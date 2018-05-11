@@ -79,17 +79,21 @@ func (app *Application) setupDatabase() (*gorm.DB, error) {
 }
 
 func (app *Application) setupServer() {
-	app.Server.Use(middleware.RequestID())
-	app.Server.Use(middleware.Logger())
-	app.Server.Use(middleware.Recover())
+	s := app.Server
 
-	// apiGroup := e.Group("/api")
+	root := s.Group(app.Config.Server.RootURL)
+
+	root.Use(middleware.RequestID())
+	root.Use(middleware.Logger())
+	root.Use(middleware.Recover())
+
+	apiGroup := root.Group("/api")
 
 	// userDAO := model.UserService{DB: db}
 
 	// api.Setup(apiGroup, &userDAO)
 
-	app.Server.GET("/", func(c echo.Context) error {
+	apiGroup.GET("/", func(c echo.Context) error {
 		return c.String(http.StatusOK, "Hello, World!")
 	})
 }

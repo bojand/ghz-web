@@ -29,6 +29,7 @@ type LogConfig struct {
 // Validate validates the config settings
 func (lc *LogConfig) Validate() error {
 	lvl := strings.ToLower(lc.Level)
+	lvl = strings.TrimSpace(lvl)
 
 	supported := lvl == "off" ||
 		lvl == "error" ||
@@ -63,6 +64,8 @@ func (c *Config) Validate() error {
 	if err != nil {
 		return err
 	}
+
+	c.Server.RootURL = strings.TrimSpace(c.Server.RootURL)
 
 	return nil
 }
