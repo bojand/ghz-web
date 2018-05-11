@@ -9,36 +9,79 @@ import (
 	"github.com/labstack/gommon/log"
 
 	"github.com/jinzhu/gorm"
+	_ "github.com/jinzhu/gorm/dialects/mssql"
+	_ "github.com/jinzhu/gorm/dialects/mysql"
+	_ "github.com/jinzhu/gorm/dialects/postgres"
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
 )
 
 // Application is the app
 type Application struct {
 	Config *config.Config
+	Logger echo.Logger
+	Server *echo.Echo
 }
 
 // Start starts the app
 func (app *Application) Start() {
-	db, err := gorm.Open(app.Config.DB.Type, app.Config.DB.GetConnectionString())
+	app.Server = echo.New()
+
+	app.setupLogger()
+
+	db, err := app.setupDatabase()
 	if err != nil {
-		panic("failed to connect database")
+		panic("failed to connect database: " + err.Error())
 	}
 	defer db.Close()
 
-	db.LogMode(true)
+	app.setupServer()
+
+	app.Logger.Fatal(app.Server.Start(app.Config.Server.GetHostPort()))
+}
+
+func (app *Application) setupLogger() {
+	if app.Config.Log.Level == "debug" {
+		app.Server.Logger.SetLevel(log.DEBUG)
+	} else if app.Config.Log.Level == "info" {
+		app.Server.Logger.SetLevel(log.INFO)
+	} else if app.Config.Log.Level == "warn" {
+		app.Server.Logger.SetLevel(log.WARN)
+	} else if app.Config.Log.Level == "error" {
+		app.Server.Logger.SetLevel(log.ERROR)
+	} else {
+		app.Server.Logger.SetLevel(log.OFF)
+	}
+
+	app.Logger = app.Server.Logger
+}
+
+func (app *Application) setupDatabase() (*gorm.DB, error) {
+	dbType := app.Config.Database.GetDialect()
+	dbConn := app.Config.Database.GetConnectionString()
+
+	app.Logger.Infof("Connecting DB. Type: %+v Connection string: %+v", dbType, dbConn)
+
+	db, err := gorm.Open(dbType, dbConn)
+	if err != nil {
+		return nil, err
+	}
+
+	if app.Config.Log.Level == "debug" {
+		db.LogMode(true)
+	}
 
 	// Migrate the schema
 	db.AutoMigrate()
 
-	e := echo.New()
-
-	e.Logger.SetLevel(log.INFO)
-
 	// db.SetLogger(gorm.Logger{e.Logger})
 
-	e.Use(middleware.RequestID())
-	e.Use(middleware.Logger())
-	e.Use(middleware.Recover())
+	return db, nil
+}
+
+func (app *Application) setupServer() {
+	app.Server.Use(middleware.RequestID())
+	app.Server.Use(middleware.Logger())
+	app.Server.Use(middleware.Recover())
 
 	// apiGroup := e.Group("/api")
 
@@ -46,9 +89,7 @@ func (app *Application) Start() {
 
 	// api.Setup(apiGroup, &userDAO)
 
-	e.GET("/", func(c echo.Context) error {
+	app.Server.GET("/", func(c echo.Context) error {
 		return c.String(http.StatusOK, "Hello, World!")
 	})
-
-	e.Logger.Fatal(e.Start(app.Config.Srv.GetHostPort()))
 }

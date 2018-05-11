@@ -1,0 +1,12 @@
+[database]
+type = "postgres"
+host = "123.0.0.1"
+user = "dbuser"
+port = 1234
+
+[server]
+port = 4321
+
+[log]
+level = "warn"
+path = "/tmp/ghz.log"

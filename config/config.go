@@ -1,74 +1,67 @@
 package config
 
 import (
-	"os"
 	"strconv"
 	"strings"
 
-	"github.com/BurntSushi/toml"
+	"github.com/jinzhu/configor"
 	"github.com/pkg/errors"
 )
 
-// Database host database configs
-type Database struct {
-	// The SQL dialect we support
-	// One of mysql, postgres, mssql, sqlite3
-	Type string
-
-	// The database connection options
-	Host     string
-	Name     string
-	User     string
-	Password string
-
-	// Optionally full connection string in which case the above are ignored
-	Connection string
-
-	// Path to db for sqlite
-	Path string
-}
-
-// GetConnectionString returns the database connection string
-func (db *Database) GetConnectionString() string {
-	if strings.TrimSpace(db.Connection) != "" {
-		return db.Connection
-	}
-
-	if db.Type == "sqlite" {
-		return db.Path
-	}
-
-	return ""
-}
-
-// Server config
-type Server struct {
+// ServerConfig is server config
+type ServerConfig struct {
 	RootURL string
 	Address string
-	Port    uint
+	Port    uint `default:"3000"`
 }
 
 // GetHostPort returns host:port
-func (s *Server) GetHostPort() string {
+func (s *ServerConfig) GetHostPort() string {
 	return s.Address + ":" + strconv.FormatUint(uint64(s.Port), 10)
+}
+
+// LogConfig log settings
+type LogConfig struct {
+	Level string `default:"info"`
+	Path  string
+}
+
+// Validate validates the config settings
+func (lc *LogConfig) Validate() error {
+	lvl := strings.ToLower(lc.Level)
+
+	supported := lvl == "off" ||
+		lvl == "error" ||
+		lvl == "warn" ||
+		lvl == "info" ||
+		lvl == "debug"
+
+	if !supported {
+		return errors.New("Unsupported log level: " + lc.Level)
+	}
+
+	lc.Level = lvl
+
+	return nil
 }
 
 // Config is the application config
 type Config struct {
-	DB  Database `toml:"database"`
-	Srv Server   `toml:"server"`
+	Database DBConfig
+	Server   ServerConfig
+	Log      LogConfig
 }
 
 // Validate the config
 func (c *Config) Validate() error {
-	if err := requiredString(c.DB.Type); err != nil {
-		return errors.Wrap(err, "Database.Type")
+	err := c.Database.Validate()
+	if err != nil {
+		return err
 	}
 
-	if c.DB.Type == "sqlite" {
-		if err := requiredString(c.DB.Path); err != nil {
-			return errors.Wrap(err, "Database.Oath")
-		}
+	err = c.Log.Validate()
+	if err != nil {
+		return err
 	}
 
 	return nil
@@ -80,20 +73,14 @@ func Read(path string) (*Config, error) {
 		path = "config.toml"
 	}
 
-	config := Config{
-		DB: Database{
-			Type: "sqlite3",
-			Path: "test.db",
-		},
-		Srv: Server{
-			Port: 3000,
-		},
-	}
+	config := Config{}
 
-	if _, err := os.Stat(path); err == nil {
-		if _, err := toml.DecodeFile(path, &config); err != nil {
-			return nil, err
-		}
+	configor.Load(&config, path)
+
+	err := config.Validate()
+
+	if err != nil {
+		return nil, err
 	}
 
 	return &config, nil
