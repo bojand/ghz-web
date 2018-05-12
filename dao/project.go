@@ -27,10 +27,13 @@ func (ps *ProjectService) FindByName(name string, p *model.Project) error {
 
 // Create creates a new project
 func (ps *ProjectService) Create(p *model.Project) error {
-	if strings.TrimSpace(p.Name) == "" {
-		p.Name = random.String(16)
+	name := strings.Replace(p.Name, " ", "", -1)
+	if name == "" {
+		name = random.String(16)
 	}
-	p.Name = strings.ToLower(p.Name)
+	p.Name = strings.ToLower(name)
+	p.Description = strings.TrimSpace(p.Description)
+
 	return ps.DB.Create(p).Error
 }
 
@@ -42,11 +45,13 @@ func (ps *ProjectService) Update(p *model.Project) error {
 		return err
 	}
 
-	if strings.TrimSpace(p.Name) == "" {
-		p.Name = projToUpdate.Name
+	name := strings.Replace(p.Name, " ", "", -1)
+	if name == "" {
+		name = projToUpdate.Name
 	}
 
-	p.Name = strings.ToLower(p.Name)
+	p.Name = strings.ToLower(name)
+	p.Description = strings.TrimSpace(p.Description)
 
 	return ps.DB.Model(projToUpdate).Updates(p).Error
 }
