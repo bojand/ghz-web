@@ -87,13 +87,11 @@ func (app *Application) setupServer() {
 	root.Use(middleware.Logger())
 	root.Use(middleware.Recover())
 
-	apiGroup := root.Group("/api")
-
 	// userDAO := model.UserService{DB: db}
 
 	// api.Setup(apiGroup, &userDAO)
 
-	apiGroup.GET("/", func(c echo.Context) error {
+	root.GET("/", func(c echo.Context) error {
 		return c.String(http.StatusOK, "Hello, World!")
 	})
 }
