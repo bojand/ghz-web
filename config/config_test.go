@@ -13,19 +13,19 @@ func TestConfig_Read(t *testing.T) {
 		expected *Config
 	}{
 		{"config1.toml",
-			"../testdata/config/config1.toml",
+			"../test/config1.toml",
 			&Config{
 				Server:   ServerConfig{Port: 3000},
 				Database: DBConfig{Type: "sqlite", Host: "localhost", Name: "ghz", Path: "ghz.db", SSLMode: "disable"},
 				Log:      LogConfig{Level: "info"}}},
 		{"config2.toml",
-			"../testdata/config/config2.toml",
+			"../test/config2.toml",
 			&Config{
 				Server:   ServerConfig{Port: 4321},
 				Database: DBConfig{Type: "postgres", Host: "123.0.0.1", Name: "ghz", Path: "ghz.db", SSLMode: "disable", User: "dbuser", Port: 1234},
 				Log:      LogConfig{Level: "warn", Path: "/tmp/ghz.log"}}},
 		{"config3.toml",
-			"../testdata/config/config3.toml",
+			"../test/config3.toml",
 			&Config{
 				Server:   ServerConfig{Port: 3000},
 				Database: DBConfig{Type: "postgres", Host: "localhost", Name: "ghz", Path: "ghz.db", SSLMode: "disable"},

@@ -10,7 +10,7 @@ import (
 func SetupProjectAPI(g *echo.Group) {
 	api := &ProjectAPI{}
 
-	g.POST("/:name", api.create)
+	g.POST("/", api.create)
 	g.GET("/:id", api.get)
 	g.PUT("/:id", api.update)
 	g.PUT("/:id", api.delete)
