@@ -1,11 +1,14 @@
 package api
 
 import (
+	"bytes"
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 
+	"github.com/bojand/ghz-web/model"
 	"github.com/labstack/echo"
 	"github.com/stretchr/testify/assert"
 )
@@ -15,7 +18,9 @@ var projectAPI = &ProjectAPI{}
 func TestCreateProject(t *testing.T) {
 	// Setup
 	e := echo.New()
-	req := httptest.NewRequest(echo.POST, "/", strings.NewReader(""))
+
+	jsonStr := []byte(`{"name":" Test Project Name "}`)
+	req := httptest.NewRequest(echo.POST, "/", bytes.NewBuffer(jsonStr))
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
@@ -23,7 +28,15 @@ func TestCreateProject(t *testing.T) {
 	// Assertions
 	if assert.NoError(t, projectAPI.create(c)) {
 		assert.Equal(t, http.StatusCreated, rec.Code)
-		assert.Equal(t, "Created Project", rec.Body.String())
+
+		p := new(model.Project)
+		err := json.Unmarshal(rec.Body.Bytes(), p)
+
+		assert.NoError(t, err)
+
+		assert.NotZero(t, p.ID)
+		assert.Equal(t, "testprojectname", p.Name)
+		assert.Equal(t, "", p.Description)
 	}
 }
 

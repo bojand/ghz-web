@@ -3,6 +3,8 @@ package api
 import (
 	"net/http"
 
+	"github.com/bojand/ghz-web/model"
+	"github.com/bojand/ghz-web/service"
 	"github.com/labstack/echo"
 )
 
@@ -21,10 +23,21 @@ func SetupProjectAPI(g *echo.Group) {
 
 // ProjectAPI provides the api
 type ProjectAPI struct {
+	dao service.ProjectService
 }
 
 func (api *ProjectAPI) create(c echo.Context) error {
-	return c.String(http.StatusCreated, "Created Project")
+	p := new(model.Project)
+	if err := c.Bind(p); err != nil {
+		return c.JSON(http.StatusBadRequest, "Bad Request: "+err.Error())
+	}
+
+	err := api.dao.Create(p)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, "Bad Request: "+err.Error())
+	}
+
+	return c.JSON(http.StatusCreated, p)
 }
 
 func (api *ProjectAPI) get(c echo.Context) error {
