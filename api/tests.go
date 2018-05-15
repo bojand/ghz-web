@@ -6,7 +6,7 @@ import (
 	"github.com/labstack/echo"
 )
 
-// SetupTestApi sets up the API
+// SetupTestAPI sets up the API
 func SetupTestAPI(g *echo.Group) {
 	api := &TestAPI{}
 
@@ -16,7 +16,7 @@ func SetupTestAPI(g *echo.Group) {
 	g.PUT("/:id", api.delete)
 
 	runsGroup := g.Group("/:id/runs")
-	SetupRuntAPI(runsGroup)
+	SetupRunAPI(runsGroup)
 }
 
 // TestAPI provides the api

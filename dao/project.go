@@ -1,6 +1,7 @@
 package dao
 
 import (
+	"errors"
 	"strings"
 
 	"github.com/labstack/gommon/random"
@@ -54,4 +55,8 @@ func (ps *ProjectService) Update(p *model.Project) error {
 	p.Description = strings.TrimSpace(p.Description)
 
 	return ps.DB.Model(projToUpdate).Updates(p).Error
+}
+
+func (ps *ProjectService) Delete(p *model.Project) error {
+	return errors.New("Not Implemented Yet")
 }

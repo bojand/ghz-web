@@ -6,8 +6,8 @@ import (
 	"github.com/labstack/echo"
 )
 
-// SetupRuntAPI sets up the API
-func SetupRuntAPI(g *echo.Group) {
+// SetupRunAPI sets up the API
+func SetupRunAPI(g *echo.Group) {
 	api := &RunAPI{}
 
 	g.POST("/", api.create)

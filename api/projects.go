@@ -52,25 +52,50 @@ func (api *ProjectAPI) get(c echo.Context) error {
 
 	c.Logger().Info("Getting project: " + string(id))
 
-	u := new(model.Project)
+	p := new(model.Project)
 
 	if getByID {
-		if err := api.dao.FindByID(uint(id), u); gorm.IsRecordNotFoundError(err) {
+		if err = api.dao.FindByID(uint(id), p); gorm.IsRecordNotFoundError(err) {
 			return c.JSON(http.StatusNotFound, "Not Found")
 		}
 	} else {
-		if err := api.dao.FindByName(idparam, u); gorm.IsRecordNotFoundError(err) {
+		if err = api.dao.FindByName(idparam, p); gorm.IsRecordNotFoundError(err) {
 			return c.JSON(http.StatusNotFound, "Not Found")
 		}
 	}
 
-	return c.JSON(http.StatusOK, u)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, "Bad Request: "+err.Error())
+	}
+
+	return c.JSON(http.StatusOK, p)
 }
 
 func (api *ProjectAPI) update(c echo.Context) error {
-	return c.String(http.StatusNotImplemented, "Not Implemented")
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		return c.JSON(http.StatusNotFound, "Not Found")
+	}
+
+	p := new(model.Project)
+	if err := c.Bind(p); err != nil {
+		return c.JSON(http.StatusBadRequest, "Bad Request: "+err.Error())
+	}
+
+	uid := uint(id)
+	p.ID = uid
+
+	if err = api.dao.Update(p); gorm.IsRecordNotFoundError(err) {
+		return c.JSON(http.StatusNotFound, "Not Found")
+	}
+
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, "Bad Request: "+err.Error())
+	}
+
+	return c.JSON(http.StatusOK, p)
 }
 
 func (api *ProjectAPI) delete(c echo.Context) error {
-	return c.String(http.StatusOK, "Delete Project")
+	return c.String(http.StatusNotImplemented, "Not Implemented")
 }

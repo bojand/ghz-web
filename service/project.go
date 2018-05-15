@@ -8,4 +8,5 @@ type ProjectService interface {
 	FindByName(name string, p *model.Project) error
 	Create(p *model.Project) error
 	Update(p *model.Project) error
+	Delete(p *model.Project) error
 }

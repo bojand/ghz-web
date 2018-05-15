@@ -42,7 +42,7 @@ func TestProjectAPI(t *testing.T) {
 	var projectAPI = &ProjectAPI{dao: &dao}
 	var projectID uint
 
-	t.Run("POST", func(t *testing.T) {
+	t.Run("POST create new", func(t *testing.T) {
 		e := echo.New()
 
 		jsonStr := []byte(`{"name":" Test Project Name "}`)
@@ -64,7 +64,20 @@ func TestProjectAPI(t *testing.T) {
 			assert.Equal(t, "", p.Description)
 
 			projectID = p.ID
-			fmt.Println("projectID: " + strconv.FormatUint(uint64(projectID), 10))
+		}
+	})
+
+	t.Run("POST invalid body", func(t *testing.T) {
+		e := echo.New()
+
+		jsonStr := []byte(`{"name":" Test Project Name ","desc":"asdf"}`)
+		req := httptest.NewRequest(echo.POST, "/", bytes.NewBuffer(jsonStr))
+		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+		rec := httptest.NewRecorder()
+		c := e.NewContext(req, rec)
+
+		if assert.NoError(t, projectAPI.create(c)) {
+			assert.Equal(t, http.StatusBadRequest, rec.Code)
 		}
 	})
 
@@ -72,7 +85,6 @@ func TestProjectAPI(t *testing.T) {
 		e := echo.New()
 		pid := strconv.FormatUint(uint64(projectID), 10)
 
-		fmt.Println("pid: " + pid)
 		req := httptest.NewRequest(echo.GET, "/"+pid, strings.NewReader(""))
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		rec := httptest.NewRecorder()
@@ -139,15 +151,85 @@ func TestProjectAPI(t *testing.T) {
 	})
 
 	t.Run("PUT /:id", func(t *testing.T) {
+		pid := strconv.FormatUint(uint64(projectID), 10)
 		e := echo.New()
-		req := httptest.NewRequest(echo.POST, "/", strings.NewReader(""))
+
+		jsonStr := []byte(`{"name":" Updated Project Name ","description":"My project description!"}`)
+		req := httptest.NewRequest(echo.PUT, "/"+pid, bytes.NewBuffer(jsonStr))
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		rec := httptest.NewRecorder()
+
 		c := e.NewContext(req, rec)
+		c.SetParamNames("id")
+		c.SetParamValues(pid)
 
 		if assert.NoError(t, projectAPI.update(c)) {
-			assert.Equal(t, http.StatusNotImplemented, rec.Code)
-			assert.Equal(t, "Not Implemented", rec.Body.String())
+			assert.Equal(t, http.StatusOK, rec.Code)
+
+			p := new(model.Project)
+			err := json.Unmarshal(rec.Body.Bytes(), p)
+
+			assert.NoError(t, err)
+
+			assert.Equal(t, projectID, p.ID)
+			assert.Equal(t, "updatedprojectname", p.Name)
+			assert.Equal(t, "My project description!", p.Description)
+		}
+	})
+
+	t.Run("PUT invalid id num", func(t *testing.T) {
+		e := echo.New()
+
+		jsonStr := []byte(`{"name":" Updated Project Name ","description":"My project description!"}`)
+		req := httptest.NewRequest(echo.PUT, "/12345", bytes.NewBuffer(jsonStr))
+		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+		rec := httptest.NewRecorder()
+
+		c := e.NewContext(req, rec)
+		c.SetParamNames("id")
+		c.SetParamValues("12345")
+
+		if assert.NoError(t, projectAPI.update(c)) {
+			fmt.Printf("%+v\n", rec.Body.String())
+			fmt.Printf("%+v\n", rec.Code)
+			assert.Equal(t, http.StatusNotFound, rec.Code)
+		}
+	})
+
+	t.Run("PUT invalid id string", func(t *testing.T) {
+		e := echo.New()
+
+		jsonStr := []byte(`{"name":" Updated Project Name 2","description":"My project description!"}`)
+		req := httptest.NewRequest(echo.PUT, "/updatedprojectname", bytes.NewBuffer(jsonStr))
+		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+		rec := httptest.NewRecorder()
+
+		c := e.NewContext(req, rec)
+		c.SetParamNames("id")
+		c.SetParamValues("updatedprojectname")
+
+		if assert.NoError(t, projectAPI.update(c)) {
+			fmt.Printf("%+v\n", rec.Body.String())
+			fmt.Printf("%+v\n", rec.Code)
+			assert.Equal(t, http.StatusNotFound, rec.Code)
+		}
+	})
+
+	t.Run("PUT invalid body", func(t *testing.T) {
+		pid := strconv.FormatUint(uint64(projectID), 10)
+		e := echo.New()
+
+		jsonStr := []byte(`{"name":" Updated Project Name ","desc":"My project description!"}`)
+		req := httptest.NewRequest(echo.PUT, "/"+pid, bytes.NewBuffer(jsonStr))
+		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+		rec := httptest.NewRecorder()
+
+		c := e.NewContext(req, rec)
+		c.SetParamNames("id")
+		c.SetParamValues(pid)
+
+		if assert.NoError(t, projectAPI.create(c)) {
+			assert.Equal(t, http.StatusBadRequest, rec.Code)
 		}
 	})
 
@@ -159,8 +241,7 @@ func TestProjectAPI(t *testing.T) {
 		c := e.NewContext(req, rec)
 
 		if assert.NoError(t, projectAPI.delete(c)) {
-			assert.Equal(t, http.StatusOK, rec.Code)
-			assert.Equal(t, "Delete Project", rec.Body.String())
+			assert.Equal(t, http.StatusNotImplemented, rec.Code)
 		}
 	})
 }
