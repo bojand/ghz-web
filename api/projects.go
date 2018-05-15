@@ -2,9 +2,11 @@ package api
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/bojand/ghz-web/model"
 	"github.com/bojand/ghz-web/service"
+	"github.com/jinzhu/gorm"
 	"github.com/labstack/echo"
 )
 
@@ -41,7 +43,28 @@ func (api *ProjectAPI) create(c echo.Context) error {
 }
 
 func (api *ProjectAPI) get(c echo.Context) error {
-	return c.String(http.StatusOK, "Get Project")
+	idparam := c.Param("id")
+	id, err := strconv.Atoi(idparam)
+	getByID := true
+	if err != nil {
+		getByID = false
+	}
+
+	c.Logger().Info("Getting project: " + string(id))
+
+	u := new(model.Project)
+
+	if getByID {
+		if err := api.dao.FindByID(uint(id), u); gorm.IsRecordNotFoundError(err) {
+			return c.JSON(http.StatusNotFound, "Not Found")
+		}
+	} else {
+		if err := api.dao.FindByName(idparam, u); gorm.IsRecordNotFoundError(err) {
+			return c.JSON(http.StatusNotFound, "Not Found")
+		}
+	}
+
+	return c.JSON(http.StatusOK, u)
 }
 
 func (api *ProjectAPI) update(c echo.Context) error {

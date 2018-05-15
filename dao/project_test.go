@@ -1,11 +1,11 @@
 package dao
 
 import (
-	"database/sql"
 	"os"
 	"testing"
 
 	"github.com/bojand/ghz-web/model"
+	"github.com/bojand/ghz-web/test"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
 	"github.com/stretchr/testify/assert"
@@ -13,46 +13,10 @@ import (
 
 const dbName = "../test/project_test.db"
 
-func createTestData() error {
-	os.Remove(dbName)
-
-	db, err := sql.Open("sqlite3", dbName)
-	if err != nil {
-		return err
-	}
-	defer db.Close()
-
-	sqlStmt := `CREATE TABLE "projects" ("id" integer primary key autoincrement,"created_at" datetime,"updated_at" datetime,"deleted_at" datetime,"name" varchar(255),"description" varchar(255) );`
-	_, err = db.Exec(sqlStmt)
-	if err != nil {
-		return err
-	}
-
-	sqlStmt = `CREATE INDEX idx_projects_deleted_at ON "projects"(deleted_at);`
-	_, err = db.Exec(sqlStmt)
-	if err != nil {
-		return err
-	}
-
-	sqlStmt = `CREATE UNIQUE INDEX uix_projects_email ON "projects"("name");`
-	_, err = db.Exec(sqlStmt)
-	if err != nil {
-		return err
-	}
-
-	sqlStmt = `INSERT INTO "projects" ("created_at","updated_at","deleted_at","name","description") VALUES ('2018-05-06 20:42:37','2018-05-06 20:42:37',NULL,'testproject123','test project description goes here');`
-	_, err = db.Exec(sqlStmt)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func TestProjectService_FindByID(t *testing.T) {
 	defer os.Remove(dbName)
 
-	err := createTestData()
+	err := test.SetupTestDatabase(dbName)
 	if err != nil {
 		assert.FailNow(t, err.Error())
 	}
@@ -92,7 +56,7 @@ func TestProjectService_FindByID(t *testing.T) {
 func TestProjectService_FindByName(t *testing.T) {
 	defer os.Remove(dbName)
 
-	err := createTestData()
+	err := test.SetupTestDatabase(dbName)
 	if err != nil {
 		assert.FailNow(t, err.Error())
 	}
@@ -132,7 +96,7 @@ func TestProjectService_FindByName(t *testing.T) {
 func TestProjectService_Create(t *testing.T) {
 	defer os.Remove(dbName)
 
-	err := createTestData()
+	err := test.SetupTestDatabase(dbName)
 	if err != nil {
 		assert.FailNow(t, err.Error())
 	}
@@ -251,7 +215,7 @@ func TestProjectService_Create(t *testing.T) {
 func TestProjectService_Update(t *testing.T) {
 	defer os.Remove(dbName)
 
-	err := createTestData()
+	err := test.SetupTestDatabase(dbName)
 	if err != nil {
 		assert.FailNow(t, err.Error())
 	}
