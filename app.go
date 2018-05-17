@@ -1,9 +1,13 @@
 package main
 
 import (
+	"encoding/json"
 	"net/http"
+	"time"
 
 	"github.com/bojand/ghz-web/config"
+	"github.com/bojand/ghz-web/dao"
+	"github.com/bojand/ghz-web/model"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
 	"github.com/labstack/gommon/log"
@@ -20,6 +24,7 @@ type Application struct {
 	Config *config.Config
 	Logger echo.Logger
 	Server *echo.Echo
+	DB     *gorm.DB
 }
 
 // Start starts the app
@@ -28,15 +33,58 @@ func (app *Application) Start() {
 
 	app.setupLogger()
 
-	db, err := app.setupDatabase()
+	err := app.setupDatabase()
 	if err != nil {
 		panic("failed to connect database: " + err.Error())
 	}
-	defer db.Close()
+	defer app.DB.Close()
 
 	app.setupServer()
 
+	app.testStuff()
 	app.Logger.Fatal(app.Server.Start(app.Config.Server.GetHostPort()))
+}
+
+func (app *Application) testStuff() {
+	// TEST STUFF
+
+	pdao := &dao.ProjectService{DB: app.DB}
+
+	project := &model.Project{Name: "Testproject2"}
+
+	app.Logger.Infof("Project: %+v\n", project)
+
+	err := pdao.Create(project)
+	if err != nil {
+		app.Logger.Errorf("Error: %+v\n", err.Error())
+	} else {
+		app.Logger.Infof("Saved: %+v", project.ID)
+	}
+
+	t1 := &model.Test{
+		Name: "test2",
+		Thresholds: map[model.Threshold]*model.ThresholdSetting{
+			model.ThresholdMedian: &model.ThresholdSetting{Threshold: 2 * time.Millisecond, Status: model.StatusFail},
+		},
+		Description: "test descroption 2",
+	}
+
+	err = app.DB.Create(t1).Error
+	if err != nil {
+		app.Logger.Errorf("Error: %+v\n", err.Error())
+	} else {
+		app.Logger.Infof("Saved: %+v", t1.ID)
+	}
+
+	t2 := &model.Test{}
+	err = app.DB.First(t2, "name = ?", "test3").Error
+	if err != nil {
+		app.Logger.Errorf("Error: %+v\n", err.Error())
+	} else {
+		str, _ := json.Marshal(t2)
+		app.Logger.Infof("Found: %+v\n", t2)
+		app.Logger.Infof("JSON: %+v\n", string(str))
+	}
 }
 
 func (app *Application) setupLogger() {
@@ -55,7 +103,7 @@ func (app *Application) setupLogger() {
 	app.Logger = app.Server.Logger
 }
 
-func (app *Application) setupDatabase() (*gorm.DB, error) {
+func (app *Application) setupDatabase() error {
 	dbType := app.Config.Database.GetDialect()
 	dbConn := app.Config.Database.GetConnectionString()
 
@@ -63,7 +111,7 @@ func (app *Application) setupDatabase() (*gorm.DB, error) {
 
 	db, err := gorm.Open(dbType, dbConn)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	if app.Config.Log.Level == "debug" {
@@ -71,11 +119,13 @@ func (app *Application) setupDatabase() (*gorm.DB, error) {
 	}
 
 	// Migrate the schema
-	db.AutoMigrate()
+	db.AutoMigrate(&model.Project{}, model.Test{})
 
 	// db.SetLogger(gorm.Logger{e.Logger})
 
-	return db, nil
+	app.DB = db
+
+	return nil
 }
 
 func (app *Application) setupServer() {
