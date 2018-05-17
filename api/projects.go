@@ -1,6 +1,8 @@
 package api
 
 import (
+	"errors"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -31,12 +33,12 @@ type ProjectAPI struct {
 func (api *ProjectAPI) create(c echo.Context) error {
 	p := new(model.Project)
 	if err := c.Bind(p); err != nil {
-		return c.JSON(http.StatusBadRequest, "Bad Request: "+err.Error())
+		return c.JSON(http.StatusBadRequest, newAPIError(err))
 	}
 
 	err := api.dao.Create(p)
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, "Bad Request: "+err.Error())
+		return c.JSON(http.StatusBadRequest, newAPIError(err))
 	}
 
 	return c.JSON(http.StatusCreated, p)
@@ -52,15 +54,15 @@ func (api *ProjectAPI) get(c echo.Context) error {
 
 	c.Logger().Info("Getting project: " + string(id))
 
-	p := new(model.Project)
+	var p *model.Project
 
 	if getByID {
-		if err = api.dao.FindByID(uint(id), p); gorm.IsRecordNotFoundError(err) {
-			return c.JSON(http.StatusNotFound, "Not Found")
+		if p, err = api.dao.FindByID(uint(id)); gorm.IsRecordNotFoundError(err) {
+			return c.JSON(http.StatusNotFound, newAPIError(err))
 		}
 	} else {
-		if err = api.dao.FindByName(idparam, p); gorm.IsRecordNotFoundError(err) {
-			return c.JSON(http.StatusNotFound, "Not Found")
+		if p, err = api.dao.FindByName(idparam); gorm.IsRecordNotFoundError(err) {
+			return c.JSON(http.StatusNotFound, newAPIError(err))
 		}
 	}
 
@@ -72,14 +74,15 @@ func (api *ProjectAPI) get(c echo.Context) error {
 }
 
 func (api *ProjectAPI) update(c echo.Context) error {
-	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil {
-		return c.JSON(http.StatusNotFound, "Not Found")
-	}
-
 	p := new(model.Project)
 	if err := c.Bind(p); err != nil {
-		return c.JSON(http.StatusBadRequest, "Bad Request: "+err.Error())
+		fmt.Printf("%#v\n\n", err)
+		return c.JSON(http.StatusBadRequest, newAPIError(err))
+	}
+
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		return c.JSON(http.StatusNotFound, newAPIError(err))
 	}
 
 	uid := uint(id)
@@ -90,12 +93,12 @@ func (api *ProjectAPI) update(c echo.Context) error {
 	}
 
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, "Bad Request: "+err.Error())
+		return c.JSON(http.StatusInternalServerError, newAPIError(err))
 	}
 
 	return c.JSON(http.StatusOK, p)
 }
 
 func (api *ProjectAPI) delete(c echo.Context) error {
-	return c.String(http.StatusNotImplemented, "Not Implemented")
+	return c.JSON(http.StatusNotImplemented, newAPIError(errors.New("Not Implemented")))
 }

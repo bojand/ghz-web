@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/bojand/ghz-web/config"
-	"github.com/bojand/ghz-web/dao"
 	"github.com/bojand/ghz-web/model"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
@@ -49,7 +48,7 @@ func (app *Application) Start() {
 func (app *Application) testStuff() {
 	// TEST STUFF
 
-	pdao := &dao.ProjectService{DB: app.DB}
+	pdao := &model.ProjectService{DB: app.DB}
 
 	project := &model.Project{Name: "Testproject1"}
 

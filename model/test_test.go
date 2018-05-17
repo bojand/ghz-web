@@ -26,10 +26,10 @@ func TestTestModel_SetStatus(t *testing.T) {
 	}{
 		{"empty", &Test{}, [4]time.Duration{
 			milli1, milli2, milli3, milli4,
-		}, false, &Test{}},
+		}, false, &Test{Status: StatusOK}},
 		{"with error true but no fail on error setting", &Test{}, [4]time.Duration{
 			milli1, milli2, milli3, milli4,
-		}, true, &Test{}},
+		}, true, &Test{Status: StatusOK}},
 		{"with error true but and fail on error", &Test{FailOnError: true}, [4]time.Duration{
 			milli1, milli2, milli3, milli4,
 		}, true, &Test{Status: StatusFail, FailOnError: true}},

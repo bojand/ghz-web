@@ -1,9 +1,7 @@
 package api
 
 import (
-	"bytes"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -11,7 +9,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/bojand/ghz-web/dao"
 	"github.com/bojand/ghz-web/model"
 	"github.com/bojand/ghz-web/test"
 	"github.com/jinzhu/gorm"
@@ -37,7 +34,7 @@ func TestProjectAPI(t *testing.T) {
 	}
 	defer db.Close()
 
-	dao := dao.ProjectService{DB: db}
+	dao := model.ProjectService{DB: db}
 
 	var projectAPI = &ProjectAPI{dao: &dao}
 	var projectID uint
@@ -45,8 +42,8 @@ func TestProjectAPI(t *testing.T) {
 	t.Run("POST create new", func(t *testing.T) {
 		e := echo.New()
 
-		jsonStr := []byte(`{"name":" Test Project Name "}`)
-		req := httptest.NewRequest(echo.POST, "/", bytes.NewBuffer(jsonStr))
+		jsonStr := `{"name":" Test Project Name "}`
+		req := httptest.NewRequest(echo.POST, "/", strings.NewReader(jsonStr))
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
@@ -67,11 +64,57 @@ func TestProjectAPI(t *testing.T) {
 		}
 	})
 
-	t.Run("POST invalid body", func(t *testing.T) {
+	t.Run("POST create new empty", func(t *testing.T) {
 		e := echo.New()
 
-		jsonStr := []byte(`{"name":" Test Project Name ","desc":"asdf"}`)
-		req := httptest.NewRequest(echo.POST, "/", bytes.NewBuffer(jsonStr))
+		jsonStr := `{}`
+		req := httptest.NewRequest(echo.POST, "/", strings.NewReader(jsonStr))
+		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+		rec := httptest.NewRecorder()
+		c := e.NewContext(req, rec)
+
+		if assert.NoError(t, projectAPI.create(c)) {
+			assert.Equal(t, http.StatusCreated, rec.Code)
+
+			p := new(model.Project)
+			err := json.Unmarshal(rec.Body.Bytes(), p)
+
+			assert.NoError(t, err)
+
+			assert.NotZero(t, p.ID)
+			assert.NotEmpty(t, p.Name)
+			assert.Equal(t, "", p.Description)
+		}
+	})
+
+	t.Run("POST create new with just description", func(t *testing.T) {
+		e := echo.New()
+
+		jsonStr := `{"description":"asdf"}`
+		req := httptest.NewRequest(echo.POST, "/", strings.NewReader(jsonStr))
+		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+		rec := httptest.NewRecorder()
+		c := e.NewContext(req, rec)
+
+		if assert.NoError(t, projectAPI.create(c)) {
+			assert.Equal(t, http.StatusCreated, rec.Code)
+
+			p := new(model.Project)
+			err := json.Unmarshal(rec.Body.Bytes(), p)
+
+			assert.NoError(t, err)
+
+			assert.NotZero(t, p.ID)
+			assert.NotEmpty(t, p.Name)
+			assert.Equal(t, "asdf", p.Description)
+		}
+	})
+
+	t.Run("POST fail with same name", func(t *testing.T) {
+		e := echo.New()
+
+		jsonStr := `{"name":" Test Project Name"}`
+		req := httptest.NewRequest(echo.POST, "/", strings.NewReader(jsonStr))
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
@@ -154,12 +197,12 @@ func TestProjectAPI(t *testing.T) {
 		pid := strconv.FormatUint(uint64(projectID), 10)
 		e := echo.New()
 
-		jsonStr := []byte(`{"name":" Updated Project Name ","description":"My project description!"}`)
-		req := httptest.NewRequest(echo.PUT, "/"+pid, bytes.NewBuffer(jsonStr))
+		jsonStr := `{"name":" Updated Project Name ","description":"My project description!"}`
+		req := httptest.NewRequest(echo.PUT, "/"+pid, strings.NewReader(jsonStr))
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		rec := httptest.NewRecorder()
-
 		c := e.NewContext(req, rec)
+
 		c.SetParamNames("id")
 		c.SetParamValues(pid)
 
@@ -180,8 +223,8 @@ func TestProjectAPI(t *testing.T) {
 	t.Run("PUT invalid id num", func(t *testing.T) {
 		e := echo.New()
 
-		jsonStr := []byte(`{"name":" Updated Project Name ","description":"My project description!"}`)
-		req := httptest.NewRequest(echo.PUT, "/12345", bytes.NewBuffer(jsonStr))
+		jsonStr := `{"name":" Updated Project Name ","description":"My project description!"}`
+		req := httptest.NewRequest(echo.PUT, "/12345", strings.NewReader(jsonStr))
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		rec := httptest.NewRecorder()
 
@@ -190,8 +233,6 @@ func TestProjectAPI(t *testing.T) {
 		c.SetParamValues("12345")
 
 		if assert.NoError(t, projectAPI.update(c)) {
-			fmt.Printf("%+v\n", rec.Body.String())
-			fmt.Printf("%+v\n", rec.Code)
 			assert.Equal(t, http.StatusNotFound, rec.Code)
 		}
 	})
@@ -199,8 +240,8 @@ func TestProjectAPI(t *testing.T) {
 	t.Run("PUT invalid id string", func(t *testing.T) {
 		e := echo.New()
 
-		jsonStr := []byte(`{"name":" Updated Project Name 2","description":"My project description!"}`)
-		req := httptest.NewRequest(echo.PUT, "/updatedprojectname", bytes.NewBuffer(jsonStr))
+		jsonStr := `{"name":" Updated Project Name 2","description":"My project description!"}`
+		req := httptest.NewRequest(echo.PUT, "/updatedprojectname", strings.NewReader(jsonStr))
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		rec := httptest.NewRecorder()
 
@@ -209,27 +250,7 @@ func TestProjectAPI(t *testing.T) {
 		c.SetParamValues("updatedprojectname")
 
 		if assert.NoError(t, projectAPI.update(c)) {
-			fmt.Printf("%+v\n", rec.Body.String())
-			fmt.Printf("%+v\n", rec.Code)
 			assert.Equal(t, http.StatusNotFound, rec.Code)
-		}
-	})
-
-	t.Run("PUT invalid body", func(t *testing.T) {
-		pid := strconv.FormatUint(uint64(projectID), 10)
-		e := echo.New()
-
-		jsonStr := []byte(`{"name":" Updated Project Name ","desc":"My project description!"}`)
-		req := httptest.NewRequest(echo.PUT, "/"+pid, bytes.NewBuffer(jsonStr))
-		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-		rec := httptest.NewRecorder()
-
-		c := e.NewContext(req, rec)
-		c.SetParamNames("id")
-		c.SetParamValues(pid)
-
-		if assert.NoError(t, projectAPI.create(c)) {
-			assert.Equal(t, http.StatusBadRequest, rec.Code)
 		}
 	})
 

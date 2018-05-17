@@ -73,8 +73,8 @@ const (
 
 // ThresholdSetting setting
 type ThresholdSetting struct {
-	Status    TestStatus    `json:"status"`
-	Threshold time.Duration `json:"threshold"`
+	Status    TestStatus    `json:"status" validate:"oneof=ok fail"`
+	Threshold time.Duration `json:"threshold" validate:"oneof=mean median 95th 99th"`
 }
 
 // UnmarshalJSON prases a ThresholdSetting value from JSON string
@@ -103,9 +103,9 @@ type Test struct {
 	gorm.Model
 	ProjectID      uint                            `json:"projectID"`
 	Project        Project                         `json:"-"`
-	Name           string                          `json:"name" gorm:"unique_index"`
+	Name           string                          `json:"name" gorm:"unique_index" validate:"required"`
 	Description    string                          `json:"description"`
-	Status         TestStatus                      `json:"status"`
+	Status         TestStatus                      `json:"status" validate:"oneof=ok fail"`
 	Thresholds     map[Threshold]*ThresholdSetting `json:"thresholds,omitempty" gorm:"-"`
 	FailOnError    bool                            `json:"failOnError"`
 	ThresholdsJSON string                          `json:"-" gorm:"column:thresholds"`
@@ -136,6 +136,9 @@ func (t *Test) AfterFind() error {
 		}
 		t.Thresholds = dat
 	}
+
+	t.ThresholdsJSON = ""
+
 	return nil
 }
 
