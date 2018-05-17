@@ -10,69 +10,24 @@ import (
 )
 
 // Threshold represends a threshold limit we may care about
-type Threshold int
+type Threshold string
 
 const (
 	// ThresholdMean is the threshold for mean / average
-	ThresholdMean Threshold = iota
+	ThresholdMean Threshold = Threshold("mean")
 
 	// ThresholdMedian is the threshold for the median
-	ThresholdMedian
+	ThresholdMedian = Threshold("median")
 
 	// Threshold95th is the threshold for the 95th percentile
-	Threshold95th
+	Threshold95th = Threshold("95th")
 
 	// Threshold99th is the threshold for the 96th percentile
-	Threshold99th
+	Threshold99th = Threshold("99th")
 )
-
-// String() is the string representation of threshold
-func (t Threshold) String() string {
-	tholds := [...]string{"mean", "median", "95th", "99th"}
-
-	if t < ThresholdMean || t > Threshold99th {
-		return ""
-	}
-
-	return tholds[t]
-}
-
-// ThresholdFromString creates a Threshold from a string
-func ThresholdFromString(str string) Threshold {
-	str = strings.ToLower(str)
-	if str == "1" || str == "median" {
-		return ThresholdMedian
-	} else if str == "2" || str == "95th" {
-		return Threshold95th
-	} else if str == "3" || str == "99th" {
-		return Threshold99th
-	}
-
-	return ThresholdMean
-}
-
-// UnmarshalJSON prases a Threshold value from JSON string
-func (t *Threshold) UnmarshalJSON(b []byte) error {
-	*t = ThresholdFromString(string(b))
-
-	return nil
-}
-
-// MarshalJSON formats a Threshold value into a JSON string
-func (t Threshold) MarshalJSON() ([]byte, error) {
-	return []byte(fmt.Sprintf("\"%s\"", t.String())), nil
-}
 
 // TestStatus represents a status of a test, whether its latest run failed the threshold settings
-type TestStatus int
-
-const (
-	// StatusOK means the latest run in test was within the threshold
-	StatusOK TestStatus = iota
-
-	// StatusFail means the latest run in test was not within the threshold
-	StatusFail
-)
+type TestStatus string
 
 // String() is the string representation of threshold
 func (t TestStatus) String() string {
@@ -81,19 +36,6 @@ func (t TestStatus) String() string {
 	}
 
 	return "ok"
-}
-
-// TestStatusFromString creates a TestStatus from a string
-func TestStatusFromString(str string) TestStatus {
-	str = strings.ToLower(str)
-
-	t := StatusOK
-
-	if str == "1" || str == "fail" {
-		t = StatusFail
-	}
-
-	return t
 }
 
 // UnmarshalJSON prases a Threshold value from JSON string
@@ -108,24 +50,31 @@ func (t TestStatus) MarshalJSON() ([]byte, error) {
 	return []byte(fmt.Sprintf("\"%s\"", t.String())), nil
 }
 
+// TestStatusFromString creates a TestStatus from a string
+func TestStatusFromString(str string) TestStatus {
+	str = strings.ToLower(str)
+
+	t := StatusOK
+
+	if str == "fail" {
+		t = StatusFail
+	}
+
+	return t
+}
+
+const (
+	// StatusOK means the latest run in test was within the threshold
+	StatusOK TestStatus = TestStatus("ok")
+
+	// StatusFail means the latest run in test was not within the threshold
+	StatusFail = TestStatus("fail")
+)
+
 // ThresholdSetting setting
 type ThresholdSetting struct {
 	Status    TestStatus    `json:"status"`
 	Threshold time.Duration `json:"threshold"`
-}
-
-// MarshalJSON formats a ThresholdSetting value into a JSON string
-func (m ThresholdSetting) MarshalJSON() ([]byte, error) {
-	type Alias ThresholdSetting
-	aux := &struct {
-		Status string `json:"status"`
-		*Alias
-	}{
-		Status: m.Status.String(),
-		Alias:  (*Alias)(&m),
-	}
-
-	return json.Marshal(aux)
 }
 
 // UnmarshalJSON prases a ThresholdSetting value from JSON string
@@ -157,71 +106,20 @@ type Test struct {
 	Name           string                          `json:"name" gorm:"unique_index"`
 	Description    string                          `json:"description"`
 	Status         TestStatus                      `json:"status"`
-	Thresholds     map[Threshold]*ThresholdSetting `json:"thresholds" gorm:"-"`
+	Thresholds     map[Threshold]*ThresholdSetting `json:"thresholds,omitempty" gorm:"-"`
 	FailOnError    bool                            `json:"failOnError"`
 	ThresholdsJSON string                          `json:"-" gorm:"column:thresholds"`
 }
 
-// MarshalJSON formats a Test value into a JSON string
-func (t Test) MarshalJSON() ([]byte, error) {
-	type Alias Test
-	aux := &struct {
-		Thresholds map[string]*ThresholdSetting `json:"thresholds"`
-		*Alias
-	}{
-		Thresholds: thresholdsToStringMap(t.Thresholds),
-		Alias:      (*Alias)(&t),
-	}
-
-	return json.Marshal(aux)
-}
-
-// UnmarshalJSON prases a Test value from JSON string
-func (t *Test) UnmarshalJSON(data []byte) error {
-	type Alias Test
-	aux := &struct {
-		Thresholds map[string]*ThresholdSetting `json:"thresholds"`
-		*Alias
-	}{
-		Alias: (*Alias)(t),
-	}
-	if err := json.Unmarshal(data, &aux); err != nil {
-		return err
-	}
-
-	t.Thresholds = thresholdsFromStringMap(aux.Thresholds)
-
-	return nil
-}
-
-// thresholdsToStringMap converts a threshold map string map
-func thresholdsToStringMap(tholds map[Threshold]*ThresholdSetting) map[string]*ThresholdSetting {
-	m := make(map[string]*ThresholdSetting)
-
-	for k, v := range tholds {
-		m[k.String()] = v
-	}
-
-	return m
-}
-
-// thresholdsToStringMap converts a threshold map string map
-func thresholdsFromStringMap(tholds map[string]*ThresholdSetting) map[Threshold]*ThresholdSetting {
-	m := make(map[Threshold]*ThresholdSetting)
-
-	for k, v := range tholds {
-		kt := ThresholdFromString(k)
-		m[kt] = v
-	}
-
-	return m
-}
-
 // BeforeSave is called by GORM before save
 func (t *Test) BeforeSave() error {
-	tholds, err := json.Marshal(thresholdsToStringMap(t.Thresholds))
-	if err != nil {
-		return err
+	tholds := []byte("")
+	if t.Thresholds != nil && len(t.Thresholds) > 0 {
+		var err error
+		tholds, err = json.Marshal(t.Thresholds)
+		if err != nil {
+			return err
+		}
 	}
 
 	t.ThresholdsJSON = string(tholds)
@@ -232,11 +130,11 @@ func (t *Test) BeforeSave() error {
 func (t *Test) AfterFind() error {
 	tholds := strings.TrimSpace(t.ThresholdsJSON)
 	if tholds != "" {
-		var dat map[string]*ThresholdSetting
+		dat := map[Threshold]*ThresholdSetting{}
 		if err := json.Unmarshal([]byte(tholds), &dat); err != nil {
 			return err
 		}
-		t.Thresholds = thresholdsFromStringMap(dat)
+		t.Thresholds = dat
 	}
 	return nil
 }
