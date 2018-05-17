@@ -42,13 +42,123 @@ func (app *Application) Start() {
 	app.setupServer()
 
 	app.testStuff()
+
 	app.Logger.Fatal(app.Server.Start(app.Config.Server.GetHostPort()))
 }
+
+func (app *Application) setupLogger() {
+	if app.Config.Log.Level == "debug" {
+		app.Server.Logger.SetLevel(log.DEBUG)
+	} else if app.Config.Log.Level == "info" {
+		app.Server.Logger.SetLevel(log.INFO)
+	} else if app.Config.Log.Level == "warn" {
+		app.Server.Logger.SetLevel(log.WARN)
+	} else if app.Config.Log.Level == "error" {
+		app.Server.Logger.SetLevel(log.ERROR)
+	} else {
+		app.Server.Logger.SetLevel(log.OFF)
+	}
+
+	app.Logger = app.Server.Logger
+}
+
+func (app *Application) setupDatabase() error {
+	dbType := app.Config.Database.GetDialect()
+	dbConn := app.Config.Database.GetConnectionString()
+
+	app.Logger.Infof("Connecting DB. Type: %+v Connection string: %+v", dbType, dbConn)
+
+	db, err := gorm.Open(dbType, dbConn)
+	if err != nil {
+		return err
+	}
+
+	if app.Config.Log.Level == "debug" {
+		db.LogMode(true)
+	}
+
+	// Migrate the schema
+	db.AutoMigrate(&model.Project{}, model.Test{})
+
+	// db.SetLogger(gorm.Logger{e.Logger})
+
+	app.DB = db
+
+	return nil
+}
+
+func (app *Application) setupServer() {
+	s := app.Server
+
+	root := s.Group(app.Config.Server.RootURL)
+
+	root.Use(middleware.RequestID())
+	root.Use(middleware.Logger())
+	root.Use(middleware.Recover())
+
+	// userDAO := model.UserService{DB: db}
+
+	// api.Setup(apiGroup, &userDAO)
+
+	root.GET("/", func(c echo.Context) error {
+		return c.String(http.StatusOK, "Hello, World!")
+	})
+}
+
+//
+// =====
+//
 
 func (app *Application) testStuff() {
 	// TEST STUFF
 
-	pdao := &model.ProjectService{DB: app.DB}
+	project := &model.Project{Name: "Testproject1"}
+
+	tdao := &model.TestService{DB: app.DB}
+	t1 := &model.Test{
+		Project: project,
+		Name:    "test1",
+		Thresholds: map[model.Threshold]*model.ThresholdSetting{
+			model.ThresholdMedian: &model.ThresholdSetting{Threshold: 2 * time.Millisecond, Status: model.StatusFail},
+		},
+		Description: "test descroption 1",
+	}
+
+	err := tdao.Create(t1)
+	if err != nil {
+		app.Logger.Errorf("Error: %+v\n", err.Error())
+	} else {
+		app.Logger.Infof("Saved: %+v", t1.ID)
+	}
+
+	t2 := &model.Test{
+		Project: project,
+		Name:    "test2",
+		Thresholds: map[model.Threshold]*model.ThresholdSetting{
+			model.ThresholdMean: &model.ThresholdSetting{Threshold: 1 * time.Millisecond, Status: model.StatusOK},
+		},
+		Description: "test descroption 2",
+	}
+
+	err = tdao.Create(t2)
+	if err != nil {
+		app.Logger.Errorf("Error: %+v\n", err.Error())
+	} else {
+		app.Logger.Infof("Saved: %+v", t2.ID)
+	}
+
+	tests := []model.Test{}
+	err = app.DB.Model(project).Related(&tests).Error
+
+	if err != nil {
+		app.Logger.Errorf("Error: %+v\n", err.Error())
+	} else {
+		str, _ := json.Marshal(tests)
+		fmt.Printf("Found: %+v\n\n", tests)
+		fmt.Printf("JSON: %s\n\n====\n\n", string(str))
+	}
+
+	/*pdao := &model.ProjectService{DB: app.DB}
 
 	project := &model.Project{Name: "Testproject1"}
 
@@ -222,64 +332,5 @@ func (app *Application) testStuff() {
 		fmt.Printf("Found: %+v\n\n", tests)
 		fmt.Printf("JSON: %s\n\n====\n\n", string(str))
 	}
-
-}
-
-func (app *Application) setupLogger() {
-	if app.Config.Log.Level == "debug" {
-		app.Server.Logger.SetLevel(log.DEBUG)
-	} else if app.Config.Log.Level == "info" {
-		app.Server.Logger.SetLevel(log.INFO)
-	} else if app.Config.Log.Level == "warn" {
-		app.Server.Logger.SetLevel(log.WARN)
-	} else if app.Config.Log.Level == "error" {
-		app.Server.Logger.SetLevel(log.ERROR)
-	} else {
-		app.Server.Logger.SetLevel(log.OFF)
-	}
-
-	app.Logger = app.Server.Logger
-}
-
-func (app *Application) setupDatabase() error {
-	dbType := app.Config.Database.GetDialect()
-	dbConn := app.Config.Database.GetConnectionString()
-
-	app.Logger.Infof("Connecting DB. Type: %+v Connection string: %+v", dbType, dbConn)
-
-	db, err := gorm.Open(dbType, dbConn)
-	if err != nil {
-		return err
-	}
-
-	if app.Config.Log.Level == "debug" {
-		db.LogMode(true)
-	}
-
-	// Migrate the schema
-	db.AutoMigrate(&model.Project{}, model.Test{})
-
-	// db.SetLogger(gorm.Logger{e.Logger})
-
-	app.DB = db
-
-	return nil
-}
-
-func (app *Application) setupServer() {
-	s := app.Server
-
-	root := s.Group(app.Config.Server.RootURL)
-
-	root.Use(middleware.RequestID())
-	root.Use(middleware.Logger())
-	root.Use(middleware.Recover())
-
-	// userDAO := model.UserService{DB: db}
-
-	// api.Setup(apiGroup, &userDAO)
-
-	root.GET("/", func(c echo.Context) error {
-		return c.String(http.StatusOK, "Hello, World!")
-	})
+	*/
 }

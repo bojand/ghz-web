@@ -1,10 +1,12 @@
 package model
 
 import (
-	"fmt"
+	"encoding/json"
+	"os"
 	"testing"
 	"time"
 
+	"github.com/jinzhu/gorm"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -118,7 +120,90 @@ func TestTestModel_SetStatus(t *testing.T) {
 			actual := tt.model
 			actual.SetStatus(tt.in[0], tt.in[1], tt.in[2], tt.in[3], tt.inError)
 			assert.Equal(t, tt.expected, actual)
-			fmt.Printf("%+v\n%+v\n\n", tt.expected, actual)
 		})
 	}
+}
+
+func TestTestStatus_String(t *testing.T) {
+	var tests = []struct {
+		name     string
+		in       TestStatus
+		expected string
+	}{
+		{"ok", StatusOK, "ok"},
+		{"fail", StatusFail, "fail"},
+		{"unknown", TestStatus("foo"), "ok"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			actual := tt.in.String()
+			assert.Equal(t, tt.expected, actual)
+		})
+	}
+}
+
+func TestTestStatus_TestStatusFromString(t *testing.T) {
+	var tests = []struct {
+		name     string
+		in       string
+		expected TestStatus
+	}{
+		{"ok", "ok", StatusOK},
+		{"fail", "fail", StatusFail},
+		{"unknown", "foo", StatusOK},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			actual := TestStatusFromString(tt.in)
+			assert.Equal(t, tt.expected, actual)
+		})
+	}
+}
+
+func TestThresholdSetting_UnmarshalJSON(t *testing.T) {
+	var tests = []struct {
+		name     string
+		in       string
+		expected ThresholdSetting
+	}{
+		{"just status", `{"status":"ok"}`, ThresholdSetting{Status: StatusOK}},
+		{"status and duration", `{"status":"ok","threshold":1000000}`, ThresholdSetting{Status: StatusOK, Threshold: milli1}},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var actual ThresholdSetting
+			err := json.Unmarshal([]byte(tt.in), &actual)
+			assert.NoError(t, err)
+			assert.Equal(t, tt.expected, actual)
+		})
+	}
+}
+
+func TestTestService_Create(t *testing.T) {
+	defer os.Remove(dbName)
+
+	db, err := gorm.Open("sqlite3", dbName)
+	if err != nil {
+		assert.FailNow(t, err.Error())
+	}
+	defer db.Close()
+
+	db.AutoMigrate(&Project{}, &Test{})
+
+	dao := TestService{DB: db}
+	// var tid uint
+	// var pid uint
+
+	t.Run("fail new without project", func(t *testing.T) {
+		o := Test{
+			Name:        "Test111 ",
+			Description: "Test Description Asdf ",
+		}
+		err := dao.Create(&o)
+
+		assert.Error(t, err)
+	})
 }

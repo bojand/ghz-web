@@ -1,8 +1,6 @@
 package api
 
 import (
-	"errors"
-	"fmt"
 	"net/http"
 	"strconv"
 
@@ -32,13 +30,14 @@ type ProjectAPI struct {
 
 func (api *ProjectAPI) create(c echo.Context) error {
 	p := new(model.Project)
+
 	if err := c.Bind(p); err != nil {
-		return c.JSON(http.StatusBadRequest, newAPIError(err))
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
 	err := api.dao.Create(p)
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, newAPIError(err))
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
 	return c.JSON(http.StatusCreated, p)
@@ -58,11 +57,11 @@ func (api *ProjectAPI) get(c echo.Context) error {
 
 	if getByID {
 		if p, err = api.dao.FindByID(uint(id)); gorm.IsRecordNotFoundError(err) {
-			return c.JSON(http.StatusNotFound, newAPIError(err))
+			return echo.NewHTTPError(http.StatusNotFound, err.Error())
 		}
 	} else {
 		if p, err = api.dao.FindByName(idparam); gorm.IsRecordNotFoundError(err) {
-			return c.JSON(http.StatusNotFound, newAPIError(err))
+			return echo.NewHTTPError(http.StatusNotFound, err.Error())
 		}
 	}
 
@@ -75,14 +74,14 @@ func (api *ProjectAPI) get(c echo.Context) error {
 
 func (api *ProjectAPI) update(c echo.Context) error {
 	p := new(model.Project)
+
 	if err := c.Bind(p); err != nil {
-		fmt.Printf("%#v\n\n", err)
-		return c.JSON(http.StatusBadRequest, newAPIError(err))
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
-		return c.JSON(http.StatusNotFound, newAPIError(err))
+		return echo.NewHTTPError(http.StatusNotFound, err.Error())
 	}
 
 	uid := uint(id)
@@ -93,12 +92,12 @@ func (api *ProjectAPI) update(c echo.Context) error {
 	}
 
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, newAPIError(err))
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
 	return c.JSON(http.StatusOK, p)
 }
 
 func (api *ProjectAPI) delete(c echo.Context) error {
-	return c.JSON(http.StatusNotImplemented, newAPIError(errors.New("Not Implemented")))
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }

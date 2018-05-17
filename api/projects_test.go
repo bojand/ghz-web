@@ -23,7 +23,7 @@ func TestProjectAPI(t *testing.T) {
 
 	defer os.Remove(dbName)
 
-	err := test.SetupTestDatabase(dbName)
+	err := test.SetupTestProjectDatabase(dbName)
 	if err != nil {
 		assert.FailNow(t, err.Error())
 	}
@@ -119,8 +119,11 @@ func TestProjectAPI(t *testing.T) {
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
 
-		if assert.NoError(t, projectAPI.create(c)) {
-			assert.Equal(t, http.StatusBadRequest, rec.Code)
+		err := projectAPI.create(c)
+		if assert.Error(t, err) {
+			assert.IsType(t, err, &echo.HTTPError{})
+			httpErr := err.(*echo.HTTPError)
+			assert.Equal(t, http.StatusBadRequest, httpErr.Code)
 		}
 	})
 
@@ -188,8 +191,11 @@ func TestProjectAPI(t *testing.T) {
 		c.SetParamNames("id")
 		c.SetParamValues("tstprj")
 
-		if assert.NoError(t, projectAPI.get(c)) {
-			assert.Equal(t, http.StatusNotFound, rec.Code)
+		err := projectAPI.get(c)
+		if assert.Error(t, err) {
+			assert.IsType(t, err, &echo.HTTPError{})
+			httpErr := err.(*echo.HTTPError)
+			assert.Equal(t, http.StatusNotFound, httpErr.Code)
 		}
 	})
 
@@ -249,8 +255,11 @@ func TestProjectAPI(t *testing.T) {
 		c.SetParamNames("id")
 		c.SetParamValues("updatedprojectname")
 
-		if assert.NoError(t, projectAPI.update(c)) {
-			assert.Equal(t, http.StatusNotFound, rec.Code)
+		err := projectAPI.update(c)
+		if assert.Error(t, err) {
+			assert.IsType(t, err, &echo.HTTPError{})
+			httpErr := err.(*echo.HTTPError)
+			assert.Equal(t, http.StatusNotFound, httpErr.Code)
 		}
 	})
 
@@ -261,8 +270,11 @@ func TestProjectAPI(t *testing.T) {
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
 
-		if assert.NoError(t, projectAPI.delete(c)) {
-			assert.Equal(t, http.StatusNotImplemented, rec.Code)
+		err := projectAPI.delete(c)
+		if assert.Error(t, err) {
+			assert.IsType(t, err, &echo.HTTPError{})
+			httpErr := err.(*echo.HTTPError)
+			assert.Equal(t, http.StatusNotImplemented, httpErr.Code)
 		}
 	})
 }

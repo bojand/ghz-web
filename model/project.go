@@ -17,23 +17,25 @@ type Project struct {
 
 // BeforeCreate is a GORM hook called when a model is created
 func (p *Project) BeforeCreate() error {
-	name := strings.Replace(p.Name, " ", "", -1)
-	if name == "" {
-		name = random.String(16)
+	if p.Name == "" {
+		p.Name = random.String(16)
 	}
-	p.Name = strings.ToLower(name)
-	p.Description = strings.TrimSpace(p.Description)
 
 	return nil
 }
 
 // BeforeUpdate is a GORM hook called when a model is updated
 func (p *Project) BeforeUpdate() error {
-	name := strings.Replace(p.Name, " ", "", -1)
-	if name == "" {
+	if p.Name == "" {
 		return errors.New("Project name cannot be empty")
 	}
 
+	return nil
+}
+
+// BeforeSave is a GORM hook called when a model is created
+func (p *Project) BeforeSave() error {
+	name := strings.Replace(p.Name, " ", "", -1)
 	p.Name = strings.ToLower(name)
 	p.Description = strings.TrimSpace(p.Description)
 
@@ -68,8 +70,7 @@ func (ps *ProjectService) Create(p *Project) error {
 // Update updates  project
 func (ps *ProjectService) Update(p *Project) error {
 	projToUpdate := &Project{}
-	err := ps.DB.First(projToUpdate, p.ID).Error
-	if err != nil {
+	if err := ps.DB.First(projToUpdate, p.ID).Error; err != nil {
 		return err
 	}
 

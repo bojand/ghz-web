@@ -15,7 +15,7 @@ const dbName = "../test/project_test.db"
 func TestProjectService_FindByID(t *testing.T) {
 	defer os.Remove(dbName)
 
-	err := test.SetupTestDatabase(dbName)
+	err := test.SetupTestProjectDatabase(dbName)
 	if err != nil {
 		assert.FailNow(t, err.Error())
 	}
@@ -53,7 +53,7 @@ func TestProjectService_FindByID(t *testing.T) {
 func TestProjectService_FindByName(t *testing.T) {
 	defer os.Remove(dbName)
 
-	err := test.SetupTestDatabase(dbName)
+	err := test.SetupTestProjectDatabase(dbName)
 	if err != nil {
 		assert.FailNow(t, err.Error())
 	}
@@ -91,7 +91,7 @@ func TestProjectService_FindByName(t *testing.T) {
 func TestProjectService_Create(t *testing.T) {
 	defer os.Remove(dbName)
 
-	err := test.SetupTestDatabase(dbName)
+	err := test.SetupTestProjectDatabase(dbName)
 	if err != nil {
 		assert.FailNow(t, err.Error())
 	}
@@ -207,7 +207,7 @@ func TestProjectService_Create(t *testing.T) {
 func TestProjectService_Update(t *testing.T) {
 	defer os.Remove(dbName)
 
-	err := test.SetupTestDatabase(dbName)
+	err := test.SetupTestProjectDatabase(dbName)
 	if err != nil {
 		assert.FailNow(t, err.Error())
 	}

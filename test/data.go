@@ -5,8 +5,8 @@ import (
 	"os"
 )
 
-// SetupTestDatabase creates the test
-func SetupTestDatabase(dbName string) error {
+// SetupTestProjectDatabase creates the test
+func SetupTestProjectDatabase(dbName string) error {
 	os.Remove(dbName)
 
 	db, err := sql.Open("sqlite3", dbName)

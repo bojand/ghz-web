@@ -2,11 +2,13 @@ package model
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
 
 	"github.com/jinzhu/gorm"
+	"github.com/labstack/gommon/random"
 )
 
 // Threshold represends a threshold limit we may care about
@@ -74,7 +76,7 @@ const (
 // ThresholdSetting setting
 type ThresholdSetting struct {
 	Status    TestStatus    `json:"status" validate:"oneof=ok fail"`
-	Threshold time.Duration `json:"threshold" validate:"oneof=mean median 95th 99th"`
+	Threshold time.Duration `json:"threshold"`
 }
 
 // UnmarshalJSON prases a ThresholdSetting value from JSON string
@@ -102,7 +104,7 @@ var constants = [4]Threshold{ThresholdMean, ThresholdMedian, Threshold95th, Thre
 type Test struct {
 	gorm.Model
 	ProjectID      uint                            `json:"projectID"`
-	Project        Project                         `json:"-"`
+	Project        *Project                        `json:"-"`
 	Name           string                          `json:"name" gorm:"unique_index" validate:"required"`
 	Description    string                          `json:"description"`
 	Status         TestStatus                      `json:"status" validate:"oneof=ok fail"`
@@ -111,8 +113,30 @@ type Test struct {
 	ThresholdsJSON string                          `json:"-" gorm:"column:thresholds"`
 }
 
+// BeforeCreate is a GORM hook called when a model is created
+func (t *Test) BeforeCreate() error {
+	if t.Name == "" {
+		t.Name = random.String(16)
+	}
+
+	return nil
+}
+
+// BeforeUpdate is a GORM hook called when a model is updated
+func (t *Test) BeforeUpdate() error {
+	if t.Name == "" {
+		return errors.New("Test name cannot be empty")
+	}
+
+	return nil
+}
+
 // BeforeSave is called by GORM before save
 func (t *Test) BeforeSave() error {
+	if t.ProjectID == 0 && t.Project == nil {
+		return errors.New("Test must belong to a project")
+	}
+
 	tholds := []byte("")
 	if t.Thresholds != nil && len(t.Thresholds) > 0 {
 		var err error
@@ -123,6 +147,11 @@ func (t *Test) BeforeSave() error {
 	}
 
 	t.ThresholdsJSON = string(tholds)
+
+	name := strings.Replace(t.Name, " ", "", -1)
+	t.Name = strings.ToLower(name)
+	t.Description = strings.TrimSpace(t.Description)
+
 	return nil
 }
 
@@ -167,4 +196,49 @@ func (t *Test) SetStatus(tMean, tMedian, t95, t99 time.Duration, hasError bool) 
 	if t.FailOnError && hasError {
 		t.Status = StatusFail
 	}
+}
+
+// TestService is our implementation
+type TestService struct {
+	DB *gorm.DB
+}
+
+// FindByID finds project by id
+func (ts *TestService) FindByID(id uint) (*Test, error) {
+	t := new(Test)
+	err := ts.DB.First(t, id).Error
+	return t, err
+}
+
+// FindByName finds project by name
+func (ts *TestService) FindByName(name string) (*Test, error) {
+	name = strings.ToLower(name)
+	t := new(Test)
+	err := ts.DB.First(t, "name = ?", name).Error
+	return t, err
+}
+
+// Create creates a new project
+func (ts *TestService) Create(t *Test) error {
+	return ts.DB.Create(t).Error
+}
+
+// Update updates  project
+func (ts *TestService) Update(t *Test) error {
+	testToUpdate := &Test{}
+	if err := ts.DB.First(testToUpdate, t.ID).Error; err != nil {
+		return err
+	}
+
+	name := strings.Replace(t.Name, " ", "", -1)
+	if name == "" {
+		t.Name = testToUpdate.Name
+	}
+
+	return ts.DB.Model(t).Updates(t).Error
+}
+
+// Delete deletes project
+func (ts *TestService) Delete(t *Test) error {
+	return errors.New("Not Implemented Yet")
 }
