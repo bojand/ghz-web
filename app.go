@@ -147,8 +147,7 @@ func (app *Application) testStuff() {
 		app.Logger.Infof("Saved: %+v", t2.ID)
 	}
 
-	tests := []model.Test{}
-	err = app.DB.Model(project).Related(&tests).Error
+	tests, err := tdao.FindByProjectID(project.ID, -1, -1)
 
 	if err != nil {
 		app.Logger.Errorf("Error: %+v\n", err.Error())

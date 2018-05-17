@@ -218,6 +218,23 @@ func (ts *TestService) FindByName(name string) (*Test, error) {
 	return t, err
 }
 
+// FindByProjectID finds tests by project
+func (ts *TestService) FindByProjectID(pid uint, num, page int) ([]*Test, error) {
+	p := &Project{}
+	p.ID = pid
+
+	s := make([]*Test, 0)
+
+	offset := -1
+	if page >= 0 && num >= 0 {
+		offset = page * num
+	}
+
+	err := ts.DB.Offset(offset).Limit(num).Order("name desc").Model(p).Related(&s).Error
+
+	return s, err
+}
+
 // Create creates a new project
 func (ts *TestService) Create(t *Test) error {
 	return ts.DB.Create(t).Error

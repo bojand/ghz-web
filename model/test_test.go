@@ -194,8 +194,8 @@ func TestTestService_Create(t *testing.T) {
 	db.AutoMigrate(&Project{}, &Test{})
 
 	dao := TestService{DB: db}
-	// var tid uint
-	// var pid uint
+	var tid uint
+	var pid uint
 
 	t.Run("fail new without project", func(t *testing.T) {
 		o := Test{
@@ -205,5 +205,43 @@ func TestTestService_Create(t *testing.T) {
 		err := dao.Create(&o)
 
 		assert.Error(t, err)
+	})
+
+	t.Run("new test and  project", func(t *testing.T) {
+		p := &Project{}
+		o := Test{
+			Project:     p,
+			Name:        "Test 111 ",
+			Description: "Test Description Asdf ",
+		}
+		err := dao.Create(&o)
+
+		assert.NoError(t, err)
+		assert.NotZero(t, p.ID)
+		assert.NotEmpty(t, p.Name)
+		assert.Equal(t, "", p.Description)
+		assert.NotNil(t, p.CreatedAt)
+		assert.NotNil(t, p.UpdatedAt)
+		assert.Nil(t, p.DeletedAt)
+
+		assert.NotZero(t, o.ID)
+		assert.Equal(t, "test111", o.Name)
+		assert.Equal(t, "Test Description Asdf", o.Description)
+		assert.NotNil(t, o.CreatedAt)
+		assert.NotNil(t, o.UpdatedAt)
+		assert.Nil(t, o.DeletedAt)
+
+		tid = o.ID
+		pid = p.ID
+
+		cp := &Project{}
+		err = db.First(cp, pid).Error
+		assert.NoError(t, err)
+		assert.Equal(t, p.Name, cp.Name)
+
+		ct := &Test{}
+		err = db.First(ct, tid).Error
+		assert.NoError(t, err)
+		assert.Equal(t, o.Name, ct.Name)
 	})
 }
