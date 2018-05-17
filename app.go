@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -50,7 +51,7 @@ func (app *Application) testStuff() {
 
 	pdao := &dao.ProjectService{DB: app.DB}
 
-	project := &model.Project{Name: "Testproject2"}
+	project := &model.Project{Name: "Testproject1"}
 
 	app.Logger.Infof("Project: %+v\n", project)
 
@@ -62,7 +63,8 @@ func (app *Application) testStuff() {
 	}
 
 	t1 := &model.Test{
-		Name: "test2",
+		Project: *project,
+		Name:    "test1",
 		Thresholds: map[model.Threshold]*model.ThresholdSetting{
 			model.ThresholdMedian: &model.ThresholdSetting{Threshold: 2 * time.Millisecond, Status: model.StatusFail},
 		},
@@ -76,15 +78,152 @@ func (app *Application) testStuff() {
 		app.Logger.Infof("Saved: %+v", t1.ID)
 	}
 
-	t2 := &model.Test{}
-	err = app.DB.First(t2, "name = ?", "test3").Error
+	t2 := &model.Test{
+		Project: *project,
+		Name:    "test2",
+		Thresholds: map[model.Threshold]*model.ThresholdSetting{
+			model.ThresholdMedian: &model.ThresholdSetting{Threshold: 2 * time.Millisecond, Status: model.StatusFail},
+		},
+		Description: "test descroption 2",
+	}
+
+	err = app.DB.Create(t2).Error
 	if err != nil {
 		app.Logger.Errorf("Error: %+v\n", err.Error())
 	} else {
-		str, _ := json.Marshal(t2)
-		app.Logger.Infof("Found: %+v\n", t2)
-		app.Logger.Infof("JSON: %+v\n", string(str))
+		app.Logger.Infof("Saved: %+v", t2.ID)
 	}
+
+	t3 := &model.Test{
+		Project: *project,
+		Name:    "test3",
+		Thresholds: map[model.Threshold]*model.ThresholdSetting{
+			model.ThresholdMedian: &model.ThresholdSetting{Threshold: 2 * time.Millisecond, Status: model.StatusFail},
+			model.Threshold95th:   &model.ThresholdSetting{Threshold: 3 * time.Millisecond, Status: model.StatusOK},
+		},
+		Description: "test descroption 3",
+	}
+
+	err = app.DB.Create(t3).Error
+	if err != nil {
+		app.Logger.Errorf("Error: %+v\n", err.Error())
+	} else {
+		app.Logger.Infof("Saved: %+v", t3.ID)
+	}
+
+	t5 := &model.Test{
+		ProjectID: project.ID,
+		Name:      "test4",
+		Thresholds: map[model.Threshold]*model.ThresholdSetting{
+			model.ThresholdMedian: &model.ThresholdSetting{Threshold: 2 * time.Millisecond, Status: model.StatusFail},
+			model.ThresholdMean:   &model.ThresholdSetting{Threshold: 1 * time.Millisecond, Status: model.StatusOK},
+		},
+		Description: "test descroption 4",
+	}
+
+	err = app.DB.Create(t5).Error
+	if err != nil {
+		app.Logger.Errorf("Error: %+v\n", err.Error())
+	} else {
+		app.Logger.Infof("Saved: %+v", t5.ID)
+	}
+
+	t6 := &model.Test{
+		ProjectID: project.ID,
+		Name:      "test5",
+		Thresholds: map[model.Threshold]*model.ThresholdSetting{
+			model.ThresholdMedian: &model.ThresholdSetting{Threshold: 2 * time.Millisecond, Status: model.StatusFail},
+			model.ThresholdMean:   &model.ThresholdSetting{Threshold: 1 * time.Millisecond, Status: model.StatusOK},
+			model.Threshold95th:   &model.ThresholdSetting{Threshold: 3 * time.Millisecond, Status: model.StatusOK},
+		},
+		Description: "test descroption 5",
+	}
+
+	err = app.DB.Create(t6).Error
+	if err != nil {
+		app.Logger.Errorf("Error: %+v\n", err.Error())
+	} else {
+		app.Logger.Infof("Saved: %+v", t6.ID)
+	}
+
+	t7 := &model.Test{
+		ProjectID: project.ID,
+		Name:      "test6",
+		Thresholds: map[model.Threshold]*model.ThresholdSetting{
+			model.ThresholdMedian: &model.ThresholdSetting{Threshold: 3 * time.Millisecond, Status: model.StatusOK},
+			model.ThresholdMean:   &model.ThresholdSetting{Threshold: 4 * time.Millisecond, Status: model.StatusOK},
+			model.Threshold95th:   &model.ThresholdSetting{Threshold: 5 * time.Millisecond, Status: model.StatusOK},
+		},
+		Description: "test descroption 6",
+	}
+
+	err = app.DB.Create(t7).Error
+	if err != nil {
+		app.Logger.Errorf("Error: %+v\n", err.Error())
+	} else {
+		app.Logger.Infof("Saved: %+v", t7.ID)
+	}
+
+	t7 = &model.Test{
+		ProjectID:   project.ID,
+		Name:        "test7",
+		Description: "test descroption 7",
+	}
+
+	err = app.DB.Create(t7).Error
+	if err != nil {
+		app.Logger.Errorf("Error: %+v\n", err.Error())
+	} else {
+		app.Logger.Infof("Saved: %+v", t7.ID)
+	}
+
+	t8 := &model.Test{
+		ProjectID:   project.ID + 100,
+		Name:        "test8",
+		Description: "test descroption 8",
+	}
+
+	err = app.DB.Create(t8).Error
+	if err != nil {
+		app.Logger.Errorf("Error: %+v\n", err.Error())
+	} else {
+		app.Logger.Infof("Saved: %+v", t8.ID)
+	}
+
+	// =====
+
+	t4 := &model.Test{}
+	err = app.DB.First(t4, "name = ?", "test2").Error
+	if err != nil {
+		app.Logger.Errorf("Error: %+v\n", err.Error())
+	} else {
+		str, _ := json.Marshal(t4)
+		fmt.Printf("Found: %+v\n\n", t4)
+		fmt.Printf("JSON: %s\n", string(str))
+	}
+
+	tests := []model.Test{}
+	err = app.DB.Limit(3).Order("name desc").Model(project).Related(&tests).Error
+
+	if err != nil {
+		app.Logger.Errorf("Error: %+v\n", err.Error())
+	} else {
+		str, _ := json.Marshal(tests)
+		fmt.Printf("Found: %+v\n\n", tests)
+		fmt.Printf("JSON: %s\n", string(str))
+	}
+
+	tests = []model.Test{}
+	err = app.DB.Model(project).Related(&tests).Error
+
+	if err != nil {
+		app.Logger.Errorf("Error: %+v\n", err.Error())
+	} else {
+		str, _ := json.Marshal(tests)
+		fmt.Printf("Found: %+v\n\n", tests)
+		fmt.Printf("JSON: %s\n\n====\n\n", string(str))
+	}
+
 }
 
 func (app *Application) setupLogger() {

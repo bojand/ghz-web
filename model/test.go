@@ -152,6 +152,8 @@ var constants = [4]Threshold{ThresholdMean, ThresholdMedian, Threshold95th, Thre
 // Test represents a test
 type Test struct {
 	gorm.Model
+	ProjectID      uint                            `json:"projectID"`
+	Project        Project                         `json:"-"`
 	Name           string                          `json:"name" gorm:"unique_index"`
 	Description    string                          `json:"description"`
 	Status         TestStatus                      `json:"status"`
