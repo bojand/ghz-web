@@ -332,6 +332,7 @@ func TestTestService_Create(t *testing.T) {
 		assert.Nil(t, p.DeletedAt)
 
 		assert.NotZero(t, o.ID)
+		assert.Equal(t, p.ID, o.ProjectID)
 		assert.Equal(t, "test111", o.Name)
 		assert.Equal(t, "Test Description Asdf", o.Description)
 		assert.NotNil(t, o.CreatedAt)
@@ -350,7 +351,15 @@ func TestTestService_Create(t *testing.T) {
 		ct := &Test{}
 		err = db.First(ct, tid).Error
 		assert.NoError(t, err)
+		assert.Equal(t, o.ProjectID, ct.ProjectID)
 		assert.Equal(t, o.Name, ct.Name)
+		assert.Equal(t, o.Description, ct.Description)
+		assert.Equal(t, o.Status, ct.Status)
+		assert.Equal(t, o.Thresholds, ct.Thresholds)
+		assert.Empty(t, ct.ThresholdsJSON)
+		assert.Equal(t, o.ThresholdsJSON, ct.ThresholdsJSON)
+		assert.True(t, o.CreatedAt.Equal(ct.CreatedAt))
+		assert.True(t, o.UpdatedAt.Equal(ct.CreatedAt))
 	})
 
 	t.Run("new test existing project", func(t *testing.T) {
@@ -364,6 +373,7 @@ func TestTestService_Create(t *testing.T) {
 		assert.NoError(t, err)
 
 		assert.NotZero(t, o.ID)
+		assert.Equal(t, pid, o.ProjectID)
 		assert.Equal(t, "test112", o.Name)
 		assert.Equal(t, "Test Description 2", o.Description)
 		assert.NotNil(t, o.CreatedAt)
@@ -378,7 +388,15 @@ func TestTestService_Create(t *testing.T) {
 		ct := &Test{}
 		err = db.First(ct, o.ID).Error
 		assert.NoError(t, err)
+		assert.Equal(t, o.ProjectID, ct.ProjectID)
 		assert.Equal(t, o.Name, ct.Name)
+		assert.Equal(t, o.Description, ct.Description)
+		assert.Equal(t, o.Status, ct.Status)
+		assert.Equal(t, o.Thresholds, ct.Thresholds)
+		assert.Empty(t, ct.ThresholdsJSON)
+		assert.Equal(t, o.ThresholdsJSON, ct.ThresholdsJSON)
+		assert.True(t, o.CreatedAt.Equal(ct.CreatedAt))
+		assert.True(t, o.UpdatedAt.Equal(ct.CreatedAt))
 	})
 
 	t.Run("new test existing project ID", func(t *testing.T) {
@@ -392,6 +410,7 @@ func TestTestService_Create(t *testing.T) {
 
 		assert.NoError(t, err)
 		assert.NotZero(t, o.ID)
+		assert.Equal(t, pid, o.ProjectID)
 		assert.Equal(t, "test113", o.Name)
 		assert.Equal(t, "Test Description 3", o.Description)
 		assert.NotNil(t, o.CreatedAt)
@@ -406,7 +425,15 @@ func TestTestService_Create(t *testing.T) {
 		ct := &Test{}
 		err = db.First(ct, o.ID).Error
 		assert.NoError(t, err)
+		assert.Equal(t, o.ProjectID, ct.ProjectID)
 		assert.Equal(t, o.Name, ct.Name)
+		assert.Equal(t, o.Description, ct.Description)
+		assert.Equal(t, o.Status, ct.Status)
+		assert.Equal(t, o.Thresholds, ct.Thresholds)
+		assert.Empty(t, ct.ThresholdsJSON)
+		assert.Equal(t, o.ThresholdsJSON, ct.ThresholdsJSON)
+		assert.True(t, o.CreatedAt.Equal(ct.CreatedAt))
+		assert.True(t, o.UpdatedAt.Equal(ct.CreatedAt))
 	})
 
 	t.Run("fail new test non existing project ID", func(t *testing.T) {
@@ -447,6 +474,7 @@ func TestTestService_Create(t *testing.T) {
 
 		assert.NoError(t, err)
 		assert.NotZero(t, o.ID)
+		assert.Equal(t, pid, o.ProjectID)
 		assert.NotEmpty(t, o.Name)
 		assert.Equal(t, "Test Description 4", o.Description)
 		assert.NotNil(t, o.CreatedAt)
@@ -461,6 +489,120 @@ func TestTestService_Create(t *testing.T) {
 		ct := &Test{}
 		err = db.First(ct, o.ID).Error
 		assert.NoError(t, err)
+		assert.Equal(t, o.ProjectID, ct.ProjectID)
 		assert.Equal(t, o.Name, ct.Name)
+		assert.Equal(t, o.Description, ct.Description)
+		assert.Equal(t, o.Status, ct.Status)
+		assert.Equal(t, o.Thresholds, ct.Thresholds)
+		assert.Empty(t, ct.ThresholdsJSON)
+		assert.Equal(t, o.ThresholdsJSON, ct.ThresholdsJSON)
+		assert.True(t, o.CreatedAt.Equal(ct.CreatedAt))
+		assert.True(t, o.UpdatedAt.Equal(ct.CreatedAt))
+	})
+}
+
+func TestTestService_Update(t *testing.T) {
+	defer os.Remove(dbName)
+
+	db, err := gorm.Open("sqlite3", dbName)
+	if err != nil {
+		assert.FailNow(t, err.Error())
+	}
+	defer db.Close()
+
+	db.AutoMigrate(&Project{}, &Test{})
+	db.Exec("PRAGMA foreign_keys = ON;")
+
+	dao := TestService{DB: db}
+	var tid uint
+	var pid uint
+
+	t.Run("create new test and project", func(t *testing.T) {
+		p := &Project{}
+		o := Test{
+			Project:     p,
+			Name:        "Test 111 ",
+			Description: "Test Description Asdf ",
+		}
+		err := dao.Create(&o)
+
+		assert.NoError(t, err)
+		assert.NotZero(t, p.ID)
+		assert.NotEmpty(t, p.Name)
+		assert.Equal(t, "", p.Description)
+		assert.NotNil(t, p.CreatedAt)
+		assert.NotNil(t, p.UpdatedAt)
+		assert.Nil(t, p.DeletedAt)
+
+		assert.NotZero(t, o.ID)
+		assert.Equal(t, p.ID, o.ProjectID)
+		assert.Equal(t, "test111", o.Name)
+		assert.Equal(t, "Test Description Asdf", o.Description)
+		assert.NotNil(t, o.CreatedAt)
+		assert.NotNil(t, o.UpdatedAt)
+		assert.Nil(t, o.DeletedAt)
+
+		tid = o.ID
+		pid = p.ID
+
+		cp := &Project{}
+		err = db.First(cp, pid).Error
+		assert.NoError(t, err)
+		assert.Equal(t, p.Name, cp.Name)
+
+		ct := &Test{}
+		err = db.First(ct, tid).Error
+		assert.NoError(t, err)
+		assert.Equal(t, o.ProjectID, ct.ProjectID)
+		assert.Equal(t, o.Name, ct.Name)
+		assert.Equal(t, o.Description, ct.Description)
+		assert.Equal(t, o.Status, ct.Status)
+		assert.Equal(t, o.Thresholds, ct.Thresholds)
+		assert.Empty(t, ct.ThresholdsJSON)
+		assert.Equal(t, o.ThresholdsJSON, ct.ThresholdsJSON)
+		assert.True(t, o.CreatedAt.Equal(ct.CreatedAt))
+		assert.True(t, o.UpdatedAt.Equal(ct.CreatedAt))
+	})
+
+	t.Run("update", func(t *testing.T) {
+		o := Test{
+			ProjectID:   pid,
+			Name:        "Test 222 ",
+			Description: "Test Description 2 ",
+			Status:      StatusFail,
+			Thresholds: map[Threshold]*ThresholdSetting{
+				Threshold95th:   &ThresholdSetting{Threshold: milli4, Status: StatusOK},
+				Threshold99th:   &ThresholdSetting{Threshold: milli5, Status: StatusFail},
+				ThresholdMedian: &ThresholdSetting{Threshold: milli3, Status: StatusOK},
+				ThresholdMean:   &ThresholdSetting{Threshold: milli2, Status: StatusOK},
+			},
+		}
+		o.ID = tid
+
+		err := dao.Update(&o)
+
+		assert.NoError(t, err)
+		assert.Equal(t, tid, o.ID)
+		assert.Equal(t, pid, o.ProjectID)
+		assert.Equal(t, "test222", o.Name)
+		assert.Equal(t, "Test Description 2", o.Description)
+		assert.NotNil(t, o.CreatedAt)
+		assert.NotNil(t, o.UpdatedAt)
+		assert.Nil(t, o.DeletedAt)
+
+		tid = o.ID
+
+		ct := &Test{}
+		err = db.First(ct, tid).Error
+		assert.NoError(t, err)
+		assert.Equal(t, o.ProjectID, ct.ProjectID)
+		assert.Equal(t, o.Name, ct.Name)
+		assert.Equal(t, o.Description, ct.Description)
+		assert.Equal(t, o.Status, ct.Status)
+		assert.Equal(t, o.Thresholds, ct.Thresholds)
+		assert.Empty(t, ct.ThresholdsJSON)
+		assert.Equal(t, o.ThresholdsJSON, ct.ThresholdsJSON)
+		assert.True(t, o.CreatedAt.Equal(ct.CreatedAt))
+		assert.True(t, o.UpdatedAt.Equal(ct.CreatedAt))
 	})
 }

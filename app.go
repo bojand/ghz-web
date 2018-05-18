@@ -1,8 +1,6 @@
 package main
 
 import (
-	"encoding/json"
-	"fmt"
 	"net/http"
 	"time"
 
@@ -112,13 +110,57 @@ func (app *Application) setupServer() {
 // =====
 //
 
+const (
+	milli1 = 1 * time.Millisecond
+	milli2 = 2 * time.Millisecond
+	milli3 = 3 * time.Millisecond
+	milli4 = 4 * time.Millisecond
+	milli5 = 5 * time.Millisecond
+)
+
 func (app *Application) testStuff() {
 	// TEST STUFF
 
 	project := &model.Project{Name: "Testproject1"}
 
 	tdao := &model.TestService{DB: app.DB}
+
 	t1 := &model.Test{
+		Project:     project,
+		Name:        " Test 1 ",
+		Description: " test descroption 1 ",
+	}
+
+	err := tdao.Create(t1)
+	if err != nil {
+		app.Logger.Errorf("Error: %+v\n", err.Error())
+	} else {
+		app.Logger.Infof("Saved: %+v", t1.ID)
+	}
+
+	o := &model.Test{
+		ProjectID:   project.ID,
+		Name:        " Test 222 ",
+		Description: " Test Description 2 ",
+	}
+	o.ID = t1.ID
+
+	// Status:      model.StatusFail,
+	// 	Thresholds: map[model.Threshold]*model.ThresholdSetting{
+	// 		model.Threshold95th:   &model.ThresholdSetting{Threshold: milli4, Status: model.StatusOK},
+	// 		model.Threshold99th:   &model.ThresholdSetting{Threshold: milli5, Status: model.StatusFail},
+	// 		model.ThresholdMedian: &model.ThresholdSetting{Threshold: milli3, Status: model.StatusOK},
+	// 		model.ThresholdMean:   &model.ThresholdSetting{Threshold: milli2, Status: model.StatusOK},
+	// 	},
+
+	err = tdao.Update(o)
+	if err != nil {
+		app.Logger.Errorf("Error: %+v\n", err.Error())
+	} else {
+		app.Logger.Infof("Saved: %+v", o.ID)
+	}
+
+	/*t1 := &model.Test{
 		Project: project,
 		Name:    "test1",
 		Thresholds: map[model.Threshold]*model.ThresholdSetting{
@@ -175,7 +217,7 @@ func (app *Application) testStuff() {
 		str, _ := json.Marshal(tests)
 		fmt.Printf("Found: %+v\n\n", tests)
 		fmt.Printf("JSON: %s\n\n====\n\n", string(str))
-	}
+	}*/
 
 	/*pdao := &model.ProjectService{DB: app.DB}
 

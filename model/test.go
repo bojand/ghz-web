@@ -155,6 +155,12 @@ func (t *Test) BeforeSave() error {
 	return nil
 }
 
+// AfterSave is called by GORM after model is saved during create or update
+func (t *Test) AfterSave() error {
+	t.ThresholdsJSON = ""
+	return nil
+}
+
 // AfterFind is called by GORM after a query
 func (t *Test) AfterFind() error {
 	tholds := strings.TrimSpace(t.ThresholdsJSON)
