@@ -11,7 +11,7 @@ import (
 // Project represents a project
 type Project struct {
 	gorm.Model
-	Name        string `json:"name" gorm:"unique_index"`
+	Name        string `json:"name" gorm:"unique_index;not null"`
 	Description string `json:"description"`
 }
 

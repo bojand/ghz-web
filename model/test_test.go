@@ -192,10 +192,12 @@ func TestTestService_Create(t *testing.T) {
 	defer db.Close()
 
 	db.AutoMigrate(&Project{}, &Test{})
+	db.Exec("PRAGMA foreign_keys = ON;")
 
 	dao := TestService{DB: db}
 	var tid uint
 	var pid uint
+	var proj *Project
 
 	t.Run("fail new without project", func(t *testing.T) {
 		o := Test{
@@ -207,7 +209,7 @@ func TestTestService_Create(t *testing.T) {
 		assert.Error(t, err)
 	})
 
-	t.Run("new test and  project", func(t *testing.T) {
+	t.Run("new test and project", func(t *testing.T) {
 		p := &Project{}
 		o := Test{
 			Project:     p,
@@ -233,6 +235,7 @@ func TestTestService_Create(t *testing.T) {
 
 		tid = o.ID
 		pid = p.ID
+		proj = p
 
 		cp := &Project{}
 		err = db.First(cp, pid).Error
@@ -243,5 +246,89 @@ func TestTestService_Create(t *testing.T) {
 		err = db.First(ct, tid).Error
 		assert.NoError(t, err)
 		assert.Equal(t, o.Name, ct.Name)
+	})
+
+	t.Run("new test existing project", func(t *testing.T) {
+		o := Test{
+			Project:     proj,
+			Name:        "Test 112 ",
+			Description: "Test Description 2 ",
+		}
+		err := dao.Create(&o)
+
+		assert.NoError(t, err)
+
+		assert.NotZero(t, o.ID)
+		assert.Equal(t, "test112", o.Name)
+		assert.Equal(t, "Test Description 2", o.Description)
+		assert.NotNil(t, o.CreatedAt)
+		assert.NotNil(t, o.UpdatedAt)
+		assert.Nil(t, o.DeletedAt)
+
+		cp := &Project{}
+		err = db.First(cp, pid).Error
+		assert.NoError(t, err)
+		assert.Equal(t, proj.Name, cp.Name)
+
+		ct := &Test{}
+		err = db.First(ct, o.ID).Error
+		assert.NoError(t, err)
+		assert.Equal(t, o.Name, ct.Name)
+	})
+
+	t.Run("new test existing project ID", func(t *testing.T) {
+		o := Test{
+			Name:        "Test 113 ",
+			Description: "Test Description 3 ",
+		}
+		o.ProjectID = pid
+
+		err := dao.Create(&o)
+
+		assert.NoError(t, err)
+		assert.NotZero(t, o.ID)
+		assert.Equal(t, "test113", o.Name)
+		assert.Equal(t, "Test Description 3", o.Description)
+		assert.NotNil(t, o.CreatedAt)
+		assert.NotNil(t, o.UpdatedAt)
+		assert.Nil(t, o.DeletedAt)
+
+		cp := &Project{}
+		err = db.First(cp, pid).Error
+		assert.NoError(t, err)
+		assert.Equal(t, proj.Name, cp.Name)
+
+		ct := &Test{}
+		err = db.First(ct, o.ID).Error
+		assert.NoError(t, err)
+		assert.Equal(t, o.Name, ct.Name)
+	})
+
+	t.Run("fail new test non existing project ID", func(t *testing.T) {
+		o := Test{
+			Name:        "Test 114 ",
+			Description: "Test Description 4 ",
+		}
+		o.ProjectID = 4321
+
+		err := dao.Create(&o)
+
+		assert.Error(t, err)
+
+		cp := &Project{}
+		err = db.First(cp, 4321).Error
+		assert.Error(t, err)
+	})
+
+	t.Run("fail new test with same name", func(t *testing.T) {
+		o := Test{
+			Project:     proj,
+			Name:        "Test 112 ",
+			Description: "Test Description 4 ",
+		}
+
+		err := dao.Create(&o)
+
+		assert.Error(t, err)
 	})
 }

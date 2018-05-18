@@ -80,7 +80,10 @@ func (app *Application) setupDatabase() error {
 	// Migrate the schema
 	db.AutoMigrate(&model.Project{}, model.Test{})
 
-	// db.SetLogger(gorm.Logger{e.Logger})
+	if dbType == "sqlite3" {
+		// for sqlite we need this for foreign key constraint
+		db.Exec("PRAGMA foreign_keys = ON;")
+	}
 
 	app.DB = db
 
@@ -145,6 +148,23 @@ func (app *Application) testStuff() {
 		app.Logger.Errorf("Error: %+v\n", err.Error())
 	} else {
 		app.Logger.Infof("Saved: %+v", t2.ID)
+	}
+
+	t3 := &model.Test{
+		Name: "test 3",
+		Thresholds: map[model.Threshold]*model.ThresholdSetting{
+			model.ThresholdMean: &model.ThresholdSetting{Threshold: 1 * time.Millisecond, Status: model.StatusOK},
+		},
+		Description: "test descroption 3",
+	}
+
+	t3.ProjectID = 321
+
+	err = tdao.Create(t3)
+	if err != nil {
+		app.Logger.Errorf("Error: %+v\n", err.Error())
+	} else {
+		app.Logger.Infof("Saved: %+v", t3.ID)
 	}
 
 	tests, err := tdao.FindByProjectID(project.ID, -1, -1)

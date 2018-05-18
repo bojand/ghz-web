@@ -103,9 +103,9 @@ var constants = [4]Threshold{ThresholdMean, ThresholdMedian, Threshold95th, Thre
 // Test represents a test
 type Test struct {
 	gorm.Model
-	ProjectID      uint                            `json:"projectID"`
+	ProjectID      uint                            `json:"projectID" gorm:"type:integer REFERENCES projects(id)"`
 	Project        *Project                        `json:"-"`
-	Name           string                          `json:"name" gorm:"unique_index" validate:"required"`
+	Name           string                          `json:"name" gorm:"unique_index;not null" validate:"required"`
 	Description    string                          `json:"description"`
 	Status         TestStatus                      `json:"status" validate:"oneof=ok fail"`
 	Thresholds     map[Threshold]*ThresholdSetting `json:"thresholds,omitempty" gorm:"-"`
@@ -127,6 +127,16 @@ func (t *Test) BeforeUpdate() error {
 	if t.Name == "" {
 		return errors.New("Test name cannot be empty")
 	}
+
+	// pid := t.ProjectID
+	// if t.Project != nil {
+	// 	pid = t.Project.ID
+	// }
+
+	// p := new(Project)
+	// if err := t.DB.First(p, pid).Error; gorm.IsRecordNotFoundError(err) {
+	// 	return fmt.Errorf("Parent project with ID %s does not exist", pid)
+	// }
 
 	return nil
 }
