@@ -128,16 +128,6 @@ func (t *Test) BeforeUpdate() error {
 		return errors.New("Test name cannot be empty")
 	}
 
-	// pid := t.ProjectID
-	// if t.Project != nil {
-	// 	pid = t.Project.ID
-	// }
-
-	// p := new(Project)
-	// if err := t.DB.First(p, pid).Error; gorm.IsRecordNotFoundError(err) {
-	// 	return fmt.Errorf("Parent project with ID %s does not exist", pid)
-	// }
-
 	return nil
 }
 

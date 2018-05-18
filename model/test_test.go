@@ -182,6 +182,111 @@ func TestThresholdSetting_UnmarshalJSON(t *testing.T) {
 	}
 }
 
+func TestTestModel_BeforeUpdate(t *testing.T) {
+	var tests = []struct {
+		name        string
+		in          *Test
+		expected    *Test
+		expectError bool
+	}{
+		{"no name", &Test{}, &Test{}, true},
+		{"with name", &Test{Name: " Test 2 "}, &Test{Name: " Test 2 "}, false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.in.BeforeUpdate()
+			if tt.expectError {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
+
+			assert.Equal(t, tt.expected, tt.in)
+		})
+	}
+}
+
+func TestTestModel_AfterFind(t *testing.T) {
+	var tests = []struct {
+		name        string
+		in          *Test
+		expected    *Test
+		expectError bool
+	}{
+		{"empty", &Test{}, &Test{}, false},
+		{"thresholds",
+			&Test{ProjectID: 1, Name: "test4", Description: "Test Description", Status: StatusFail,
+				ThresholdsJSON: `{"95th":{"status":"ok","threshold":4000000},"99th":{"status":"fail","threshold":5000000},"mean":{"status":"ok","threshold":2000000},"median":{"status":"ok","threshold":3000000}}`},
+			&Test{ProjectID: 1, Name: "test4", Description: "Test Description", Status: StatusFail,
+				Thresholds: map[Threshold]*ThresholdSetting{
+					Threshold95th:   &ThresholdSetting{Threshold: milli4, Status: StatusOK},
+					Threshold99th:   &ThresholdSetting{Threshold: milli5, Status: StatusFail},
+					ThresholdMedian: &ThresholdSetting{Threshold: milli3, Status: StatusOK},
+					ThresholdMean:   &ThresholdSetting{Threshold: milli2, Status: StatusOK},
+				}},
+			false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.in.AfterFind()
+			if tt.expectError {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
+
+			assert.Equal(t, tt.expected, tt.in)
+		})
+	}
+}
+
+func TestTestModel_BeforeSave(t *testing.T) {
+	var tests = []struct {
+		name        string
+		in          *Test
+		expected    *Test
+		expectError bool
+	}{
+		{"no thresholds no project", &Test{Name: "test1"}, &Test{Name: "test1"}, true},
+		{"no thresholds project id 0", &Test{ProjectID: 0, Name: "test2"}, &Test{Name: "test2"}, true},
+		{"no thresholds project id",
+			&Test{ProjectID: 1, Name: "Test3", Description: " Description for test "},
+			&Test{ProjectID: 1, Name: "test3", Description: "Description for test"}, false},
+		{"thresholds",
+			&Test{ProjectID: 1, Name: " Test 4 ", Description: " Test Description ", Status: StatusFail,
+				Thresholds: map[Threshold]*ThresholdSetting{
+					Threshold95th:   &ThresholdSetting{Threshold: milli4, Status: StatusOK},
+					Threshold99th:   &ThresholdSetting{Threshold: milli5, Status: StatusFail},
+					ThresholdMedian: &ThresholdSetting{Threshold: milli3, Status: StatusOK},
+					ThresholdMean:   &ThresholdSetting{Threshold: milli2, Status: StatusOK},
+				}},
+			&Test{ProjectID: 1, Name: "test4", Description: "Test Description", Status: StatusFail,
+				Thresholds: map[Threshold]*ThresholdSetting{
+					Threshold95th:   &ThresholdSetting{Threshold: milli4, Status: StatusOK},
+					Threshold99th:   &ThresholdSetting{Threshold: milli5, Status: StatusFail},
+					ThresholdMedian: &ThresholdSetting{Threshold: milli3, Status: StatusOK},
+					ThresholdMean:   &ThresholdSetting{Threshold: milli2, Status: StatusOK},
+				},
+				ThresholdsJSON: `{"95th":{"status":"ok","threshold":4000000},"99th":{"status":"fail","threshold":5000000},"mean":{"status":"ok","threshold":2000000},"median":{"status":"ok","threshold":3000000}}`},
+			false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.in.BeforeSave()
+			if tt.expectError {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
+
+			assert.Equal(t, tt.expected, tt.in)
+		})
+	}
+}
+
 func TestTestService_Create(t *testing.T) {
 	defer os.Remove(dbName)
 
@@ -330,5 +435,32 @@ func TestTestService_Create(t *testing.T) {
 		err := dao.Create(&o)
 
 		assert.Error(t, err)
+	})
+
+	t.Run("new test with no name", func(t *testing.T) {
+		o := Test{
+			Project:     proj,
+			Description: "Test Description 4 ",
+		}
+
+		err := dao.Create(&o)
+
+		assert.NoError(t, err)
+		assert.NotZero(t, o.ID)
+		assert.NotEmpty(t, o.Name)
+		assert.Equal(t, "Test Description 4", o.Description)
+		assert.NotNil(t, o.CreatedAt)
+		assert.NotNil(t, o.UpdatedAt)
+		assert.Nil(t, o.DeletedAt)
+
+		cp := &Project{}
+		err = db.First(cp, pid).Error
+		assert.NoError(t, err)
+		assert.Equal(t, proj.Name, cp.Name)
+
+		ct := &Test{}
+		err = db.First(ct, o.ID).Error
+		assert.NoError(t, err)
+		assert.Equal(t, o.Name, ct.Name)
 	})
 }
