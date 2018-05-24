@@ -51,6 +51,9 @@ type ProjectService struct {
 func (ps *ProjectService) FindByID(id uint) (*Project, error) {
 	p := new(Project)
 	err := ps.DB.First(p, id).Error
+	if err != nil {
+		p = nil
+	}
 	return p, err
 }
 
@@ -59,6 +62,9 @@ func (ps *ProjectService) FindByName(name string) (*Project, error) {
 	name = strings.ToLower(name)
 	p := new(Project)
 	err := ps.DB.First(p, "name = ?", name).Error
+	if err != nil {
+		p = nil
+	}
 	return p, err
 }
 
@@ -79,7 +85,7 @@ func (ps *ProjectService) Update(p *Project) error {
 		p.Name = projToUpdate.Name
 	}
 
-	return ps.DB.Model(p).Updates(p).Error
+	return ps.DB.Save(p).Error
 }
 
 // Delete deletes project

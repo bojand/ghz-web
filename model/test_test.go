@@ -603,6 +603,203 @@ func TestTestService_Update(t *testing.T) {
 		assert.Empty(t, ct.ThresholdsJSON)
 		assert.Equal(t, o.ThresholdsJSON, ct.ThresholdsJSON)
 		assert.True(t, o.CreatedAt.Equal(ct.CreatedAt))
+		assert.True(t, o.UpdatedAt.Equal(ct.UpdatedAt))
+	})
+
+	t.Run("update with invalid pid", func(t *testing.T) {
+		o := Test{
+			ProjectID:   1234,
+			Name:        "Test 333 ",
+			Description: "Test Description 3 ",
+			Status:      StatusFail,
+			Thresholds: map[Threshold]*ThresholdSetting{
+				Threshold95th:   &ThresholdSetting{Threshold: milli4, Status: StatusOK},
+				Threshold99th:   &ThresholdSetting{Threshold: milli5, Status: StatusOK},
+				ThresholdMedian: &ThresholdSetting{Threshold: milli3, Status: StatusOK},
+				ThresholdMean:   &ThresholdSetting{Threshold: milli2, Status: StatusFail},
+			},
+		}
+		o.ID = tid
+
+		err := dao.Update(&o)
+
+		assert.Error(t, err)
+
+		ct := &Test{}
+		err = db.First(ct, tid).Error
+		assert.NoError(t, err)
+		assert.Equal(t, pid, ct.ProjectID)
+		assert.Equal(t, "test222", ct.Name)
+		assert.Equal(t, "Test Description 2", ct.Description)
+		assert.Equal(t, o.Status, ct.Status)
+		assert.Empty(t, ct.ThresholdsJSON)
+	})
+}
+
+func TestTestService_FindByID(t *testing.T) {
+	defer os.Remove(dbName)
+
+	db, err := gorm.Open("sqlite3", dbName)
+	if err != nil {
+		assert.FailNow(t, err.Error())
+	}
+	defer db.Close()
+
+	db.AutoMigrate(&Project{}, &Test{})
+	db.Exec("PRAGMA foreign_keys = ON;")
+
+	dao := TestService{DB: db}
+	var tid uint
+	var pid uint
+
+	t.Run("create new test and project", func(t *testing.T) {
+		p := &Project{}
+		o := Test{
+			Project:     p,
+			Name:        "Test 111 ",
+			Description: "Test Description Asdf ",
+		}
+		err := dao.Create(&o)
+
+		assert.NoError(t, err)
+		assert.NotZero(t, p.ID)
+		assert.NotEmpty(t, p.Name)
+		assert.Equal(t, "", p.Description)
+		assert.NotNil(t, p.CreatedAt)
+		assert.NotNil(t, p.UpdatedAt)
+		assert.Nil(t, p.DeletedAt)
+
+		assert.NotZero(t, o.ID)
+		assert.Equal(t, p.ID, o.ProjectID)
+		assert.Equal(t, "test111", o.Name)
+		assert.Equal(t, "Test Description Asdf", o.Description)
+		assert.NotNil(t, o.CreatedAt)
+		assert.NotNil(t, o.UpdatedAt)
+		assert.Nil(t, o.DeletedAt)
+
+		tid = o.ID
+		pid = p.ID
+
+		cp := &Project{}
+		err = db.First(cp, pid).Error
+		assert.NoError(t, err)
+		assert.Equal(t, p.Name, cp.Name)
+
+		ct := &Test{}
+		err = db.First(ct, tid).Error
+		assert.NoError(t, err)
+		assert.Equal(t, o.ProjectID, ct.ProjectID)
+		assert.Equal(t, o.Name, ct.Name)
+		assert.Equal(t, o.Description, ct.Description)
+		assert.Equal(t, o.Status, ct.Status)
+		assert.Equal(t, o.Thresholds, ct.Thresholds)
+		assert.Empty(t, ct.ThresholdsJSON)
+		assert.Equal(t, o.ThresholdsJSON, ct.ThresholdsJSON)
+		assert.True(t, o.CreatedAt.Equal(ct.CreatedAt))
 		assert.True(t, o.UpdatedAt.Equal(ct.CreatedAt))
+	})
+
+	t.Run("find valid", func(t *testing.T) {
+		o, err := dao.FindByID(tid)
+
+		assert.NoError(t, err)
+		assert.Equal(t, tid, o.ID)
+		assert.Equal(t, pid, o.ProjectID)
+		assert.Equal(t, "test111", o.Name)
+		assert.Equal(t, "Test Description Asdf", o.Description)
+		assert.NotNil(t, o.CreatedAt)
+		assert.NotNil(t, o.UpdatedAt)
+		assert.Nil(t, o.DeletedAt)
+	})
+
+	t.Run("find invalid", func(t *testing.T) {
+		o, err := dao.FindByID(123)
+
+		assert.Error(t, err)
+		assert.Nil(t, o)
+	})
+}
+
+func TestTestService_FindByName(t *testing.T) {
+	defer os.Remove(dbName)
+
+	db, err := gorm.Open("sqlite3", dbName)
+	if err != nil {
+		assert.FailNow(t, err.Error())
+	}
+	defer db.Close()
+
+	db.AutoMigrate(&Project{}, &Test{})
+	db.Exec("PRAGMA foreign_keys = ON;")
+
+	dao := TestService{DB: db}
+	var tid uint
+	var pid uint
+
+	t.Run("create new test and project", func(t *testing.T) {
+		p := &Project{}
+		o := Test{
+			Project:     p,
+			Name:        "Test 1234 ",
+			Description: "Test Description Foo ",
+		}
+		err := dao.Create(&o)
+
+		assert.NoError(t, err)
+		assert.NotZero(t, p.ID)
+		assert.NotEmpty(t, p.Name)
+		assert.Equal(t, "", p.Description)
+		assert.NotNil(t, p.CreatedAt)
+		assert.NotNil(t, p.UpdatedAt)
+		assert.Nil(t, p.DeletedAt)
+
+		assert.NotZero(t, o.ID)
+		assert.Equal(t, p.ID, o.ProjectID)
+		assert.Equal(t, "test1234", o.Name)
+		assert.Equal(t, "Test Description Foo", o.Description)
+		assert.NotNil(t, o.CreatedAt)
+		assert.NotNil(t, o.UpdatedAt)
+		assert.Nil(t, o.DeletedAt)
+
+		tid = o.ID
+		pid = p.ID
+
+		cp := &Project{}
+		err = db.First(cp, pid).Error
+		assert.NoError(t, err)
+		assert.Equal(t, p.Name, cp.Name)
+
+		ct := &Test{}
+		err = db.First(ct, tid).Error
+		assert.NoError(t, err)
+		assert.Equal(t, o.ProjectID, ct.ProjectID)
+		assert.Equal(t, o.Name, ct.Name)
+		assert.Equal(t, o.Description, ct.Description)
+		assert.Equal(t, o.Status, ct.Status)
+		assert.Equal(t, o.Thresholds, ct.Thresholds)
+		assert.Empty(t, ct.ThresholdsJSON)
+		assert.Equal(t, o.ThresholdsJSON, ct.ThresholdsJSON)
+		assert.True(t, o.CreatedAt.Equal(ct.CreatedAt))
+		assert.True(t, o.UpdatedAt.Equal(ct.CreatedAt))
+	})
+
+	t.Run("find valid", func(t *testing.T) {
+		o, err := dao.FindByName("test1234")
+
+		assert.NoError(t, err)
+		assert.Equal(t, tid, o.ID)
+		assert.Equal(t, pid, o.ProjectID)
+		assert.Equal(t, "test1234", o.Name)
+		assert.Equal(t, "Test Description Foo", o.Description)
+		assert.NotNil(t, o.CreatedAt)
+		assert.NotNil(t, o.UpdatedAt)
+		assert.Nil(t, o.DeletedAt)
+	})
+
+	t.Run("find invalid", func(t *testing.T) {
+		o, err := dao.FindByName("lorem")
+
+		assert.Error(t, err)
+		assert.Nil(t, o)
 	})
 }

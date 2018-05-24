@@ -213,6 +213,9 @@ type TestService struct {
 func (ts *TestService) FindByID(id uint) (*Test, error) {
 	t := new(Test)
 	err := ts.DB.First(t, id).Error
+	if err != nil {
+		t = nil
+	}
 	return t, err
 }
 
@@ -221,6 +224,9 @@ func (ts *TestService) FindByName(name string) (*Test, error) {
 	name = strings.ToLower(name)
 	t := new(Test)
 	err := ts.DB.First(t, "name = ?", name).Error
+	if err != nil {
+		t = nil
+	}
 	return t, err
 }
 
@@ -258,7 +264,7 @@ func (ts *TestService) Update(t *Test) error {
 		t.Name = testToUpdate.Name
 	}
 
-	return ts.DB.Model(t).Updates(t).Error
+	return ts.DB.Save(t).Error
 }
 
 // Delete deletes project

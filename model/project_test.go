@@ -44,9 +44,7 @@ func TestProjectService_FindByID(t *testing.T) {
 		p, err := dao.FindByID(2)
 
 		assert.Error(t, err)
-		assert.Equal(t, uint(0), p.ID)
-		assert.Equal(t, "", p.Name)
-		assert.Equal(t, "", p.Description)
+		assert.Nil(t, p)
 	})
 }
 
@@ -82,9 +80,7 @@ func TestProjectService_FindByName(t *testing.T) {
 		p, err := dao.FindByName("testproject999")
 
 		assert.Error(t, err)
-		assert.Equal(t, uint(0), p.ID)
-		assert.Equal(t, "", p.Name)
-		assert.Equal(t, "", p.Description)
+		assert.Nil(t, p)
 	})
 }
 
