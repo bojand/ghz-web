@@ -237,7 +237,7 @@ func (ts *TestService) FindByProjectID(pid uint, num, page int) ([]*Test, error)
 
 	s := make([]*Test, 0)
 
-	offset := -1
+	offset := 0
 	if page >= 0 && num >= 0 {
 		offset = page * num
 	}

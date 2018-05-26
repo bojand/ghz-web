@@ -2,7 +2,9 @@ package model
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
+	"strconv"
 	"testing"
 	"time"
 
@@ -743,6 +745,8 @@ func TestTestService_FindByName(t *testing.T) {
 			Name:        "Test 1234 ",
 			Description: "Test Description Foo ",
 		}
+
+		fmt.Printf("%#v", p)
 		err := dao.Create(&o)
 
 		assert.NoError(t, err)
@@ -801,5 +805,125 @@ func TestTestService_FindByName(t *testing.T) {
 
 		assert.Error(t, err)
 		assert.Nil(t, o)
+	})
+}
+
+func TestTestService_FindByProject(t *testing.T) {
+	defer os.Remove(dbName)
+
+	db, err := gorm.Open("sqlite3", dbName)
+	if err != nil {
+		assert.FailNow(t, err.Error())
+	}
+	defer db.Close()
+
+	db.AutoMigrate(&Project{}, &Test{})
+	db.Exec("PRAGMA foreign_keys = ON;")
+
+	dao := TestService{DB: db}
+
+	var pid1 uint
+	var pid2 uint
+
+	t.Run("create new tests and project 1", func(t *testing.T) {
+		p := &Project{}
+
+		o := Test{
+			Project:     p,
+			Name:        "Test 0",
+			Description: "Test Description Foo 0",
+		}
+		err := dao.Create(&o)
+
+		pid1 = p.ID
+
+		fmt.Println(o)
+		assert.NoError(t, err)
+
+		for n := 1; n <= 7; n++ {
+			nStr := strconv.FormatInt(int64(n), 10)
+
+			o = Test{
+				ProjectID:   p.ID,
+				Name:        "Test " + nStr,
+				Description: "Test Description Foo " + nStr,
+			}
+			err := dao.Create(&o)
+
+			assert.NoError(t, err)
+		}
+	})
+
+	t.Run("create 2nd tests and project", func(t *testing.T) {
+		p := &Project{}
+
+		o := Test{
+			Project:     p,
+			Name:        "Test P2 0 ",
+			Description: "Test Description Foo P2 0",
+		}
+		err := dao.Create(&o)
+
+		assert.NoError(t, err)
+
+		pid2 = p.ID
+
+		for n := 1; n <= 9; n++ {
+			nStr := strconv.FormatInt(int64(n), 10)
+
+			o = Test{
+				ProjectID:   p.ID,
+				Name:        "Test P2 " + nStr,
+				Description: "Test Description Foo P2 " + nStr,
+			}
+			err := dao.Create(&o)
+
+			assert.NoError(t, err)
+		}
+	})
+
+	t.Run("find for project 1", func(t *testing.T) {
+		tests, err := dao.FindByProjectID(pid1, 10, 0)
+
+		assert.NoError(t, err)
+		assert.Len(t, tests, 8)
+	})
+
+	t.Run("find for project 2", func(t *testing.T) {
+		tests, err := dao.FindByProjectID(pid2, 10, 0)
+
+		assert.NoError(t, err)
+		assert.Len(t, tests, 10)
+	})
+
+	t.Run("find for project 2 paged", func(t *testing.T) {
+		tests, err := dao.FindByProjectID(pid2, 3, 0)
+
+		assert.NoError(t, err)
+		assert.Len(t, tests, 3)
+
+		for i, to := range tests {
+			nStr := strconv.FormatInt(int64(9-i), 10)
+			assert.Equal(t, "testp2"+nStr, to.Name)
+		}
+	})
+
+	t.Run("find for project 2 paged 2", func(t *testing.T) {
+		tests, err := dao.FindByProjectID(pid2, 3, 1)
+
+		assert.NoError(t, err)
+		assert.Len(t, tests, 3)
+
+		for i, to := range tests {
+			nStr := strconv.FormatInt(int64(6-i), 10)
+			assert.Equal(t, "testp2"+nStr, to.Name)
+		}
+	})
+
+	t.Run("find invalid", func(t *testing.T) {
+		tests, err := dao.FindByProjectID(123, 5, 0)
+
+		assert.NoError(t, err)
+		assert.Len(t, tests, 0)
 	})
 }
