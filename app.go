@@ -1,9 +1,12 @@
 package main
 
 import (
-	"net/http"
+	"fmt"
+	"sort"
+	"strings"
 	"time"
 
+	"github.com/bojand/ghz-web/api"
 	"github.com/bojand/ghz-web/config"
 	"github.com/bojand/ghz-web/model"
 	"github.com/labstack/echo"
@@ -39,7 +42,7 @@ func (app *Application) Start() {
 
 	app.setupServer()
 
-	app.testStuff()
+	// app.testStuff()
 
 	app.Logger.Fatal(app.Server.Start(app.Config.Server.GetHostPort()))
 }
@@ -97,13 +100,26 @@ func (app *Application) setupServer() {
 	root.Use(middleware.Logger())
 	root.Use(middleware.Recover())
 
-	// userDAO := model.UserService{DB: db}
+	ps := model.ProjectService{DB: app.DB}
+	ts := model.TestService{DB: app.DB}
 
-	// api.Setup(apiGroup, &userDAO)
+	api.Setup(root, &ps, &ts)
 
-	root.GET("/", func(c echo.Context) error {
-		return c.String(http.StatusOK, "Hello, World!")
-	})
+	rs := s.Routes()
+	our := make([]string, 0, 5)
+	for _, r := range rs {
+		index := strings.Index(r.Name, "api")
+		if index > 0 {
+			desc := fmt.Sprintf("%+v %+v", r.Method, r.Path)
+			our = append(our, desc)
+		}
+	}
+
+	sort.Strings(our)
+
+	for _, r := range our {
+		fmt.Println(r)
+	}
 }
 
 //

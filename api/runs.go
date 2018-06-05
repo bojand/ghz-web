@@ -11,9 +11,9 @@ func SetupRunAPI(g *echo.Group) {
 	api := &RunAPI{}
 
 	g.POST("/", api.create)
-	g.GET("/:id", api.get)
-	g.PUT("/:id", api.update)
-	g.PUT("/:id", api.delete)
+	g.GET("/:rid", api.get)
+	g.PUT("/:rid", api.update)
+	g.DELETE("/:rid", api.delete)
 }
 
 // RunAPI provides the api

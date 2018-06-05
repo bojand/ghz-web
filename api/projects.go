@@ -1,6 +1,7 @@
 package api
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -11,21 +12,24 @@ import (
 )
 
 // SetupProjectAPI sets up the API
-func SetupProjectAPI(g *echo.Group) {
-	api := &ProjectAPI{}
+func SetupProjectAPI(g *echo.Group, ps service.ProjectService, ts service.TestService) {
+	api := &ProjectAPI{ps: ps, ts: ts}
 
 	g.POST("/", api.create)
-	g.GET("/:id", api.get)
-	g.PUT("/:id", api.update)
-	g.PUT("/:id", api.delete)
+	g.GET("/:pid", api.get)
+	g.PUT("/:pid", api.update)
+	g.DELETE("/:pid", api.delete)
+	// g.GET("/:pid/tests", api.listTests)
 
-	testsGroup := g.Group("/:id/tests")
-	SetupTestAPI(testsGroup)
+	testsGroup := g.Group("/:pid/tests")
+	testsGroup.GET("", api.listTests)
+	SetupTestAPI(testsGroup, ts)
 }
 
 // ProjectAPI provides the api
 type ProjectAPI struct {
-	dao service.ProjectService
+	ps service.ProjectService
+	ts service.TestService
 }
 
 func (api *ProjectAPI) create(c echo.Context) error {
@@ -35,7 +39,7 @@ func (api *ProjectAPI) create(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
-	err := api.dao.Create(p)
+	err := api.ps.Create(p)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
@@ -44,23 +48,21 @@ func (api *ProjectAPI) create(c echo.Context) error {
 }
 
 func (api *ProjectAPI) get(c echo.Context) error {
-	idparam := c.Param("id")
+	idparam := c.Param("pid")
 	id, err := strconv.Atoi(idparam)
 	getByID := true
 	if err != nil {
 		getByID = false
 	}
 
-	c.Logger().Info("Getting project: " + string(id))
-
 	var p *model.Project
 
 	if getByID {
-		if p, err = api.dao.FindByID(uint(id)); gorm.IsRecordNotFoundError(err) {
+		if p, err = api.ps.FindByID(uint(id)); gorm.IsRecordNotFoundError(err) {
 			return echo.NewHTTPError(http.StatusNotFound, err.Error())
 		}
 	} else {
-		if p, err = api.dao.FindByName(idparam); gorm.IsRecordNotFoundError(err) {
+		if p, err = api.ps.FindByName(idparam); gorm.IsRecordNotFoundError(err) {
 			return echo.NewHTTPError(http.StatusNotFound, err.Error())
 		}
 	}
@@ -79,7 +81,7 @@ func (api *ProjectAPI) update(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
-	id, err := strconv.Atoi(c.Param("id"))
+	id, err := strconv.Atoi(c.Param("pid"))
 	if err != nil {
 		return echo.NewHTTPError(http.StatusNotFound, err.Error())
 	}
@@ -87,7 +89,7 @@ func (api *ProjectAPI) update(c echo.Context) error {
 	uid := uint(id)
 	p.ID = uid
 
-	if err = api.dao.Update(p); gorm.IsRecordNotFoundError(err) {
+	if err = api.ps.Update(p); gorm.IsRecordNotFoundError(err) {
 		return c.JSON(http.StatusNotFound, "Not Found")
 	}
 
@@ -100,4 +102,43 @@ func (api *ProjectAPI) update(c echo.Context) error {
 
 func (api *ProjectAPI) delete(c echo.Context) error {
 	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
+}
+
+func (api *ProjectAPI) listTests(c echo.Context) error {
+	fmt.Printf("LIST TESTS.")
+	idparam := c.Param("pid")
+	pid, err := strconv.Atoi(idparam)
+	getByID := true
+	if err != nil {
+		getByID = false
+	}
+
+	if !getByID {
+		var p *model.Project
+		if p, err = api.ps.FindByName(idparam); gorm.IsRecordNotFoundError(err) {
+			return echo.NewHTTPError(http.StatusNotFound, err.Error())
+		}
+		pid = int(p.ID)
+	}
+
+	pageparam := c.QueryParam("page")
+	page := 0
+	if pageparam != "" {
+		p, err := strconv.Atoi(pageparam)
+		if err != nil {
+			page = p
+		}
+	}
+
+	limit := 20
+
+	fmt.Printf("LIST TESTS. PID: %+v LIMIT: %+v PAGE: %+v")
+
+	tests, err := api.ts.FindByProjectID(uint(pid), limit, page)
+
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, "Bad Request: "+err.Error())
+	}
+
+	return c.JSON(http.StatusOK, tests)
 }
