@@ -2,6 +2,7 @@ package model
 
 import (
 	"os"
+	"strconv"
 	"testing"
 
 	"github.com/bojand/ghz-web/test"
@@ -281,5 +282,67 @@ func TestProjectService_Update(t *testing.T) {
 		assert.NotNil(t, p.CreatedAt)
 		assert.NotNil(t, p.UpdatedAt)
 		assert.Nil(t, p.DeletedAt)
+	})
+}
+
+func TestProjectService_List(t *testing.T) {
+	defer os.Remove(dbName)
+
+	db, err := gorm.Open("sqlite3", dbName)
+	if err != nil {
+		assert.FailNow(t, err.Error())
+	}
+	defer db.Close()
+
+	db.AutoMigrate(&Project{}, &Test{})
+	db.Exec("PRAGMA foreign_keys = ON;")
+
+	dao := ProjectService{DB: db}
+
+	t.Run("create new projects", func(t *testing.T) {
+		i := 1
+		for i <= 10 {
+			iStr := strconv.FormatInt(int64(i), 10)
+			p := Project{
+				Name:        "TestProj" + iStr,
+				Description: "Test Description " + iStr,
+			}
+			err := dao.Create(&p)
+
+			assert.NoError(t, err)
+
+			i = i + 1
+		}
+	})
+
+	t.Run("find all", func(t *testing.T) {
+		ps, err := dao.List(20, 0)
+
+		assert.NoError(t, err)
+		assert.Len(t, ps, 10)
+	})
+
+	t.Run("list paged", func(t *testing.T) {
+		ps, err := dao.List(3, 0)
+
+		assert.NoError(t, err)
+		assert.Len(t, ps, 3)
+
+		for i, pr := range ps {
+			nStr := strconv.FormatInt(int64(9-i), 10)
+			assert.Equal(t, "testproj"+nStr, pr.Name)
+		}
+	})
+
+	t.Run("list paged 2", func(t *testing.T) {
+		ps, err := dao.List(3, 1)
+
+		assert.NoError(t, err)
+		assert.Len(t, ps, 3)
+
+		for i, pr := range ps {
+			nStr := strconv.FormatInt(int64(6-i), 10)
+			assert.Equal(t, "testproj"+nStr, pr.Name)
+		}
 	})
 }

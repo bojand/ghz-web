@@ -5,13 +5,11 @@ import (
 	"errors"
 	"strings"
 	"time"
-
-	"github.com/jinzhu/gorm"
 )
 
 // Run represents a project
 type Run struct {
-	gorm.Model
+	Model
 	TestID uint  `json:"testID" gorm:"type:integer REFERENCES tests(id)"`
 	Test   *Test `json:"-"`
 

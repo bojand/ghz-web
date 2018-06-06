@@ -10,7 +10,7 @@ import (
 
 // Project represents a project
 type Project struct {
-	gorm.Model
+	Model
 	Name        string `json:"name" gorm:"unique_index;not null"`
 	Description string `json:"description"`
 }
@@ -91,4 +91,18 @@ func (ps *ProjectService) Update(p *Project) error {
 // Delete deletes project
 func (ps *ProjectService) Delete(p *Project) error {
 	return errors.New("Not Implemented Yet")
+}
+
+// List lists projects
+func (ps *ProjectService) List(limit, page int) ([]*Project, error) {
+	s := make([]*Project, 0)
+
+	offset := 0
+	if page >= 0 && limit >= 0 {
+		offset = page * limit
+	}
+
+	err := ps.DB.Offset(offset).Limit(limit).Order("name desc").Find(&s).Error
+
+	return s, err
 }

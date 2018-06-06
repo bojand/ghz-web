@@ -35,8 +35,8 @@ func TestProjectAPI(t *testing.T) {
 	defer db.Close()
 
 	dao := model.ProjectService{DB: db}
+	projectAPI := &ProjectAPI{ps: &dao}
 
-	var projectAPI = &ProjectAPI{dao: &dao}
 	var projectID uint
 
 	t.Run("POST create new", func(t *testing.T) {
@@ -136,7 +136,7 @@ func TestProjectAPI(t *testing.T) {
 		rec := httptest.NewRecorder()
 
 		c := e.NewContext(req, rec)
-		c.SetParamNames("id")
+		c.SetParamNames("pid")
 		c.SetParamValues(pid)
 
 		if assert.NoError(t, projectAPI.get(c)) {
@@ -162,7 +162,7 @@ func TestProjectAPI(t *testing.T) {
 		rec := httptest.NewRecorder()
 
 		c := e.NewContext(req, rec)
-		c.SetParamNames("id")
+		c.SetParamNames("pid")
 		c.SetParamValues("testprojectname")
 
 		if assert.NoError(t, projectAPI.get(c)) {
@@ -188,7 +188,7 @@ func TestProjectAPI(t *testing.T) {
 		rec := httptest.NewRecorder()
 
 		c := e.NewContext(req, rec)
-		c.SetParamNames("id")
+		c.SetParamNames("pid")
 		c.SetParamValues("tstprj")
 
 		err := projectAPI.get(c)
@@ -209,7 +209,7 @@ func TestProjectAPI(t *testing.T) {
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
 
-		c.SetParamNames("id")
+		c.SetParamNames("pid")
 		c.SetParamValues(pid)
 
 		if assert.NoError(t, projectAPI.update(c)) {
@@ -235,7 +235,7 @@ func TestProjectAPI(t *testing.T) {
 		rec := httptest.NewRecorder()
 
 		c := e.NewContext(req, rec)
-		c.SetParamNames("id")
+		c.SetParamNames("pid")
 		c.SetParamValues("12345")
 
 		if assert.NoError(t, projectAPI.update(c)) {
@@ -252,7 +252,7 @@ func TestProjectAPI(t *testing.T) {
 		rec := httptest.NewRecorder()
 
 		c := e.NewContext(req, rec)
-		c.SetParamNames("id")
+		c.SetParamNames("pid")
 		c.SetParamValues("updatedprojectname")
 
 		err := projectAPI.update(c)

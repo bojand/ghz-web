@@ -1,7 +1,6 @@
 package api
 
 import (
-	"fmt"
 	"net/http"
 	"strconv"
 
@@ -19,10 +18,11 @@ func SetupProjectAPI(g *echo.Group, ps service.ProjectService, ts service.TestSe
 	g.GET("/:pid", api.get)
 	g.PUT("/:pid", api.update)
 	g.DELETE("/:pid", api.delete)
-	// g.GET("/:pid/tests", api.listTests)
 
 	testsGroup := g.Group("/:pid/tests")
+
 	testsGroup.GET("", api.listTests)
+
 	SetupTestAPI(testsGroup, ts)
 }
 
@@ -105,7 +105,6 @@ func (api *ProjectAPI) delete(c echo.Context) error {
 }
 
 func (api *ProjectAPI) listTests(c echo.Context) error {
-	fmt.Printf("LIST TESTS.")
 	idparam := c.Param("pid")
 	pid, err := strconv.Atoi(idparam)
 	getByID := true
@@ -132,7 +131,7 @@ func (api *ProjectAPI) listTests(c echo.Context) error {
 
 	limit := 20
 
-	fmt.Printf("LIST TESTS. PID: %+v LIMIT: %+v PAGE: %+v")
+	c.Logger().Infof("LIST TESTS. PID: %+v LIMIT: %+v PAGE: %+v", pid, limit, page)
 
 	tests, err := api.ts.FindByProjectID(uint(pid), limit, page)
 
