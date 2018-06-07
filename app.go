@@ -94,6 +94,8 @@ func (app *Application) setupDatabase() error {
 func (app *Application) setupServer() {
 	s := app.Server
 
+	s.Pre(middleware.RemoveTrailingSlash())
+
 	root := s.Group(app.Config.Server.RootURL)
 
 	root.Use(middleware.RequestID())

@@ -14,7 +14,8 @@ import (
 func SetupProjectAPI(g *echo.Group, ps service.ProjectService, ts service.TestService) {
 	api := &ProjectAPI{ps: ps, ts: ts}
 
-	g.POST("/", api.create)
+	g.GET("", api.listProjects)
+	g.POST("", api.create)
 	g.GET("/:pid", api.get)
 	g.PUT("/:pid", api.update)
 	g.DELETE("/:pid", api.delete)
@@ -131,8 +132,6 @@ func (api *ProjectAPI) listTests(c echo.Context) error {
 
 	limit := 20
 
-	c.Logger().Infof("LIST TESTS. PID: %+v LIMIT: %+v PAGE: %+v", pid, limit, page)
-
 	tests, err := api.ts.FindByProjectID(uint(pid), limit, page)
 
 	if err != nil {
@@ -140,4 +139,25 @@ func (api *ProjectAPI) listTests(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, tests)
+}
+
+func (api *ProjectAPI) listProjects(c echo.Context) error {
+	pageparam := c.QueryParam("page")
+	page := 0
+	if pageparam != "" {
+		p, err := strconv.Atoi(pageparam)
+		if err != nil {
+			page = p
+		}
+	}
+
+	limit := 20
+
+	projects, err := api.ps.List(limit, page)
+
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, "Bad Request: "+err.Error())
+	}
+
+	return c.JSON(http.StatusOK, projects)
 }

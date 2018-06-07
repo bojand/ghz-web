@@ -10,7 +10,7 @@ import (
 func SetupRunAPI(g *echo.Group) {
 	api := &RunAPI{}
 
-	g.POST("/", api.create)
+	g.POST("", api.create)
 	g.GET("/:rid", api.get)
 	g.PUT("/:rid", api.update)
 	g.DELETE("/:rid", api.delete)

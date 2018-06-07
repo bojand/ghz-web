@@ -14,12 +14,15 @@ import (
 func SetupTestAPI(g *echo.Group, ts service.TestService) {
 	api := &TestAPI{ts: ts}
 
-	g.POST("/", api.create)
+	g.POST("", api.create)
 	g.GET("/:tid", api.get)
 	g.PUT("/:tid", api.update)
 	g.DELETE("/:tid", api.delete)
 
 	runsGroup := g.Group("/:tid/runs")
+
+	// runsGroup.GET("", api.getRuns)
+
 	SetupRunAPI(runsGroup)
 }
 

@@ -265,16 +265,50 @@ func TestProjectAPI(t *testing.T) {
 
 	t.Run("DELETE /:id", func(t *testing.T) {
 		e := echo.New()
-		req := httptest.NewRequest(echo.POST, "/", strings.NewReader(""))
+		pid := strconv.FormatUint(uint64(projectID), 10)
+
+		req := httptest.NewRequest(echo.DELETE, "/"+pid, strings.NewReader(""))
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		rec := httptest.NewRecorder()
+
 		c := e.NewContext(req, rec)
+		c.SetParamNames("pid")
+		c.SetParamValues(pid)
 
 		err := projectAPI.delete(c)
 		if assert.Error(t, err) {
 			assert.IsType(t, err, &echo.HTTPError{})
 			httpErr := err.(*echo.HTTPError)
 			assert.Equal(t, http.StatusNotImplemented, httpErr.Code)
+		}
+	})
+
+	t.Run("GET /", func(t *testing.T) {
+		e := echo.New()
+
+		req := httptest.NewRequest(echo.GET, "/", strings.NewReader(""))
+		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+		rec := httptest.NewRecorder()
+
+		c := e.NewContext(req, rec)
+
+		if assert.NoError(t, projectAPI.listProjects(c)) {
+			assert.Equal(t, http.StatusOK, rec.Code)
+
+			ps := make([]model.Project, 0)
+
+			err := json.Unmarshal(rec.Body.Bytes(), &ps)
+
+			assert.NoError(t, err)
+			assert.Len(t, ps, 4)
+			assert.NotZero(t, ps[0].ID)
+			assert.NotEmpty(t, ps[0].Name)
+			assert.NotZero(t, ps[1].ID)
+			assert.NotEmpty(t, ps[1].Name)
+			assert.NotZero(t, ps[2].ID)
+			assert.NotEmpty(t, ps[2].Name)
+			assert.NotZero(t, ps[3].ID)
+			assert.NotEmpty(t, ps[3].Name)
 		}
 	})
 }
