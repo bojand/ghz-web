@@ -311,4 +311,8 @@ func TestProjectAPI(t *testing.T) {
 			assert.NotEmpty(t, ps[3].Name)
 		}
 	})
+
+	t.Run("GET /:pid/tests", func(t *testing.T) {
+		t.Skip()
+	})
 }
