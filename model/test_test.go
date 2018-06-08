@@ -746,7 +746,6 @@ func TestTestService_FindByName(t *testing.T) {
 			Description: "Test Description Foo ",
 		}
 
-		fmt.Printf("%#v", p)
 		err := dao.Create(&o)
 
 		assert.NoError(t, err)

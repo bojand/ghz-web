@@ -124,9 +124,13 @@ func (api *ProjectAPI) listTests(c echo.Context) error {
 	pageparam := c.QueryParam("page")
 	page := 0
 	if pageparam != "" {
-		p, err := strconv.Atoi(pageparam)
-		if err != nil {
-			page = p
+		pageNum, err := strconv.Atoi(pageparam)
+		if err == nil {
+			if pageNum < 0 {
+				pageNum = pageNum * -1
+			}
+
+			page = pageNum
 		}
 	}
 
@@ -145,9 +149,13 @@ func (api *ProjectAPI) listProjects(c echo.Context) error {
 	pageparam := c.QueryParam("page")
 	page := 0
 	if pageparam != "" {
-		p, err := strconv.Atoi(pageparam)
-		if err != nil {
-			page = p
+		pageNum, err := strconv.Atoi(pageparam)
+		if err == nil {
+			if pageNum < 0 {
+				pageNum = pageNum * -1
+			}
+
+			page = pageNum
 		}
 	}
 

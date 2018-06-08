@@ -10,7 +10,6 @@ import (
 	"testing"
 
 	"github.com/bojand/ghz-web/model"
-	"github.com/bojand/ghz-web/test"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
 	"github.com/labstack/echo"
@@ -23,19 +22,18 @@ func TestProjectAPI(t *testing.T) {
 
 	defer os.Remove(dbName)
 
-	err := test.SetupTestProjectDatabase(dbName)
-	if err != nil {
-		assert.FailNow(t, err.Error())
-	}
-
 	db, err := gorm.Open("sqlite3", dbName)
 	if err != nil {
 		assert.FailNow(t, err.Error())
 	}
 	defer db.Close()
 
-	dao := model.ProjectService{DB: db}
-	projectAPI := &ProjectAPI{ps: &dao}
+	db.AutoMigrate(&model.Project{}, &model.Test{})
+	db.Exec("PRAGMA foreign_keys = ON;")
+
+	ps := model.ProjectService{DB: db}
+	ts := model.TestService{DB: db}
+	projectAPI := &ProjectAPI{ps: &ps, ts: &ts}
 
 	var projectID uint
 
@@ -247,13 +245,13 @@ func TestProjectAPI(t *testing.T) {
 		e := echo.New()
 
 		jsonStr := `{"name":" Updated Project Name 2","description":"My project description!"}`
-		req := httptest.NewRequest(echo.PUT, "/updatedprojectname", strings.NewReader(jsonStr))
+		req := httptest.NewRequest(echo.PUT, "/updatedprojectnameasdf", strings.NewReader(jsonStr))
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		rec := httptest.NewRecorder()
 
 		c := e.NewContext(req, rec)
 		c.SetParamNames("pid")
-		c.SetParamValues("updatedprojectname")
+		c.SetParamValues("updatedprojectnameasdf")
 
 		err := projectAPI.update(c)
 		if assert.Error(t, err) {
@@ -300,19 +298,86 @@ func TestProjectAPI(t *testing.T) {
 			err := json.Unmarshal(rec.Body.Bytes(), &ps)
 
 			assert.NoError(t, err)
-			assert.Len(t, ps, 4)
+			assert.Len(t, ps, 3)
 			assert.NotZero(t, ps[0].ID)
 			assert.NotEmpty(t, ps[0].Name)
 			assert.NotZero(t, ps[1].ID)
 			assert.NotEmpty(t, ps[1].Name)
 			assert.NotZero(t, ps[2].ID)
 			assert.NotEmpty(t, ps[2].Name)
-			assert.NotZero(t, ps[3].ID)
-			assert.NotEmpty(t, ps[3].Name)
 		}
 	})
 
 	t.Run("GET /:pid/tests", func(t *testing.T) {
-		t.Skip()
+		e := echo.New()
+		pid := strconv.FormatUint(uint64(projectID), 10)
+
+		// create sample tests
+		for i := 0; i < 25; i++ {
+			t := &model.Test{
+				ProjectID: projectID,
+				Name:      "test" + strconv.FormatInt(int64(i), 10),
+			}
+			ts.Create(t)
+		}
+
+		req := httptest.NewRequest(echo.GET, "/"+pid+"/tests", strings.NewReader(""))
+		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+		rec := httptest.NewRecorder()
+
+		c := e.NewContext(req, rec)
+		c.SetParamNames("pid")
+		c.SetParamValues(pid)
+
+		if assert.NoError(t, projectAPI.listTests(c)) {
+
+			assert.Equal(t, http.StatusOK, rec.Code)
+
+			ps := make([]model.Project, 0)
+
+			err := json.Unmarshal(rec.Body.Bytes(), &ps)
+
+			assert.NoError(t, err)
+			assert.Len(t, ps, 20)
+
+			assert.NotZero(t, ps[0].ID)
+			assert.NotEmpty(t, ps[0].Name)
+			assert.NotZero(t, ps[1].ID)
+			assert.NotEmpty(t, ps[1].Name)
+			assert.NotZero(t, ps[19].ID)
+			assert.NotEmpty(t, ps[19].Name)
+		}
+	})
+
+	t.Run("GET /:pid/tests?page=1", func(t *testing.T) {
+		e := echo.New()
+		pid := strconv.FormatUint(uint64(projectID), 10)
+
+		req := httptest.NewRequest(echo.GET, "/"+pid+"/tests?page=1", strings.NewReader(""))
+		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+		rec := httptest.NewRecorder()
+
+		c := e.NewContext(req, rec)
+		c.SetParamNames("pid")
+		c.SetParamValues(pid)
+
+		if assert.NoError(t, projectAPI.listTests(c)) {
+
+			assert.Equal(t, http.StatusOK, rec.Code)
+
+			ps := make([]model.Project, 0)
+
+			err := json.Unmarshal(rec.Body.Bytes(), &ps)
+
+			assert.NoError(t, err)
+			assert.Len(t, ps, 5)
+
+			assert.NotZero(t, ps[0].ID)
+			assert.NotEmpty(t, ps[0].Name)
+			assert.NotZero(t, ps[1].ID)
+			assert.NotEmpty(t, ps[1].Name)
+			assert.NotZero(t, ps[4].ID)
+			assert.NotEmpty(t, ps[4].Name)
+		}
 	})
 }
