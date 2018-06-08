@@ -122,7 +122,7 @@ func (api *ProjectAPI) listTests(c echo.Context) error {
 	}
 
 	pageparam := c.QueryParam("page")
-	page := 0
+	page := uint(0)
 	if pageparam != "" {
 		pageNum, err := strconv.Atoi(pageparam)
 		if err == nil {
@@ -130,11 +130,11 @@ func (api *ProjectAPI) listTests(c echo.Context) error {
 				pageNum = pageNum * -1
 			}
 
-			page = pageNum
+			page = uint(pageNum)
 		}
 	}
 
-	limit := 20
+	limit := uint(20)
 
 	tests, err := api.ts.FindByProjectID(uint(pid), limit, page)
 
@@ -147,7 +147,7 @@ func (api *ProjectAPI) listTests(c echo.Context) error {
 
 func (api *ProjectAPI) listProjects(c echo.Context) error {
 	pageparam := c.QueryParam("page")
-	page := 0
+	page := uint(0)
 	if pageparam != "" {
 		pageNum, err := strconv.Atoi(pageparam)
 		if err == nil {
@@ -155,11 +155,11 @@ func (api *ProjectAPI) listProjects(c echo.Context) error {
 				pageNum = pageNum * -1
 			}
 
-			page = pageNum
+			page = uint(pageNum)
 		}
 	}
 
-	limit := 20
+	limit := uint(20)
 
 	projects, err := api.ps.List(limit, page)
 

@@ -231,13 +231,13 @@ func (ts *TestService) FindByName(name string) (*Test, error) {
 }
 
 // FindByProjectID finds tests by project
-func (ts *TestService) FindByProjectID(pid uint, num, page int) ([]*Test, error) {
+func (ts *TestService) FindByProjectID(pid uint, num, page uint) ([]*Test, error) {
 	p := &Project{}
 	p.ID = pid
 
 	s := make([]*Test, 0)
 
-	offset := 0
+	offset := uint(0)
 	if page >= 0 && num >= 0 {
 		offset = page * num
 	}

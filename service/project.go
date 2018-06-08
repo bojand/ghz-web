@@ -6,7 +6,7 @@ import "github.com/bojand/ghz-web/model"
 type ProjectService interface {
 	FindByID(id uint) (*model.Project, error)
 	FindByName(name string) (*model.Project, error)
-	List(limit, page int) ([]*model.Project, error)
+	List(limit, page uint) ([]*model.Project, error)
 	Create(p *model.Project) error
 	Update(p *model.Project) error
 	Delete(p *model.Project) error

@@ -94,10 +94,10 @@ func (ps *ProjectService) Delete(p *Project) error {
 }
 
 // List lists projects
-func (ps *ProjectService) List(limit, page int) ([]*Project, error) {
+func (ps *ProjectService) List(limit, page uint) ([]*Project, error) {
 	s := make([]*Project, 0)
 
-	offset := 0
+	offset := uint(0)
 	if page >= 0 && limit >= 0 {
 		offset = page * limit
 	}
