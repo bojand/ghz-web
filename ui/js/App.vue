@@ -2,19 +2,19 @@
   <div>
     <section class="section">
       <div class="container">
-        <component-builds></component-builds>
+        <component-projects></component-projects>
       </div>
     </section>
   </div>
 </template>
 
 <script>
-import Builds from './components/Builds.vue'
+import Projects from './components/Projects.vue'
 
 export default {
   name: 'app',
   components: {
-    'component-builds': Builds
+    'component-projects': Projects
   }
 }
 </script>
