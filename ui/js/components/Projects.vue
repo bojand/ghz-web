@@ -11,7 +11,7 @@
         </b-field>
         <b-field>
           <p class="control">
-            <button class="button is-primary">Search</button>
+            <button class="button is-success">Create</button>
           </p>
         </b-field>
       </b-field>
