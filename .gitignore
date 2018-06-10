@@ -17,3 +17,8 @@ test.db
 ghz.db
 vendor
 ghz-web
+
+# client
+node_modules
+.cache
+dist

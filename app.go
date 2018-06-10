@@ -94,6 +94,8 @@ func (app *Application) setupDatabase() error {
 func (app *Application) setupServer() {
 	s := app.Server
 
+	s.Use(middleware.CORS())
+
 	s.Pre(middleware.RemoveTrailingSlash())
 
 	root := s.Group(app.Config.Server.RootURL)
@@ -102,10 +104,14 @@ func (app *Application) setupServer() {
 	root.Use(middleware.Logger())
 	root.Use(middleware.Recover())
 
+	apiRoot := root.Group("/api")
+
 	ps := model.ProjectService{DB: app.DB}
 	ts := model.TestService{DB: app.DB}
 
-	api.Setup(root, &ps, &ts)
+	api.Setup(apiRoot, &ps, &ts)
+
+	s.Static("/", "ui/dist")
 
 	rs := s.Routes()
 	our := make([]string, 0, 5)
