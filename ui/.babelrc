@@ -2,5 +2,9 @@
   "presets": [
     "env",
     "vue"
+  ],
+  "plugins": [
+    "transform-async-to-generator",
+    "transform-runtime"
   ]
 }

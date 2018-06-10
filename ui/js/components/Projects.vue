@@ -1,22 +1,7 @@
 <template>
   <section>
-    <section>
-      <h2 class="subtitle">Create</h2>
-      <b-field grouped>
-        <b-field>
-          <b-input placeholder="Name"></b-input>
-        </b-field>
-        <b-field>
-          <b-input placeholder="Description"></b-input>
-        </b-field>
-        <b-field>
-          <p class="control">
-            <button class="button is-success">Create</button>
-          </p>
-        </b-field>
-      </b-field>
-    </section>
-    <br />
+    <component-project-create v-on:project-created="projectCreated"></component-project-create>
+    <hr />
     <section>
       <h2 class="subtitle">Projects</h2>
       <b-field grouped>
@@ -55,6 +40,7 @@
 
 <script>
 import axios from 'axios'
+import ProjectCreate from './ProjectCreate.vue'
 
 export default {
   data() {
@@ -67,24 +53,24 @@ export default {
     }
   },
   methods: {
-    loadAsyncData() {
+    async loadAsyncData() {
       const page = this.page - 1 || 0
       const params = `page=${page}`
 
       this.loading = true
-      axios
-        .get(`http://localhost:3000/api/projects?${params}`)
-        .then(({ data }) => {
-          console.log(data)
-          this.data = data
-          this.loading = false
-        })
-        .catch(error => {
-          this.data = []
-          this.total = 0
-          this.loading = false
-          throw error
-        })
+      try {
+        const { data } = await axios.get(
+          `http://localhost:3000/api/projects?${params}`
+        )
+
+        this.data = data
+        this.loading = false
+      } catch (error) {
+        this.data = []
+        this.total = 0
+        this.loading = false
+        throw error
+      }
     },
 
     onPageChange(page) {
@@ -100,6 +86,10 @@ export default {
 
     detailsClicked(id, ev) {
       console.log(id)
+    },
+
+    projectCreated(p) {
+      this.loadAsyncData()
     }
   },
   filters: {
@@ -112,6 +102,9 @@ export default {
   },
   mounted() {
     this.loadAsyncData()
+  },
+  components: {
+    'component-project-create': ProjectCreate
   }
 }
 </script>
