@@ -18,13 +18,15 @@
 
 <script>
 import VueRouter from 'vue-router'
-import Projects from './components/Projects.vue'
+import ProjectList from './components/ProjectList.vue'
+import ProjectDetails from './components/ProjectDetails.vue'
 import Navbar from './layout/Navbar.vue'
 import VFooter from './layout/Footer.vue'
 
 const routes = [
   { path: '/', redirect: '/projects' },
-  { path: '/projects', component: Projects }
+  { name: 'projects', path: '/projects', component: ProjectList },
+  { name: 'project', path: '/projects/:id', component: ProjectDetails }
 ]
 
 const router = new VueRouter({

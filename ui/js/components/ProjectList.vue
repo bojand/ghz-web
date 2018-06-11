@@ -33,7 +33,7 @@
           </b-table-column>
 
           <b-table-column width="100">
-            <button class="button block" @click="detailsClicked(props.row.id, $event)">Details</button>
+            <router-link :to="{ name: 'project', params: { id: props.row.id } }" class="button block" @click="detailsClicked(props.row.id, $event)">Details</router-link>
           </b-table-column>
         </template>
       </b-table>
