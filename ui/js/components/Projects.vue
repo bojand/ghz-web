@@ -10,6 +10,9 @@
         :data="data" 
         :loading="loading"
 
+        :default-sort-direction="defaultSortDirection"
+        :default-sort="[sortField, sortOrder]"
+
         paginated
         backend-pagination
         :total="total"
@@ -17,11 +20,11 @@
         @page-change="onPageChange">
 
         <template slot-scope="props">
-          <b-table-column field="id" label="ID" width="100">
+          <b-table-column field="id" label="ID" width="100" sortable>
             {{ props.row.id }}
           </b-table-column>
 
-          <b-table-column field="name" label="Name" width="200">
+          <b-table-column field="name" label="Name" width="200" sortable>
             {{ props.row.name }}
           </b-table-column>
 
@@ -48,6 +51,9 @@ export default {
       data: [],
       total: 100,
       loading: false,
+      sortField: 'id',
+      sortOrder: 'desc',
+      defaultSortOrder: 'desc',
       page: 1,
       perPage: 20
     }
