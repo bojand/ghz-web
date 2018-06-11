@@ -53,7 +53,7 @@ export default {
       loading: false,
       sortField: 'id',
       sortOrder: 'desc',
-      defaultSortOrder: 'desc',
+      defaultSortDirection: 'desc',
       page: 1,
       perPage: 20
     }
