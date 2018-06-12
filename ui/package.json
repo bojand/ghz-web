@@ -5,8 +5,9 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "parcel",
-    "build": "parcel build"
+    "build-css": "node-sass sass/style.scss css/style.css",
+    "start": "npm run build-css && parcel",
+    "build": "npm run build-css && parcel build"
   },
   "author": "",
   "license": "ISC",
@@ -26,6 +27,7 @@
     "babel-plugin-transform-runtime": "^6.23.0",
     "babel-preset-env": "^1.6.1",
     "babel-preset-vue": "^2.0.0",
+    "node-sass": "^4.9.0",
     "parcel-bundler": "^1.8.1",
     "standard": "^11.0.1",
     "vue-template-compiler": "^2.5.16"

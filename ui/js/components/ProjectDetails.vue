@@ -6,17 +6,17 @@
           <div class="media-content">
             <div class="content" v-if="!editMode">
                 <p>
-                <strong>{{ name }}</strong>
+                <strong>{{ model.name }}</strong>
                 <br>
-                {{ description }}
+                {{ model.description }}
                 </p>
             </div>
             <div class="content" v-if="editMode">
               <b-field>
-                <b-input :placeholder="name"></b-input>
+                <b-input :placeholder="model.name" v-model="model.name"></b-input>
               </b-field>
               <b-field>
-                <b-input :placeholder="description"></b-input>
+                <b-input :placeholder="model.description" v-model="model.description"></b-input>
               </b-field>
             </div>
             <nav class="level is-mobile">
@@ -25,6 +25,12 @@
                   <button :class="['button', editMode ? 'is-primary' : '']" @click="editClicked">
                     <b-icon :icon="editMode ? 'check' : 'pencil'" size="is-small"></b-icon>
                     <span>{{ editMode ? 'Save' : 'Edit' }}</span>
+                  </button>
+                </a>
+                <a v-if="editMode" class="level-item" aria-label="reply">
+                  <button class="button" @click="cancelClicked">
+                    <b-icon icon="cancel" size="is-small"></b-icon>
+                    <span>Cancel</span>
                   </button>
                 </a>
               </div>
@@ -42,10 +48,12 @@ export default {
   data() {
     return {
       id: null,
-      name: '',
-      description: '',
       loading: false,
-      editMode: false
+      editMode: false,
+      model: {
+        name: '',
+        description: ''
+      }
     }
   },
   created() {
@@ -62,20 +70,54 @@ export default {
     async loadAsyncData() {
       this.loading = true
       try {
-        const { data } = await axios.get(`http://localhost:3000/api/projects/${this.id}`)
+        const { data } = await axios.get(
+          `http://localhost:3000/api/projects/${this.id}`
+        )
 
-        this.name = data.name
-        this.description = data.description
-
+        this.model = data
         this.loading = false
       } catch (error) {
         this.loading = false
         throw error
       }
     },
-    
-    editClicked() {
+
+    async editClicked() {
+      if (this.editMode) {
+        this.loading = true
+
+        try {
+          const { data } = await axios.put(
+            `http://localhost:3000/api/projects/${this.id}`,
+            this.model
+          )
+
+          this.model = data
+          this.loading = false
+          
+          this.$snackbar.open({
+            message: 'Data saved',
+            type: 'is-success',
+            position: 'is-top'
+          })
+        } catch (e) {
+          this.loading = false
+          
+          this.$snackbar.open({
+            message: e.message,
+            type: 'is-danger',
+            position: 'is-top'
+          })
+
+          this.loadAsyncData()
+        }
+      }
       this.editMode = !this.editMode
+    },
+
+    async cancelClicked() {
+      await this.loadAsyncData()
+      this.editMode = false
     }
   },
   mounted() {
