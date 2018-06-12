@@ -1,6 +1,6 @@
 <template>
   <section>
-    <h2 class="subtitle">Create Project</h2>
+    <h2 class="subtitle"><strong>Create Project</strong></h2>
     <b-field grouped>
     <b-field>
         <b-input v-model="projectName" placeholder="Name"></b-input>
@@ -32,21 +32,32 @@ export default {
       let name = this.projectName
       let description = this.projectDesc
 
-      const { data } = await axios.post('http://localhost:3000/api/projects', {
-        name,
-        description
-      })
+      try {
+        const { data } = await axios.post(
+          'http://localhost:3000/api/projects',
+          {
+            name,
+            description
+          }
+        )
 
-      name = data.name
-      description = data.description
+        name = data.name
+        description = data.description
 
-      this.$emit('project-created', {
-        id: 123,
-        name,
-        description
-      })
-      this.projectName = ''
-      this.projectDesc = ''
+        this.$emit('project-created', {
+          id: 123,
+          name,
+          description
+        })
+        this.projectName = ''
+        this.projectDesc = ''
+      } catch (e) {
+        this.$snackbar.open({
+          message: e.message,
+          type: 'is-danger',
+          position: 'is-top'
+        })
+      }
     }
   }
 }

@@ -1,9 +1,9 @@
 <template>
   <section>
-    <component-project-create v-on:project-created="projectCreated"></component-project-create>
+    <component-project-details></component-project-details>
     <hr />
     <section>
-      <h2 class="subtitle"><strong>Projects</strong></h2>
+      <h2 class="subtitle"><strong>Tests</strong></h2>
       <b-field grouped>
       </b-field>
       <b-table 
@@ -33,7 +33,7 @@
           </b-table-column>
 
           <b-table-column width="100">
-            <router-link :to="{ name: 'project', params: { id: props.row.id } }" class="button block" @click="detailsClicked(props.row.id, $event)">Details</router-link>
+            <router-link :to="{ name: 'project', params: { id: props.row.id } }" class="button block">Details</router-link>
           </b-table-column>
         </template>
       </b-table>
@@ -42,8 +42,7 @@
 </template>
 
 <script>
-import axios from 'axios'
-import ProjectCreate from './ProjectCreate.vue'
+import ProjectDetails from './ProjectDetails.vue'
 
 export default {
   data() {
@@ -59,63 +58,17 @@ export default {
     }
   },
   methods: {
-    async loadAsyncData() {
-      const page = this.page - 1 || 0
-      const params = `page=${page}`
-
-      this.loading = true
-      try {
-        const { data } = await axios.get(
-          `http://localhost:3000/api/projects?${params}`
-        )
-
-        this.data = data
-        this.loading = false
-      } catch (e) {
-        this.data = []
-        this.total = 0
-        this.loading = false
-
-        this.$snackbar.open({
-          message: e.message,
-          type: 'is-danger',
-          position: 'is-top'
-        })
-      }
-    },
-
     onPageChange(page) {
       this.page = page
-      this.loadAsyncData()
     },
 
     onSort(field, order) {
       this.sortField = field
       this.sortOrder = order
-      this.loadAsyncData()
     },
-
-    detailsClicked(id, ev) {
-      console.log(id)
-    },
-
-    projectCreated(p) {
-      this.loadAsyncData()
-    }
-  },
-  filters: {
-    /**
-     * Filter to truncate string, accepts a length parameter
-     */
-    truncate(value, length) {
-      return value.length > length ? value.substr(0, length) + '...' : value
-    }
-  },
-  mounted() {
-    this.loadAsyncData()
   },
   components: {
-    'component-project-create': ProjectCreate
+    'component-project-details': ProjectDetails
   }
 }
 </script>

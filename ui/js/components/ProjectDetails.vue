@@ -1,5 +1,6 @@
 <template>
   <section>
+    <h2 class="subtitle strong"><strong>Project Details</strong></h2>
     <div class="box">
       <article class="media">
         <div class="media-left">
@@ -74,11 +75,17 @@ export default {
           `http://localhost:3000/api/projects/${this.id}`
         )
 
+        console.log(data)
         this.model = data
         this.loading = false
-      } catch (error) {
+      } catch (e) {
         this.loading = false
-        throw error
+
+        this.$snackbar.open({
+          message: e.message,
+          type: 'is-danger',
+          position: 'is-top'
+        })
       }
     },
 
@@ -94,15 +101,9 @@ export default {
 
           this.model = data
           this.loading = false
-          
-          this.$snackbar.open({
-            message: 'Data saved',
-            type: 'is-success',
-            position: 'is-top'
-          })
         } catch (e) {
           this.loading = false
-          
+
           this.$snackbar.open({
             message: e.message,
             type: 'is-danger',
