@@ -47,6 +47,14 @@ type ProjectService struct {
 	DB *gorm.DB
 }
 
+// Count returns the total number of projects
+func (ps *ProjectService) Count() (uint, error) {
+	p := new(Project)
+	count := uint(0)
+	err := ps.DB.Model(p).Count(&count).Error
+	return count, err
+}
+
 // FindByID finds project by id
 func (ps *ProjectService) FindByID(id uint) (*Project, error) {
 	p := new(Project)
@@ -95,6 +103,20 @@ func (ps *ProjectService) Delete(p *Project) error {
 
 // List lists projects
 func (ps *ProjectService) List(limit, page uint) ([]*Project, error) {
+	s := make([]*Project, 0)
+
+	offset := uint(0)
+	if page >= 0 && limit >= 0 {
+		offset = page * limit
+	}
+
+	err := ps.DB.Offset(offset).Limit(limit).Order("name desc").Find(&s).Error
+
+	return s, err
+}
+
+// ListSorted lists projects using sorting
+func (ps *ProjectService) ListSorted(limit, page uint, sortField, order string) ([]*Project, error) {
 	s := make([]*Project, 0)
 
 	offset := uint(0)

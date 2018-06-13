@@ -346,3 +346,41 @@ func TestProjectService_List(t *testing.T) {
 		}
 	})
 }
+
+func TestProjectService_Count(t *testing.T) {
+	defer os.Remove(dbName)
+
+	db, err := gorm.Open("sqlite3", dbName)
+	if err != nil {
+		assert.FailNow(t, err.Error())
+	}
+	defer db.Close()
+
+	db.AutoMigrate(&Project{}, &Test{})
+	db.Exec("PRAGMA foreign_keys = ON;")
+
+	dao := ProjectService{DB: db}
+
+	t.Run("create new projects", func(t *testing.T) {
+		i := 1
+		for i <= 10 {
+			iStr := strconv.FormatInt(int64(i), 10)
+			p := Project{
+				Name:        "TestProj" + iStr,
+				Description: "Test Description " + iStr,
+			}
+			err := dao.Create(&p)
+
+			assert.NoError(t, err)
+
+			i = i + 1
+		}
+	})
+
+	t.Run("count", func(t *testing.T) {
+		count, err := dao.Count()
+
+		assert.NoError(t, err)
+		assert.Equal(t, count, uint(10))
+	})
+}
