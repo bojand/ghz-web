@@ -3,6 +3,7 @@ package api
 import (
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/bojand/ghz-web/model"
 	"github.com/bojand/ghz-web/service"
@@ -10,9 +11,11 @@ import (
 	"github.com/labstack/echo"
 )
 
-// type ProjectList struct {
-// 	Total
-// }
+// ProjectList response
+type ProjectList struct {
+	Total uint             `json:"total"`
+	Data  []*model.Project `json:"data"`
+}
 
 // SetupProjectAPI sets up the API
 func SetupProjectAPI(g *echo.Group, ps service.ProjectService, ts service.TestService) {
@@ -163,13 +166,60 @@ func (api *ProjectAPI) listProjects(c echo.Context) error {
 		}
 	}
 
-	limit := uint(20)
+	doSort := false
+	sort := c.QueryParam("sort")
+	order := c.QueryParam("order")
+	if sort != "" {
+		sort = strings.ToLower(sort)
+		if sort == "id" || sort == "name" {
+			doSort = true
+		}
 
-	projects, err := api.ps.List(limit, page)
-
-	if err != nil {
-		return c.JSON(http.StatusInternalServerError, "Bad Request: "+err.Error())
+		if doSort {
+			order = strings.ToLower(order)
+			if order != "asc" && order != "desc" {
+				order = "asc"
+			}
+		}
 	}
 
-	return c.JSON(http.StatusOK, projects)
+	limit := uint(20)
+
+	countCh := make(chan uint, 1)
+	dataCh := make(chan []*model.Project, 1)
+	errCh := make(chan error, 2)
+
+	go func() {
+		count, err := api.ps.Count()
+		errCh <- err
+		countCh <- count
+		close(countCh)
+	}()
+
+	go func() {
+		var projects []*model.Project
+		var err error
+		if doSort {
+			projects, err = api.ps.ListSorted(limit, page, sort, order)
+		} else {
+			projects, err = api.ps.List(limit, page)
+		}
+		errCh <- err
+		dataCh <- projects
+		close(dataCh)
+	}()
+
+	count, data, err1, err2 := <-countCh, <-dataCh, <-errCh, <-errCh
+
+	if err1 != nil {
+		return c.JSON(http.StatusInternalServerError, "Bad Request: "+err1.Error())
+	}
+
+	if err2 != nil {
+		return c.JSON(http.StatusInternalServerError, "Bad Request: "+err2.Error())
+	}
+
+	pl := &ProjectList{Total: count, Data: data}
+
+	return c.JSON(http.StatusOK, pl)
 }

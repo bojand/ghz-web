@@ -231,18 +231,41 @@ func (ts *TestService) FindByName(name string) (*Test, error) {
 }
 
 // FindByProjectID finds tests by project
-func (ts *TestService) FindByProjectID(pid uint, num, page uint) ([]*Test, error) {
+func (ts *TestService) FindByProjectID(pid, num, page uint) ([]*Test, error) {
 	p := &Project{}
 	p.ID = pid
-
-	s := make([]*Test, 0)
 
 	offset := uint(0)
 	if page >= 0 && num >= 0 {
 		offset = page * num
 	}
 
+	s := make([]*Test, 0)
+
 	err := ts.DB.Offset(offset).Limit(num).Order("name desc").Model(p).Related(&s).Error
+
+	return s, err
+}
+
+// FindByProjectIDSorted lists projects using sorting
+func (ts *TestService) FindByProjectIDSorted(pid, num, page uint, sortField, order string) ([]*Test, error) {
+	if (sortField != "name" && sortField != "id") || (order != "asc" && order != "desc") {
+		return nil, errors.New("Invalid sort parameters")
+	}
+
+	offset := uint(0)
+	if page >= 0 && num >= 0 {
+		offset = page * num
+	}
+
+	orderSQL := sortField + " " + order
+
+	p := &Project{}
+	p.ID = pid
+
+	s := make([]*Test, 0)
+
+	err := ts.DB.Order(orderSQL).Offset(offset).Limit(num).Order("name desc").Model(p).Related(&s).Error
 
 	return s, err
 }

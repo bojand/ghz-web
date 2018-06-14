@@ -293,18 +293,139 @@ func TestProjectAPI(t *testing.T) {
 		if assert.NoError(t, projectAPI.listProjects(c)) {
 			assert.Equal(t, http.StatusOK, rec.Code)
 
-			ps := make([]model.Project, 0)
+			pl := new(ProjectList)
 
-			err := json.Unmarshal(rec.Body.Bytes(), &ps)
+			err := json.Unmarshal(rec.Body.Bytes(), &pl)
 
 			assert.NoError(t, err)
-			assert.Len(t, ps, 3)
-			assert.NotZero(t, ps[0].ID)
-			assert.NotEmpty(t, ps[0].Name)
-			assert.NotZero(t, ps[1].ID)
-			assert.NotEmpty(t, ps[1].Name)
-			assert.NotZero(t, ps[2].ID)
-			assert.NotEmpty(t, ps[2].Name)
+			assert.Equal(t, uint(3), pl.Total)
+			assert.Len(t, pl.Data, 3)
+			assert.NotZero(t, pl.Data[0].ID)
+			assert.NotEmpty(t, pl.Data[0].Name)
+			assert.NotZero(t, pl.Data[1].ID)
+			assert.NotEmpty(t, pl.Data[1].Name)
+			assert.NotZero(t, pl.Data[2].ID)
+			assert.NotEmpty(t, pl.Data[2].Name)
+		}
+	})
+
+	t.Run("GET /?sort=ID", func(t *testing.T) {
+		e := echo.New()
+
+		req := httptest.NewRequest(echo.GET, "/?sort=ID", strings.NewReader(""))
+		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+		rec := httptest.NewRecorder()
+
+		c := e.NewContext(req, rec)
+
+		if assert.NoError(t, projectAPI.listProjects(c)) {
+			assert.Equal(t, http.StatusOK, rec.Code)
+
+			pl := new(ProjectList)
+
+			err := json.Unmarshal(rec.Body.Bytes(), &pl)
+
+			assert.NoError(t, err)
+			assert.Equal(t, uint(3), pl.Total)
+			assert.Len(t, pl.Data, 3)
+			assert.NotZero(t, pl.Data[0].ID)
+			assert.NotEmpty(t, pl.Data[0].Name)
+			assert.NotZero(t, pl.Data[1].ID)
+			assert.NotEmpty(t, pl.Data[1].Name)
+			assert.NotZero(t, pl.Data[2].ID)
+			assert.NotEmpty(t, pl.Data[2].Name)
+			assert.True(t, pl.Data[0].ID < pl.Data[1].ID)
+			assert.True(t, pl.Data[1].ID < pl.Data[2].ID)
+		}
+	})
+
+	t.Run("GET /?sort=ID&order=desc", func(t *testing.T) {
+		e := echo.New()
+
+		req := httptest.NewRequest(echo.GET, "/?sort=ID&order=desc", strings.NewReader(""))
+		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+		rec := httptest.NewRecorder()
+
+		c := e.NewContext(req, rec)
+
+		if assert.NoError(t, projectAPI.listProjects(c)) {
+			assert.Equal(t, http.StatusOK, rec.Code)
+
+			pl := new(ProjectList)
+
+			err := json.Unmarshal(rec.Body.Bytes(), &pl)
+
+			assert.NoError(t, err)
+			assert.Equal(t, uint(3), pl.Total)
+			assert.Len(t, pl.Data, 3)
+			assert.NotZero(t, pl.Data[0].ID)
+			assert.NotEmpty(t, pl.Data[0].Name)
+			assert.NotZero(t, pl.Data[1].ID)
+			assert.NotEmpty(t, pl.Data[1].Name)
+			assert.NotZero(t, pl.Data[2].ID)
+			assert.NotEmpty(t, pl.Data[2].Name)
+			assert.True(t, pl.Data[0].ID > pl.Data[1].ID)
+			assert.True(t, pl.Data[1].ID > pl.Data[2].ID)
+		}
+	})
+
+	t.Run("GET /?sort=name&order=desc", func(t *testing.T) {
+		e := echo.New()
+
+		req := httptest.NewRequest(echo.GET, "/?sort=name&order=desc", strings.NewReader(""))
+		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+		rec := httptest.NewRecorder()
+
+		c := e.NewContext(req, rec)
+
+		if assert.NoError(t, projectAPI.listProjects(c)) {
+			assert.Equal(t, http.StatusOK, rec.Code)
+
+			pl := new(ProjectList)
+
+			err := json.Unmarshal(rec.Body.Bytes(), &pl)
+
+			assert.NoError(t, err)
+			assert.Equal(t, uint(3), pl.Total)
+			assert.Len(t, pl.Data, 3)
+			assert.NotZero(t, pl.Data[0].ID)
+			assert.NotEmpty(t, pl.Data[0].Name)
+			assert.NotZero(t, pl.Data[1].ID)
+			assert.NotEmpty(t, pl.Data[1].Name)
+			assert.NotZero(t, pl.Data[2].ID)
+			assert.NotEmpty(t, pl.Data[2].Name)
+			assert.Equal(t, 1, strings.Compare(pl.Data[0].Name, pl.Data[1].Name))
+			assert.Equal(t, 1, strings.Compare(pl.Data[1].Name, pl.Data[2].Name))
+		}
+	})
+
+	t.Run("GET /?sort=name&order=asc", func(t *testing.T) {
+		e := echo.New()
+
+		req := httptest.NewRequest(echo.GET, "/?sort=name&order=asc", strings.NewReader(""))
+		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+		rec := httptest.NewRecorder()
+
+		c := e.NewContext(req, rec)
+
+		if assert.NoError(t, projectAPI.listProjects(c)) {
+			assert.Equal(t, http.StatusOK, rec.Code)
+
+			pl := new(ProjectList)
+
+			err := json.Unmarshal(rec.Body.Bytes(), &pl)
+
+			assert.NoError(t, err)
+			assert.Equal(t, uint(3), pl.Total)
+			assert.Len(t, pl.Data, 3)
+			assert.NotZero(t, pl.Data[0].ID)
+			assert.NotEmpty(t, pl.Data[0].Name)
+			assert.NotZero(t, pl.Data[1].ID)
+			assert.NotEmpty(t, pl.Data[1].Name)
+			assert.NotZero(t, pl.Data[2].ID)
+			assert.NotEmpty(t, pl.Data[2].Name)
+			assert.Equal(t, -1, strings.Compare(pl.Data[0].Name, pl.Data[1].Name))
+			assert.Equal(t, -1, strings.Compare(pl.Data[1].Name, pl.Data[2].Name))
 		}
 	})
 

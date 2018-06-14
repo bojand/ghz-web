@@ -45,6 +45,7 @@
 
 <script>
 import axios from 'axios'
+
 export default {
   data() {
     return {
@@ -57,25 +58,22 @@ export default {
       }
     }
   },
-  created() {
-    this.id = this.$route.params.id
-    console.log(`created id: ${this.id}`)
+  props: {
+    projectId: [String, Number]
   },
-  async beforeRouteUpdate(to, from, next) {
-    console.log('beforeRouteUpdate')
-    this.id = to.params.id
-    await this.loadAsyncData()
-    next()
+  watch: {
+    projectId(newVal, oldVal) {
+      this.loadData()
+    }
   },
   methods: {
-    async loadAsyncData() {
+    async loadData() {
       this.loading = true
       try {
         const { data } = await axios.get(
-          `http://localhost:3000/api/projects/${this.id}`
+          `http://localhost:3000/api/projects/${this.projectId}`
         )
 
-        console.log(data)
         this.model = data
         this.loading = false
       } catch (e) {
@@ -95,7 +93,7 @@ export default {
 
         try {
           const { data } = await axios.put(
-            `http://localhost:3000/api/projects/${this.id}`,
+            `http://localhost:3000/api/projects/${this.projectId}`,
             this.model
           )
 
@@ -110,19 +108,19 @@ export default {
             position: 'is-top'
           })
 
-          this.loadAsyncData()
+          this.loadData()
         }
       }
       this.editMode = !this.editMode
     },
 
     async cancelClicked() {
-      await this.loadAsyncData()
+      await this.loadData()
       this.editMode = false
     }
   },
   mounted() {
-    this.loadAsyncData()
+    this.loadData()
   }
 }
 </script>
