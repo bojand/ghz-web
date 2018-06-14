@@ -347,6 +347,111 @@ func TestProjectService_List(t *testing.T) {
 	})
 }
 
+func TestProjectService_ListSorted(t *testing.T) {
+	defer os.Remove(dbName)
+
+	db, err := gorm.Open("sqlite3", dbName)
+	if err != nil {
+		assert.FailNow(t, err.Error())
+	}
+	defer db.Close()
+
+	db.AutoMigrate(&Project{}, &Test{})
+	db.Exec("PRAGMA foreign_keys = ON;")
+
+	dao := ProjectService{DB: db}
+
+	t.Run("create new projects", func(t *testing.T) {
+		i := 10
+		for i < 20 {
+			iStr := strconv.FormatInt(int64(i), 10)
+			p := Project{
+				Name:        "TestProj" + iStr,
+				Description: "Test Description " + iStr,
+			}
+			err := dao.Create(&p)
+
+			assert.NoError(t, err)
+
+			i = i + 1
+		}
+	})
+
+	t.Run("find all asc", func(t *testing.T) {
+		ps, err := dao.ListSorted(20, 0, "id", "asc")
+
+		assert.NoError(t, err)
+		assert.Len(t, ps, 10)
+
+		assert.Equal(t, uint(1), ps[0].ID)
+		assert.Equal(t, uint(10), ps[9].ID)
+	})
+
+	t.Run("find all desc", func(t *testing.T) {
+		ps, err := dao.ListSorted(20, 0, "id", "desc")
+
+		assert.NoError(t, err)
+		assert.Len(t, ps, 10)
+
+		assert.Equal(t, uint(10), ps[0].ID)
+		assert.Equal(t, uint(1), ps[9].ID)
+	})
+
+	t.Run("error on invalid param", func(t *testing.T) {
+		_, err := dao.ListSorted(20, 0, "id", "asce")
+
+		assert.Error(t, err)
+	})
+
+	t.Run("list paged name desc", func(t *testing.T) {
+		ps, err := dao.ListSorted(3, 0, "name", "desc")
+
+		assert.NoError(t, err)
+		assert.Len(t, ps, 3)
+
+		for i, pr := range ps {
+			nStr := strconv.FormatInt(int64(19-i), 10)
+			assert.Equal(t, "testproj"+nStr, pr.Name)
+		}
+	})
+
+	t.Run("list paged name asc", func(t *testing.T) {
+		ps, err := dao.ListSorted(3, 0, "name", "asc")
+
+		assert.NoError(t, err)
+		assert.Len(t, ps, 3)
+
+		for i, pr := range ps {
+			nStr := strconv.FormatInt(int64(10+i), 10)
+			assert.Equal(t, "testproj"+nStr, pr.Name)
+		}
+	})
+
+	t.Run("list paged 2 name desc", func(t *testing.T) {
+		ps, err := dao.ListSorted(3, 1, "name", "desc")
+
+		assert.NoError(t, err)
+		assert.Len(t, ps, 3)
+
+		for i, pr := range ps {
+			nStr := strconv.FormatInt(int64(16-i), 10)
+			assert.Equal(t, "testproj"+nStr, pr.Name)
+		}
+	})
+
+	t.Run("list paged 2 name asc", func(t *testing.T) {
+		ps, err := dao.ListSorted(3, 1, "name", "asc")
+
+		assert.NoError(t, err)
+		assert.Len(t, ps, 3)
+
+		for i, pr := range ps {
+			nStr := strconv.FormatInt(int64(13+i), 10)
+			assert.Equal(t, "testproj"+nStr, pr.Name)
+		}
+	})
+}
+
 func TestProjectService_Count(t *testing.T) {
 	defer os.Remove(dbName)
 

@@ -103,12 +103,12 @@ func (ps *ProjectService) Delete(p *Project) error {
 
 // List lists projects
 func (ps *ProjectService) List(limit, page uint) ([]*Project, error) {
-	s := make([]*Project, 0)
-
 	offset := uint(0)
 	if page >= 0 && limit >= 0 {
 		offset = page * limit
 	}
+
+	s := make([]*Project, 0)
 
 	err := ps.DB.Offset(offset).Limit(limit).Order("name desc").Find(&s).Error
 
@@ -117,14 +117,20 @@ func (ps *ProjectService) List(limit, page uint) ([]*Project, error) {
 
 // ListSorted lists projects using sorting
 func (ps *ProjectService) ListSorted(limit, page uint, sortField, order string) ([]*Project, error) {
-	s := make([]*Project, 0)
+	if (sortField != "name" && sortField != "id") || (order != "asc" && order != "desc") {
+		return nil, errors.New("Invalid sort parameters")
+	}
 
 	offset := uint(0)
 	if page >= 0 && limit >= 0 {
 		offset = page * limit
 	}
 
-	err := ps.DB.Offset(offset).Limit(limit).Order("name desc").Find(&s).Error
+	orderSQL := sortField + " " + order
+
+	s := make([]*Project, 0)
+
+	err := ps.DB.Order(orderSQL).Offset(offset).Limit(limit).Order("name desc").Find(&s).Error
 
 	return s, err
 }

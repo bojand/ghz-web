@@ -10,6 +10,10 @@ import (
 	"github.com/labstack/echo"
 )
 
+// type ProjectList struct {
+// 	Total
+// }
+
 // SetupProjectAPI sets up the API
 func SetupProjectAPI(g *echo.Group, ps service.ProjectService, ts service.TestService) {
 	api := &ProjectAPI{ps: ps, ts: ts}
