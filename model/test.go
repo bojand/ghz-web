@@ -3,7 +3,6 @@ package model
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"strings"
 	"time"
 
@@ -28,54 +27,9 @@ const (
 	Threshold99th = Threshold("99th")
 )
 
-// TestStatus represents a status of a test, whether its latest run failed the threshold settings
-type TestStatus string
-
-// String() is the string representation of threshold
-func (t TestStatus) String() string {
-	if t == StatusFail {
-		return "fail"
-	}
-
-	return "ok"
-}
-
-// UnmarshalJSON prases a Threshold value from JSON string
-func (t *TestStatus) UnmarshalJSON(b []byte) error {
-	*t = TestStatusFromString(string(b))
-
-	return nil
-}
-
-// MarshalJSON formats a Threshold value into a JSON string
-func (t TestStatus) MarshalJSON() ([]byte, error) {
-	return []byte(fmt.Sprintf("\"%s\"", t.String())), nil
-}
-
-// TestStatusFromString creates a TestStatus from a string
-func TestStatusFromString(str string) TestStatus {
-	str = strings.ToLower(str)
-
-	t := StatusOK
-
-	if str == "fail" {
-		t = StatusFail
-	}
-
-	return t
-}
-
-const (
-	// StatusOK means the latest run in test was within the threshold
-	StatusOK TestStatus = TestStatus("ok")
-
-	// StatusFail means the latest run in test was not within the threshold
-	StatusFail = TestStatus("fail")
-)
-
 // ThresholdSetting setting
 type ThresholdSetting struct {
-	Status    TestStatus    `json:"status" validate:"oneof=ok fail"`
+	Status    Status        `json:"status" validate:"oneof=ok fail"`
 	Threshold time.Duration `json:"threshold"`
 }
 
@@ -93,7 +47,7 @@ func (m *ThresholdSetting) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	m.Status = TestStatusFromString(aux.Status)
+	m.Status = StatusFromString(aux.Status)
 
 	return nil
 }
@@ -107,7 +61,7 @@ type Test struct {
 	Project        *Project                        `json:"-"`
 	Name           string                          `json:"name" gorm:"unique_index;not null" validate:"required"`
 	Description    string                          `json:"description"`
-	Status         TestStatus                      `json:"status" validate:"oneof=ok fail"`
+	Status         Status                          `json:"status" validate:"oneof=ok fail"`
 	Thresholds     map[Threshold]*ThresholdSetting `json:"thresholds,omitempty" gorm:"-"`
 	FailOnError    bool                            `json:"failOnError"`
 	ThresholdsJSON string                          `json:"-" gorm:"column:thresholds"`

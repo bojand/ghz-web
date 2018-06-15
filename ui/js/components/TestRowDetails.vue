@@ -37,13 +37,23 @@ export default {
   },
   methods: {
     async loadData() {
-      const { data } = await axios.get(
-        `http://localhost:3000/api/projects/${this.projectId}/tests/${
-          this.testId
-        }`
-      )
+      try {
+        const { data } = await axios.get(
+          `http://localhost:3000/api/projects/${this.projectId}/tests/${
+            this.testId
+          }`
+        )
 
-      this.model = data
+        this.model = data
+      } catch (e) {
+        this.model = {}
+
+        this.$snackbar.open({
+          message: e.message,
+          type: 'is-danger',
+          position: 'is-top'
+        })
+      }
     }
   }
 }
