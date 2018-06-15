@@ -43,7 +43,7 @@
         </b-table-column>
 
         <b-table-column width="100">
-          <router-link :to="{ path: '/' }" class="button block" @click="detailsClicked(props.row.id, $event)">Details</router-link>
+          <router-link :to="{ path: '/' }" class="button is-info" @click="detailsClicked(props.row.id, $event)">Details</router-link>
         </b-table-column>
       </template>
 
@@ -96,8 +96,8 @@ export default {
           `http://localhost:3000/api/projects/${this.projectId}/tests?${params}`
         )
 
-        this.data = data
-        this.total = data.length
+        this.data = data.data
+        this.total = data.total
         this.loading = false
       } catch (e) {
         this.data = []

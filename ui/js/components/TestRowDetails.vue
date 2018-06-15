@@ -43,14 +43,6 @@ export default {
         }`
       )
 
-      data.description = 'Lorem Ipsum'
-      if (!data.thresholds) {
-        data.thresholds = {
-          '95th': '1234',
-          '50th': '100'
-        }
-      }
-
       this.model = data
     }
   }

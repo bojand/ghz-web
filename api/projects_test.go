@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -454,19 +455,21 @@ func TestProjectAPI(t *testing.T) {
 
 			assert.Equal(t, http.StatusOK, rec.Code)
 
-			ps := make([]model.Project, 0)
+			tl := new(TestList)
+			err := json.Unmarshal(rec.Body.Bytes(), &tl)
 
-			err := json.Unmarshal(rec.Body.Bytes(), &ps)
+			fmt.Printf("%#v\n\n", tl.Total)
 
 			assert.NoError(t, err)
-			assert.Len(t, ps, 20)
+			assert.Len(t, tl.Data, 20)
 
-			assert.NotZero(t, ps[0].ID)
-			assert.NotEmpty(t, ps[0].Name)
-			assert.NotZero(t, ps[1].ID)
-			assert.NotEmpty(t, ps[1].Name)
-			assert.NotZero(t, ps[19].ID)
-			assert.NotEmpty(t, ps[19].Name)
+			assert.Equal(t, 25, int(tl.Total))
+			assert.NotZero(t, tl.Data[0].ID)
+			assert.NotEmpty(t, tl.Data[0].Name)
+			assert.NotZero(t, tl.Data[1].ID)
+			assert.NotEmpty(t, tl.Data[1].Name)
+			assert.NotZero(t, tl.Data[19].ID)
+			assert.NotEmpty(t, tl.Data[19].Name)
 		}
 	})
 
@@ -486,19 +489,19 @@ func TestProjectAPI(t *testing.T) {
 
 			assert.Equal(t, http.StatusOK, rec.Code)
 
-			ps := make([]model.Project, 0)
-
-			err := json.Unmarshal(rec.Body.Bytes(), &ps)
+			tl := new(TestList)
+			err := json.Unmarshal(rec.Body.Bytes(), &tl)
 
 			assert.NoError(t, err)
-			assert.Len(t, ps, 5)
+			assert.Len(t, tl.Data, 5)
 
-			assert.NotZero(t, ps[0].ID)
-			assert.NotEmpty(t, ps[0].Name)
-			assert.NotZero(t, ps[1].ID)
-			assert.NotEmpty(t, ps[1].Name)
-			assert.NotZero(t, ps[4].ID)
-			assert.NotEmpty(t, ps[4].Name)
+			assert.Equal(t, 25, int(tl.Total))
+			assert.NotZero(t, tl.Data[0].ID)
+			assert.NotEmpty(t, tl.Data[0].Name)
+			assert.NotZero(t, tl.Data[1].ID)
+			assert.NotEmpty(t, tl.Data[1].Name)
+			assert.NotZero(t, tl.Data[4].ID)
+			assert.NotEmpty(t, tl.Data[4].Name)
 		}
 	})
 }

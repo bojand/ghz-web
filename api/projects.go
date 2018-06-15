@@ -3,7 +3,6 @@ package api
 import (
 	"net/http"
 	"strconv"
-	"strings"
 
 	"github.com/bojand/ghz-web/model"
 	"github.com/bojand/ghz-web/service"
@@ -15,6 +14,12 @@ import (
 type ProjectList struct {
 	Total uint             `json:"total"`
 	Data  []*model.Project `json:"data"`
+}
+
+// TestList response
+type TestList struct {
+	Total uint          `json:"total"`
+	Data  []*model.Test `json:"data"`
 }
 
 // SetupProjectAPI sets up the API
@@ -114,7 +119,8 @@ func (api *ProjectAPI) delete(c echo.Context) error {
 
 func (api *ProjectAPI) listTests(c echo.Context) error {
 	idparam := c.Param("pid")
-	pid, err := strconv.Atoi(idparam)
+	pidi, err := strconv.Atoi(idparam)
+	pid := uint(pidi)
 	getByID := true
 	if err != nil {
 		getByID = false
@@ -125,69 +131,66 @@ func (api *ProjectAPI) listTests(c echo.Context) error {
 		if p, err = api.ps.FindByName(idparam); gorm.IsRecordNotFoundError(err) {
 			return echo.NewHTTPError(http.StatusNotFound, err.Error())
 		}
-		pid = int(p.ID)
+		pid = p.ID
 	}
 
-	pageparam := c.QueryParam("page")
-	page := uint(0)
-	if pageparam != "" {
-		pageNum, err := strconv.Atoi(pageparam)
-		if err == nil {
-			if pageNum < 0 {
-				pageNum = pageNum * -1
-			}
+	page := getPageParam(c)
 
-			page = uint(pageNum)
-		}
-	}
+	doSort, sort, order := getSortAndOrder(c)
 
 	limit := uint(20)
 
-	tests, err := api.ts.FindByProjectID(uint(pid), limit, page)
+	countCh := make(chan uint, 1)
+	dataCh := make(chan []*model.Test, 1)
+	errCh := make(chan error, 2)
+	defer close(errCh)
 
-	if err != nil {
-		return c.JSON(http.StatusInternalServerError, "Bad Request: "+err.Error())
+	go func() {
+		count, err := api.ts.Count(pid)
+		errCh <- err
+		countCh <- count
+		close(countCh)
+	}()
+
+	go func() {
+		var tests []*model.Test
+		err = nil
+		if doSort {
+			tests, err = api.ts.FindByProjectIDSorted(pid, limit, page, sort, order)
+		} else {
+			tests, err = api.ts.FindByProjectID(pid, limit, page)
+		}
+		errCh <- err
+		dataCh <- tests
+		close(dataCh)
+	}()
+
+	count, data, err1, err2 := <-countCh, <-dataCh, <-errCh, <-errCh
+
+	if err1 != nil {
+		return c.JSON(http.StatusInternalServerError, "Bad Request: "+err1.Error())
 	}
 
-	return c.JSON(http.StatusOK, tests)
+	if err2 != nil {
+		return c.JSON(http.StatusInternalServerError, "Bad Request: "+err2.Error())
+	}
+
+	tl := &TestList{Total: count, Data: data}
+
+	return c.JSON(http.StatusOK, tl)
 }
 
 func (api *ProjectAPI) listProjects(c echo.Context) error {
-	pageparam := c.QueryParam("page")
-	page := uint(0)
-	if pageparam != "" {
-		pageNum, err := strconv.Atoi(pageparam)
-		if err == nil {
-			if pageNum < 0 {
-				pageNum = pageNum * -1
-			}
+	page := getPageParam(c)
 
-			page = uint(pageNum)
-		}
-	}
-
-	doSort := false
-	sort := c.QueryParam("sort")
-	order := c.QueryParam("order")
-	if sort != "" {
-		sort = strings.ToLower(sort)
-		if sort == "id" || sort == "name" {
-			doSort = true
-		}
-
-		if doSort {
-			order = strings.ToLower(order)
-			if order != "asc" && order != "desc" {
-				order = "asc"
-			}
-		}
-	}
+	doSort, sort, order := getSortAndOrder(c)
 
 	limit := uint(20)
 
 	countCh := make(chan uint, 1)
 	dataCh := make(chan []*model.Project, 1)
 	errCh := make(chan error, 2)
+	defer close(errCh)
 
 	go func() {
 		count, err := api.ps.Count()

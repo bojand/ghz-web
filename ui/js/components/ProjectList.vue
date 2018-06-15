@@ -30,7 +30,7 @@
         </b-table-column>
 
         <b-table-column width="100">
-          <router-link :to="{ name: 'project', params: { id: props.row.id } }" class="button block" @click="detailsClicked(props.row.id, $event)">Details</router-link>
+          <router-link :to="{ name: 'project', params: { id: props.row.id } }" class="button is-info" @click="detailsClicked(props.row.id, $event)">Details</router-link>
         </b-table-column>
       </template>
     </b-table>
