@@ -7,6 +7,8 @@ import (
 	"github.com/labstack/echo"
 )
 
+// TODO add tests
+
 func getPageParam(c echo.Context) uint {
 	pageparam := c.QueryParam("page")
 	page := uint(0)

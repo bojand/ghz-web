@@ -1,12 +1,12 @@
 <template>
   <section>
-    <h2 class="subtitle"><strong>Create Project</strong></h2>
+    <h2 class="subtitle"><strong>Create Test</strong></h2>
     <b-field grouped>
     <b-field>
-        <b-input v-model="projectName" placeholder="Name"></b-input>
+        <b-input v-model="testName" placeholder="Name"></b-input>
     </b-field>
     <b-field>
-        <b-input v-model="projectDesc" placeholder="Description"></b-input>
+        <b-input v-model="testDesc" placeholder="Description"></b-input>
     </b-field>
     <b-field>
         <p class="control">
@@ -23,18 +23,21 @@ import axios from 'axios'
 export default {
   data() {
     return {
-      projectName: '',
-      projectDesc: ''
+      testName: '',
+      testDesc: ''
     }
+  },
+  props: {
+    projectId: [String, Number]
   },
   methods: {
     async createProject() {
-      let name = this.projectName
-      let description = this.projectDesc
+      let name = this.testName
+      let description = this.testDesc
 
       try {
         const { data } = await axios.post(
-          'http://localhost:3000/api/projects',
+          `http://localhost:3000/api/projects/${this.projectId}/tests`,
           {
             name,
             description
@@ -44,13 +47,13 @@ export default {
         name = data.name
         description = data.description
 
-        this.$emit('project-created', {
+        this.$emit('test-created', {
           id: data.id,
           name,
           description
         })
-        this.projectName = ''
-        this.projectDesc = ''
+        this.testName = ''
+        this.testDesc = ''
       } catch (e) {
         this.$snackbar.open({
           message: e.message,
