@@ -926,3 +926,99 @@ func TestTestService_FindByProject(t *testing.T) {
 		assert.Len(t, tests, 0)
 	})
 }
+
+func TestTestService_Count(t *testing.T) {
+	defer os.Remove(dbName)
+
+	db, err := gorm.Open("sqlite3", dbName)
+	if err != nil {
+		assert.FailNow(t, err.Error())
+	}
+	defer db.Close()
+
+	db.AutoMigrate(&Project{}, &Test{})
+	db.Exec("PRAGMA foreign_keys = ON;")
+
+	dao := TestService{DB: db}
+
+	var pid1 uint
+	var pid2 uint
+
+	t.Run("create new tests and project 1", func(t *testing.T) {
+		p := &Project{}
+
+		o := Test{
+			Project:     p,
+			Name:        "Test 0",
+			Description: "Test Description Foo 0",
+		}
+		err := dao.Create(&o)
+
+		pid1 = p.ID
+
+		fmt.Println(o)
+		assert.NoError(t, err)
+
+		for n := 1; n <= 7; n++ {
+			nStr := strconv.FormatInt(int64(n), 10)
+
+			o = Test{
+				ProjectID:   p.ID,
+				Name:        "Test " + nStr,
+				Description: "Test Description Foo " + nStr,
+			}
+			err := dao.Create(&o)
+
+			assert.NoError(t, err)
+		}
+	})
+
+	t.Run("create 2nd tests and project", func(t *testing.T) {
+		p := &Project{}
+
+		o := Test{
+			Project:     p,
+			Name:        "Test P2 0 ",
+			Description: "Test Description Foo P2 0",
+		}
+		err := dao.Create(&o)
+
+		assert.NoError(t, err)
+
+		pid2 = p.ID
+
+		for n := 1; n <= 9; n++ {
+			nStr := strconv.FormatInt(int64(n), 10)
+
+			o = Test{
+				ProjectID:   p.ID,
+				Name:        "Test P2 " + nStr,
+				Description: "Test Description Foo P2 " + nStr,
+			}
+			err := dao.Create(&o)
+
+			assert.NoError(t, err)
+		}
+	})
+
+	t.Run("count project 1", func(t *testing.T) {
+		count, err := dao.Count(pid1)
+
+		assert.NoError(t, err)
+		assert.Equal(t, uint(8), count)
+	})
+
+	t.Run("find for project 2", func(t *testing.T) {
+		count, err := dao.Count(pid2)
+
+		assert.NoError(t, err)
+		assert.Equal(t, uint(10), count)
+	})
+
+	t.Run("find for project 3 unknown", func(t *testing.T) {
+		count, err := dao.Count(321)
+
+		assert.NoError(t, err)
+		assert.Equal(t, uint(0), count)
+	})
+}

@@ -14,7 +14,6 @@
       :opened-detailed="defaultOpenedDetails"
       detailed
       detail-key="id"
-      @details-open="loadTestData"
 
       backend-sorting
       :default-sort-direction="defaultSortOrder"
@@ -44,29 +43,20 @@
         </b-table-column>
 
         <b-table-column width="100">
-          <router-link :to="{ name: 'project', params: { id: props.row.id } }" class="button block" @click="detailsClicked(props.row.id, $event)">Details</router-link>
+          <router-link :to="{ path: '/' }" class="button block" @click="detailsClicked(props.row.id, $event)">Details</router-link>
         </b-table-column>
       </template>
 
       <template slot="detail" slot-scope="props">
-        <article class="media">
-            <div class="media-content">
-                <div class="content">
-                    <p>
-                        <strong>{{ props.row.details ? props.row.details.name : '' }}</strong>
-                        <br>
-                        {{ props.row.details ? props.row.details.description : '' }}
-                    </p>
-                </div>
-            </div>
-        </article>
-        </template>
+        <component-test-details :project-id="projectId" :testId="props.row.id"></component-test-details>
+      </template>
     </b-table>
   </section>
 </template>
 
 <script>
 import axios from 'axios'
+import TestRowDetails from './TestRowDetails.vue'
 
 export default {
   data() {
@@ -106,7 +96,6 @@ export default {
           `http://localhost:3000/api/projects/${this.projectId}/tests?${params}`
         )
 
-        console.log(data)
         this.data = data
         this.total = data.length
         this.loading = false
@@ -136,14 +125,6 @@ export default {
 
     detailsClicked(id, ev) {
       console.log(id)
-    },
-
-    async loadTestData(row, index) {
-      const { id: testId } = row
-      const { data } = await axios.get(
-        `http://localhost:3000/api/projects/${this.projectId}/tests/${testId}`
-      )
-      row.details = data
     }
   },
   filters: {
@@ -153,6 +134,9 @@ export default {
     truncate(value, length) {
       return value.length > length ? value.substr(0, length) + '...' : value
     }
+  },
+  components: {
+    'component-test-details': TestRowDetails
   }
 }
 </script>

@@ -270,6 +270,13 @@ func (ts *TestService) FindByProjectIDSorted(pid, num, page uint, sortField, ord
 	return s, err
 }
 
+// Count returns the total number of projects
+func (ts *TestService) Count(pid uint) (uint, error) {
+	count := uint(0)
+	err := ts.DB.Model(&Test{}).Where("project_id = ?", pid).Count(&count).Error
+	return count, err
+}
+
 // Create creates a new project
 func (ts *TestService) Create(t *Test) error {
 	return ts.DB.Create(t).Error
