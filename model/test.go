@@ -224,19 +224,19 @@ func (ts *TestService) FindByProjectIDSorted(pid, num, page uint, sortField, ord
 	return s, err
 }
 
-// Count returns the total number of projects
+// Count returns the total number of tests
 func (ts *TestService) Count(pid uint) (uint, error) {
 	count := uint(0)
 	err := ts.DB.Model(&Test{}).Where("project_id = ?", pid).Count(&count).Error
 	return count, err
 }
 
-// Create creates a new project
+// Create creates a new tests
 func (ts *TestService) Create(t *Test) error {
 	return ts.DB.Create(t).Error
 }
 
-// Update updates  project
+// Update updates  tests
 func (ts *TestService) Update(t *Test) error {
 	testToUpdate := &Test{}
 	if err := ts.DB.First(testToUpdate, t.ID).Error; err != nil {
@@ -251,7 +251,7 @@ func (ts *TestService) Update(t *Test) error {
 	return ts.DB.Save(t).Error
 }
 
-// Delete deletes project
+// Delete deletes tests
 func (ts *TestService) Delete(t *Test) error {
 	return errors.New("Not Implemented Yet")
 }

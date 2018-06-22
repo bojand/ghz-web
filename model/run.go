@@ -5,6 +5,8 @@ import (
 	"errors"
 	"strings"
 	"time"
+
+	"github.com/jinzhu/gorm"
 )
 
 // Run represents a project
@@ -20,6 +22,8 @@ type Run struct {
 	Slowest time.Duration `json:"slowest"`
 	Rps     float64       `json:"rps"`
 
+	Status Status `json:"status" validate:"oneof=ok fail"`
+
 	ErrorDist      map[string]int `json:"errorDistribution,omitempty" gorm:"-"`
 	StatusCodeDist map[string]int `json:"statusCodeDistribution,omitempty" gorm:"-"`
 
@@ -33,6 +37,8 @@ func (r *Run) BeforeSave() error {
 		return errors.New("Run must belong to a test")
 	}
 
+	r.Status = StatusOK
+
 	errDist := []byte("")
 	if r.ErrorDist != nil && len(r.ErrorDist) > 0 {
 		var err error
@@ -40,6 +46,8 @@ func (r *Run) BeforeSave() error {
 		if err != nil {
 			return err
 		}
+
+		r.Status = StatusFail
 	}
 
 	r.ErrorDistJSON = string(errDist)
@@ -90,4 +98,21 @@ func (r *Run) AfterFind() error {
 	r.StatusCodeDistJSON = ""
 
 	return nil
+}
+
+// RunService is our implementation
+type RunService struct {
+	DB *gorm.DB
+}
+
+// Create creates a new run
+func (rs *RunService) Create(r *Run) error {
+	return rs.DB.Create(r).Error
+}
+
+// Count returns the total number of runs
+func (rs *RunService) Count(tid uint) (uint, error) {
+	count := uint(0)
+	err := rs.DB.Model(&Run{}).Where("test_id = ?", tid).Count(&count).Error
+	return count, err
 }
