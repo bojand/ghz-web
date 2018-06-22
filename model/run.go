@@ -12,9 +12,8 @@ import (
 // Run represents a project
 type Run struct {
 	Model
-	TestID uint  `json:"testID" gorm:"type:integer REFERENCES tests(id)"`
-	Test   *Test `json:"-"`
-
+	TestID  uint          `json:"testID" gorm:"type:integer REFERENCES tests(id)"`
+	Test    *Test         `json:"-"`
 	Count   uint64        `json:"count"`
 	Total   time.Duration `json:"total"`
 	Average time.Duration `json:"average"`
