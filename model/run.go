@@ -115,3 +115,53 @@ func (rs *RunService) Count(tid uint) (uint, error) {
 	err := rs.DB.Model(&Run{}).Where("test_id = ?", tid).Count(&count).Error
 	return count, err
 }
+
+// FindByID finds run by id
+func (rs *RunService) FindByID(id uint) (*Run, error) {
+	r := new(Run)
+	err := rs.DB.First(r, id).Error
+	if err != nil {
+		r = nil
+	}
+	return r, err
+}
+
+// FindByTestID finds tests by project
+func (rs *RunService) FindByTestID(tid, num, page uint) ([]*Run, error) {
+	t := &Test{}
+	t.ID = tid
+
+	offset := uint(0)
+	if page >= 0 && num >= 0 {
+		offset = page * num
+	}
+
+	s := make([]*Run, 0)
+
+	err := rs.DB.Offset(offset).Limit(num).Order("id desc").Model(t).Related(&s).Error
+
+	return s, err
+}
+
+// FindByProjectIDSorted lists tests using sorting
+func (rs *RunService) FindByProjectIDSorted(tid, num, page uint, sortField, order string) ([]*Run, error) {
+	if (sortField != "name" && sortField != "id") || (order != "asc" && order != "desc") {
+		return nil, errors.New("Invalid sort parameters")
+	}
+
+	offset := uint(0)
+	if page >= 0 && num >= 0 {
+		offset = page * num
+	}
+
+	orderSQL := sortField + " " + order
+
+	t := &Test{}
+	t.ID = tid
+
+	s := make([]*Run, 0)
+
+	err := rs.DB.Order(orderSQL).Offset(offset).Limit(num).Model(t).Related(&s).Error
+
+	return s, err
+}

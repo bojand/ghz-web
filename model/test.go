@@ -163,7 +163,7 @@ type TestService struct {
 	DB *gorm.DB
 }
 
-// FindByID finds project by id
+// FindByID finds test by id
 func (ts *TestService) FindByID(id uint) (*Test, error) {
 	t := new(Test)
 	err := ts.DB.First(t, id).Error
@@ -173,7 +173,7 @@ func (ts *TestService) FindByID(id uint) (*Test, error) {
 	return t, err
 }
 
-// FindByName finds project by name
+// FindByName finds test by name
 func (ts *TestService) FindByName(name string) (*Test, error) {
 	name = strings.ToLower(name)
 	t := new(Test)
@@ -201,7 +201,7 @@ func (ts *TestService) FindByProjectID(pid, num, page uint) ([]*Test, error) {
 	return s, err
 }
 
-// FindByProjectIDSorted lists projects using sorting
+// FindByProjectIDSorted lists tests using sorting
 func (ts *TestService) FindByProjectIDSorted(pid, num, page uint, sortField, order string) ([]*Test, error) {
 	if (sortField != "name" && sortField != "id") || (order != "asc" && order != "desc") {
 		return nil, errors.New("Invalid sort parameters")
@@ -219,7 +219,7 @@ func (ts *TestService) FindByProjectIDSorted(pid, num, page uint, sortField, ord
 
 	s := make([]*Test, 0)
 
-	err := ts.DB.Order(orderSQL).Offset(offset).Limit(num).Order("name desc").Model(p).Related(&s).Error
+	err := ts.DB.Order(orderSQL).Offset(offset).Limit(num).Model(p).Related(&s).Error
 
 	return s, err
 }

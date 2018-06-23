@@ -2,7 +2,7 @@ package service
 
 import "github.com/bojand/ghz-web/model"
 
-// TestService is the interface for projects
+// TestService is the interface for tests
 type TestService interface {
 	Count(pid uint) (uint, error)
 	FindByID(id uint) (*model.Test, error)

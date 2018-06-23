@@ -130,7 +130,7 @@ func (ps *ProjectService) ListSorted(limit, page uint, sortField, order string) 
 
 	s := make([]*Project, 0)
 
-	err := ps.DB.Order(orderSQL).Offset(offset).Limit(limit).Order("name desc").Find(&s).Error
+	err := ps.DB.Order(orderSQL).Offset(offset).Limit(limit).Find(&s).Error
 
 	return s, err
 }
