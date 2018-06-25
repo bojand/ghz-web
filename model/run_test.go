@@ -1,6 +1,7 @@
 package model
 
 import (
+	"fmt"
 	"os"
 	"testing"
 	"time"
@@ -579,6 +580,196 @@ func TestRunService_FindByTestID(t *testing.T) {
 
 	t.Run("find invalid", func(t *testing.T) {
 		runs, err := dao.FindByTestID(1235, 5, 0)
+
+		assert.NoError(t, err)
+		assert.Len(t, runs, 0)
+	})
+}
+
+func TestRunService_FindByTestIDSorted(t *testing.T) {
+	defer os.Remove(dbName)
+
+	db, err := gorm.Open("sqlite3", dbName)
+	if err != nil {
+		assert.FailNow(t, err.Error())
+	}
+	defer db.Close()
+
+	db.AutoMigrate(&Project{}, &Test{}, &Run{})
+	db.Exec("PRAGMA foreign_keys = ON;")
+
+	dao := RunService{DB: db}
+	var tid1, tid2, pid uint
+
+	t.Run("new run and test and project", func(t *testing.T) {
+		p := &Project{}
+
+		o := &Test{
+			Project:     p,
+			Name:        "Test 111 ",
+			Description: "Test Description Asdf ",
+		}
+
+		r := &Run{
+			Test:    o,
+			Count:   100,
+			Total:   50000 * time.Millisecond,
+			Average: 1000 * time.Millisecond,
+			Fastest: 100 * time.Millisecond,
+			Slowest: 10000 * time.Millisecond,
+		}
+
+		err := dao.Create(r)
+
+		assert.NoError(t, err)
+
+		tid1 = o.ID
+		pid = p.ID
+
+		// create more runs
+		for n := 1; n < 10; n++ {
+			nr := &Run{
+				TestID:  tid1,
+				Count:   100 + uint64(n),
+				Total:   time.Duration(50000+n) * time.Millisecond,
+				Average: time.Duration(1000+n) * time.Millisecond,
+				Fastest: time.Duration(100+n) * time.Millisecond,
+				Slowest: time.Duration(10000+n) * time.Millisecond,
+			}
+			err := dao.Create(nr)
+
+			assert.NoError(t, err)
+		}
+	})
+
+	t.Run("new runs and different test", func(t *testing.T) {
+		o := &Test{
+			ProjectID:   pid,
+			Name:        "Test 222 ",
+			Description: "Test Description 2 Asdf 2",
+		}
+
+		r := &Run{
+			Test:    o,
+			Count:   210,
+			Total:   50200 * time.Millisecond,
+			Average: 1200 * time.Millisecond,
+			Fastest: 120 * time.Millisecond,
+			Slowest: 10200 * time.Millisecond,
+			Rps:     5000,
+		}
+
+		err := dao.Create(r)
+
+		assert.NoError(t, err)
+
+		tid2 = o.ID
+
+		// create more runs
+		for n := 1; n < 20; n++ {
+			nr := &Run{
+				TestID:  tid2,
+				Count:   210 + uint64(n),
+				Total:   time.Duration(50200+n) * time.Millisecond,
+				Average: time.Duration(1200+n) * time.Millisecond,
+				Fastest: time.Duration(120+n) * time.Millisecond,
+				Slowest: time.Duration(10200+n) * time.Millisecond,
+				Rps:     5000 + float64(n),
+			}
+			err := dao.Create(nr)
+
+			assert.NoError(t, err)
+		}
+	})
+
+	t.Run("find for test 1 by id asc", func(t *testing.T) {
+		runs, err := dao.FindByTestIDSorted(tid1, 20, 0, "id", "asc")
+
+		fmt.Printf("%#v\n\n", runs)
+
+		assert.NoError(t, err)
+		assert.Len(t, runs, 10)
+		assert.Equal(t, uint(1), runs[0].ID)
+		assert.Equal(t, uint(10), runs[9].ID)
+	})
+
+	t.Run("find for test 1 by id desc", func(t *testing.T) {
+		runs, err := dao.FindByTestIDSorted(tid1, 20, 0, "id", "desc")
+
+		assert.NoError(t, err)
+		assert.Len(t, runs, 10)
+		assert.Equal(t, uint(10), runs[0].ID)
+		assert.Equal(t, uint(1), runs[9].ID)
+	})
+
+	t.Run("find for test 2 by count asc", func(t *testing.T) {
+		runs, err := dao.FindByTestIDSorted(tid2, 30, 0, "count", "asc")
+
+		assert.NoError(t, err)
+		assert.Len(t, runs, 20)
+		assert.Equal(t, 210, int(runs[0].Count))
+		assert.Equal(t, 229, int(runs[19].Count))
+	})
+
+	t.Run("find for test 2 by total desc paged", func(t *testing.T) {
+		runs, err := dao.FindByTestIDSorted(tid2, 5, 1, "total", "desc")
+
+		assert.NoError(t, err)
+		assert.Len(t, runs, 5)
+		assert.Equal(t, time.Duration(50200+14)*time.Millisecond, runs[0].Total)
+		assert.Equal(t, time.Duration(50200+10)*time.Millisecond, runs[4].Total)
+	})
+
+	t.Run("find for test 2 by average asc paged", func(t *testing.T) {
+		runs, err := dao.FindByTestIDSorted(tid2, 7, 1, "average", "asc")
+
+		assert.NoError(t, err)
+		assert.Len(t, runs, 7)
+		assert.Equal(t, time.Duration(1200+7)*time.Millisecond, runs[0].Average)
+		assert.Equal(t, time.Duration(1200+13)*time.Millisecond, runs[6].Average)
+	})
+
+	t.Run("find for test 2 by fastest asc paged", func(t *testing.T) {
+		runs, err := dao.FindByTestIDSorted(tid2, 6, 1, "fastest", "asc")
+
+		assert.NoError(t, err)
+		assert.Len(t, runs, 6)
+		assert.Equal(t, time.Duration(120+6)*time.Millisecond, runs[0].Fastest)
+		assert.Equal(t, time.Duration(120+11)*time.Millisecond, runs[5].Fastest)
+	})
+
+	t.Run("find for test 2 by slowest desc paged", func(t *testing.T) {
+		runs, err := dao.FindByTestIDSorted(tid2, 5, 1, "fastest", "desc")
+
+		assert.NoError(t, err)
+		assert.Len(t, runs, 5)
+		assert.Equal(t, time.Duration(10200+14)*time.Millisecond, runs[0].Slowest)
+		assert.Equal(t, time.Duration(10200+10)*time.Millisecond, runs[4].Slowest)
+	})
+
+	t.Run("find for test 2 by rps desc paged", func(t *testing.T) {
+		runs, err := dao.FindByTestIDSorted(tid2, 5, 1, "rps", "desc")
+
+		assert.NoError(t, err)
+		assert.Len(t, runs, 5)
+		assert.Equal(t, float64(5000+14), runs[0].Rps)
+		assert.Equal(t, float64(5000+10), runs[4].Rps)
+	})
+
+	t.Run("error on invalid sort param", func(t *testing.T) {
+		_, err := dao.FindByTestIDSorted(tid2, 0, 1, "asdf", "asc")
+
+		assert.Error(t, err)
+	})
+
+	t.Run("error on invalid order param", func(t *testing.T) {
+		_, err := dao.FindByTestIDSorted(tid2, 0, 1, "count", "asce")
+
+		assert.Error(t, err)
+	})
+
+	t.Run("0 for invalid test id", func(t *testing.T) {
+		runs, err := dao.FindByTestIDSorted(1234, 5, 1, "rps", "desc")
 
 		assert.NoError(t, err)
 		assert.Len(t, runs, 0)

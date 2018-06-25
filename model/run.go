@@ -136,16 +136,18 @@ func (rs *RunService) FindByTestID(tid, num, page uint) ([]*Run, error) {
 		offset = page * num
 	}
 
-	s := make([]*Run, 0)
+	s := make([]*Run, num)
 
 	err := rs.DB.Offset(offset).Limit(num).Order("id desc").Model(t).Related(&s).Error
 
 	return s, err
 }
 
-// FindByProjectIDSorted lists tests using sorting
-func (rs *RunService) FindByProjectIDSorted(tid, num, page uint, sortField, order string) ([]*Run, error) {
-	if (sortField != "name" && sortField != "id") || (order != "asc" && order != "desc") {
+// FindByTestIDSorted lists tests using sorting
+func (rs *RunService) FindByTestIDSorted(tid, num, page uint, sortField, order string) ([]*Run, error) {
+	if (sortField != "id" && sortField != "count" && sortField != "total" && sortField != "average" &&
+		sortField != "fastest" && sortField != "slowest" && sortField != "rps") ||
+		(order != "asc" && order != "desc") {
 		return nil, errors.New("Invalid sort parameters")
 	}
 
@@ -159,7 +161,7 @@ func (rs *RunService) FindByProjectIDSorted(tid, num, page uint, sortField, orde
 	t := &Test{}
 	t.ID = tid
 
-	s := make([]*Run, 0)
+	s := make([]*Run, num)
 
 	err := rs.DB.Order(orderSQL).Offset(offset).Limit(num).Model(t).Related(&s).Error
 

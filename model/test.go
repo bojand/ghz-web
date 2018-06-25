@@ -194,7 +194,7 @@ func (ts *TestService) FindByProjectID(pid, num, page uint) ([]*Test, error) {
 		offset = page * num
 	}
 
-	s := make([]*Test, 0)
+	s := make([]*Test, num)
 
 	err := ts.DB.Offset(offset).Limit(num).Order("name desc").Model(p).Related(&s).Error
 
@@ -217,7 +217,7 @@ func (ts *TestService) FindByProjectIDSorted(pid, num, page uint, sortField, ord
 	p := &Project{}
 	p.ID = pid
 
-	s := make([]*Test, 0)
+	s := make([]*Test, num)
 
 	err := ts.DB.Order(orderSQL).Offset(offset).Limit(num).Model(p).Related(&s).Error
 
