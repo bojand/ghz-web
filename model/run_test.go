@@ -229,6 +229,7 @@ func TestRunService_Create(t *testing.T) {
 		assert.Equal(t, r.ErrorDistJSON, cr.ErrorDistJSON)
 		assert.True(t, r.CreatedAt.Equal(cr.CreatedAt))
 		assert.True(t, r.UpdatedAt.Equal(cr.CreatedAt))
+		assert.True(t, r.UpdatedAt.Equal(cr.UpdatedAt))
 	})
 
 	t.Run("new run and existing test id", func(t *testing.T) {
@@ -260,7 +261,7 @@ func TestRunService_Create(t *testing.T) {
 		assert.Empty(t, cr.ErrorDistJSON)
 		assert.Equal(t, r.ErrorDistJSON, cr.ErrorDistJSON)
 		assert.True(t, r.CreatedAt.Equal(cr.CreatedAt))
-		assert.True(t, r.UpdatedAt.Equal(cr.CreatedAt))
+		assert.True(t, r.UpdatedAt.Equal(cr.UpdatedAt))
 	})
 }
 
@@ -773,5 +774,116 @@ func TestRunService_FindByTestIDSorted(t *testing.T) {
 
 		assert.NoError(t, err)
 		assert.Len(t, runs, 0)
+	})
+}
+
+func TestRunService_Update(t *testing.T) {
+	defer os.Remove(dbName)
+
+	db, err := gorm.Open("sqlite3", dbName)
+	if err != nil {
+		assert.FailNow(t, err.Error())
+	}
+	defer db.Close()
+
+	db.AutoMigrate(&Project{}, &Test{}, &Run{})
+	db.Exec("PRAGMA foreign_keys = ON;")
+
+	dao := RunService{DB: db}
+	var rid, tid uint
+	var cRun *Run
+
+	t.Run("new run and test and project", func(t *testing.T) {
+		p := &Project{}
+
+		tst := &Test{
+			Project:     p,
+			Name:        "Test 111 ",
+			Description: "Test Description Asdf ",
+		}
+
+		r := &Run{
+			Test:    tst,
+			Count:   100,
+			Total:   20000 * time.Millisecond,
+			Average: 1000 * time.Millisecond,
+			Fastest: 100 * time.Millisecond,
+			Slowest: 10000 * time.Millisecond,
+		}
+
+		err := dao.Create(r)
+
+		assert.NoError(t, err)
+
+		tid = tst.ID
+		rid = r.ID
+		cRun = r
+	})
+
+	t.Run("update", func(t *testing.T) {
+		r := &Run{
+			TestID:  tid,
+			Count:   200,
+			Total:   30000 * time.Millisecond,
+			Average: 2000 * time.Millisecond,
+			Fastest: 200 * time.Millisecond,
+			Slowest: 20000 * time.Millisecond,
+		}
+
+		r.CreatedAt = cRun.CreatedAt
+		r.ID = rid
+
+		err := dao.Update(r)
+
+		assert.NoError(t, err)
+
+		cr := &Run{}
+		err = db.First(cr, rid).Error
+		assert.NoError(t, err)
+		assert.Equal(t, r.TestID, cr.TestID)
+		assert.Equal(t, r.Status, cr.Status)
+		assert.Empty(t, cr.StatusCodeDistJSON)
+		assert.Empty(t, cr.ErrorDistJSON)
+		assert.Equal(t, r.ErrorDistJSON, cr.ErrorDistJSON)
+		assert.True(t, cRun.CreatedAt.Equal(r.CreatedAt))
+		assert.True(t, cRun.UpdatedAt.Before(r.UpdatedAt))
+
+		cRun = cr
+	})
+
+	t.Run("fail update on unknown run id", func(t *testing.T) {
+		r := &Run{
+			TestID:  tid,
+			Count:   200,
+			Total:   30000 * time.Millisecond,
+			Average: 2000 * time.Millisecond,
+			Fastest: 200 * time.Millisecond,
+			Slowest: 20000 * time.Millisecond,
+		}
+
+		r.CreatedAt = cRun.CreatedAt
+		r.ID = 123
+
+		err := dao.Update(r)
+
+		assert.Error(t, err)
+	})
+
+	t.Run("fail update on unknown test id", func(t *testing.T) {
+		r := &Run{
+			TestID:  432,
+			Count:   200,
+			Total:   30000 * time.Millisecond,
+			Average: 2000 * time.Millisecond,
+			Fastest: 200 * time.Millisecond,
+			Slowest: 20000 * time.Millisecond,
+		}
+
+		r.CreatedAt = cRun.CreatedAt
+		r.ID = rid
+
+		err := dao.Update(r)
+
+		assert.Error(t, err)
 	})
 }

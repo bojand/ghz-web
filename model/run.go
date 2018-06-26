@@ -167,3 +167,18 @@ func (rs *RunService) FindByTestIDSorted(tid, num, page uint, sortField, order s
 
 	return s, err
 }
+
+// Update updates a run
+func (rs *RunService) Update(r *Run) error {
+	runToUpdate := &Run{}
+	if err := rs.DB.First(runToUpdate, r.ID).Error; err != nil {
+		return err
+	}
+
+	return rs.DB.Save(r).Error
+}
+
+// Delete deletes a run
+func (rs *RunService) Delete(r *Run) error {
+	return errors.New("Not Implemented Yet")
+}

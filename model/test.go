@@ -236,7 +236,7 @@ func (ts *TestService) Create(t *Test) error {
 	return ts.DB.Create(t).Error
 }
 
-// Update updates  tests
+// Update updates tests
 func (ts *TestService) Update(t *Test) error {
 	testToUpdate := &Test{}
 	if err := ts.DB.First(testToUpdate, t.ID).Error; err != nil {
