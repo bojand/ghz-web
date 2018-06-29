@@ -8,7 +8,7 @@ type RunService interface {
 	FindByID(id uint) (*model.Run, error)
 	FindByTestID(pid uint, limit, page uint) ([]*model.Run, error)
 	FindByTestIDSorted(pid, num, page uint, sortField, order string) ([]*model.Run, error)
-	Create(m *model.Test) error
-	Update(m *model.Test) error
-	Delete(m *model.Test) error
+	Create(m *model.Run) error
+	Update(m *model.Run) error
+	Delete(m *model.Run) error
 }

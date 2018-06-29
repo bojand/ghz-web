@@ -17,7 +17,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-const dbName = "../test/project_test.db"
+const dbName = "../test/api_test.db"
 
 func TestProjectAPI(t *testing.T) {
 

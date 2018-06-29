@@ -96,7 +96,7 @@ func (api *ProjectAPI) update(c echo.Context) error {
 
 	id, err := strconv.Atoi(c.Param("pid"))
 	if err != nil {
-		return echo.NewHTTPError(http.StatusNotFound, err.Error())
+		return echo.NewHTTPError(http.StatusNotFound, "Invalid id")
 	}
 
 	uid := uint(id)

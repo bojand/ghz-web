@@ -21,8 +21,6 @@ func SetupTestAPI(g *echo.Group, ts service.TestService) {
 
 	runsGroup := g.Group("/:tid/runs")
 
-	// runsGroup.GET("", api.getRuns)
-
 	SetupRunAPI(runsGroup)
 }
 
@@ -35,7 +33,7 @@ func (api *TestAPI) create(c echo.Context) error {
 	idparam := c.Param("pid")
 	pid, err := strconv.Atoi(idparam)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+		return echo.NewHTTPError(http.StatusNotFound, "Invalid id")
 	}
 
 	t := new(model.Test)
@@ -90,7 +88,7 @@ func (api *TestAPI) update(c echo.Context) error {
 
 	id, err := strconv.Atoi(c.Param("tid"))
 	if err != nil {
-		return echo.NewHTTPError(http.StatusNotFound, err.Error())
+		return echo.NewHTTPError(http.StatusNotFound, "Invalid id")
 	}
 
 	uid := uint(id)

@@ -42,7 +42,7 @@ func (app *Application) Start() {
 
 	app.setupServer()
 
-	// app.testStuff()
+	app.testEmbeddedStuff()
 
 	app.Logger.Fatal(app.Server.Start(app.Config.Server.GetHostPort()))
 }
@@ -79,7 +79,7 @@ func (app *Application) setupDatabase() error {
 	}
 
 	// Migrate the schema
-	db.AutoMigrate(&model.Project{}, model.Test{})
+	db.AutoMigrate(&model.Project{}, &model.Test{})
 
 	if dbType == "sqlite3" {
 		// for sqlite we need this for foreign key constraint
@@ -141,6 +141,38 @@ const (
 	milli4 = 4 * time.Millisecond
 	milli5 = 5 * time.Millisecond
 )
+
+func (app *Application) testEmbeddedStuff() {
+	type BasePost struct {
+		Id    int64
+		Title string
+		URL   string
+	}
+
+	type Author struct {
+		ID    string
+		Name  string
+		Email string
+	}
+
+	type HNPost struct {
+		BasePost
+		Author  `gorm:"embedded_prefix:user_"` // Embedded struct
+		Upvotes int32
+	}
+
+	type EngadgetPost struct {
+		BasePost BasePost `gorm:"embedded"`
+		Author   Author   `gorm:"embedded;embedded_prefix:author_"` // Embedded struct
+		ImageURL string
+	}
+
+	app.DB.AutoMigrate(&BasePost{}, &Author{}, &HNPost{}, &EngadgetPost{})
+
+	app.DB.Save(&HNPost{BasePost: BasePost{Title: "news"}})
+	app.DB.Save(&HNPost{BasePost: BasePost{Title: "hn_news"}})
+	app.DB.Save(&EngadgetPost{BasePost: BasePost{Title: "engadget_news"}})
+}
 
 func (app *Application) testStuff() {
 	// TEST STUFF
