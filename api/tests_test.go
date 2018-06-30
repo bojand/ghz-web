@@ -328,4 +328,108 @@ func TestTestAPI(t *testing.T) {
 			assert.Equal(t, "updated test description", tm.Description)
 		}
 	})
+
+	t.Run("populateTest with unknown ID should 404", func(t *testing.T) {
+		e := echo.New()
+
+		req := httptest.NewRequest(echo.GET, "/"+pid+"/156", strings.NewReader(""))
+		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+		rec := httptest.NewRecorder()
+
+		c := e.NewContext(req, rec)
+		c.SetParamNames("pid", "tid")
+		c.SetParamValues(pid, "156")
+
+		handler := func(c echo.Context) error {
+			return c.String(http.StatusOK, "test")
+		}
+
+		popMW := testAPI.populateTest(handler)
+		err := popMW(c)
+		if assert.Error(t, err) {
+			assert.IsType(t, err, &echo.HTTPError{})
+			httpErr := err.(*echo.HTTPError)
+			assert.Equal(t, http.StatusNotFound, httpErr.Code)
+		}
+	})
+
+	t.Run("populateTest with unknown test name should 404", func(t *testing.T) {
+		e := echo.New()
+
+		req := httptest.NewRequest(echo.GET, "/"+pid+"/asdfdsa", strings.NewReader(""))
+		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+		rec := httptest.NewRecorder()
+
+		c := e.NewContext(req, rec)
+		c.SetParamNames("pid", "tid")
+		c.SetParamValues(pid, "asdfdsa")
+
+		handler := func(c echo.Context) error {
+			return c.String(http.StatusOK, "test")
+		}
+
+		popMW := testAPI.populateTest(handler)
+		err := popMW(c)
+		if assert.Error(t, err) {
+			assert.IsType(t, err, &echo.HTTPError{})
+			httpErr := err.(*echo.HTTPError)
+			assert.Equal(t, http.StatusNotFound, httpErr.Code)
+		}
+	})
+
+	t.Run("populateTest with valid id should work", func(t *testing.T) {
+		e := echo.New()
+
+		req := httptest.NewRequest(echo.GET, "/"+pid+"/"+tid, strings.NewReader(""))
+		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+		rec := httptest.NewRecorder()
+
+		c := e.NewContext(req, rec)
+		c.SetParamNames("pid", "tid")
+		c.SetParamValues(pid, tid)
+
+		handler := func(c echo.Context) error {
+			return c.String(http.StatusOK, "test")
+		}
+
+		popMW := testAPI.populateTest(handler)
+		err := popMW(c)
+		if assert.NoError(t, err) {
+			to := c.Get("test")
+			assert.IsType(t, to, &model.Test{})
+			tm := to.(*model.Test)
+			assert.NotZero(t, tm.ID)
+			assert.Equal(t, testID, tm.ID)
+			assert.Equal(t, "updatedtestname", tm.Name)
+			assert.Equal(t, "updated test description", tm.Description)
+		}
+	})
+
+	t.Run("populateTest with valid name should work", func(t *testing.T) {
+		e := echo.New()
+
+		req := httptest.NewRequest(echo.GET, "/"+pid+"/updatedtestname", strings.NewReader(""))
+		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+		rec := httptest.NewRecorder()
+
+		c := e.NewContext(req, rec)
+		c.SetParamNames("pid", "tid")
+		c.SetParamValues(pid, "updatedtestname")
+
+		handler := func(c echo.Context) error {
+			return c.String(http.StatusOK, "test")
+		}
+
+		popMW := testAPI.populateTest(handler)
+		err := popMW(c)
+		if assert.NoError(t, err) {
+			to := c.Get("test")
+			assert.IsType(t, to, &model.Test{})
+			tm := to.(*model.Test)
+			assert.NotZero(t, tm.ID)
+			assert.Equal(t, testID, tm.ID)
+			assert.Equal(t, "updatedtestname", tm.Name)
+			assert.Equal(t, "updated test description", tm.Description)
+		}
+	})
 }

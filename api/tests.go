@@ -21,6 +21,7 @@ func SetupTestAPI(g *echo.Group, ts service.TestService) {
 
 	runsGroup := g.Group("/:tid/runs")
 
+	runsGroup.Use(api.populateTest)
 	SetupRunAPI(runsGroup)
 }
 
@@ -53,27 +54,9 @@ func (api *TestAPI) create(c echo.Context) error {
 }
 
 func (api *TestAPI) get(c echo.Context) error {
-	idparam := c.Param("tid")
-	id, err := strconv.Atoi(idparam)
-	getByID := true
+	t, err := api.getTest(c)
 	if err != nil {
-		getByID = false
-	}
-
-	var t *model.Test
-
-	if getByID {
-		if t, err = api.ts.FindByID(uint(id)); gorm.IsRecordNotFoundError(err) {
-			return echo.NewHTTPError(http.StatusNotFound, err.Error())
-		}
-	} else {
-		if t, err = api.ts.FindByName(idparam); gorm.IsRecordNotFoundError(err) {
-			return echo.NewHTTPError(http.StatusNotFound, err.Error())
-		}
-	}
-
-	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Bad Request: "+err.Error())
+		return err
 	}
 
 	return c.JSON(http.StatusOK, t)
@@ -116,4 +99,44 @@ func (api *TestAPI) update(c echo.Context) error {
 
 func (api *TestAPI) delete(c echo.Context) error {
 	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
+}
+
+func (api *TestAPI) getTest(c echo.Context) (*model.Test, error) {
+	idparam := c.Param("tid")
+	id, err := strconv.Atoi(idparam)
+	getByID := true
+	if err != nil {
+		getByID = false
+	}
+
+	var t *model.Test
+
+	if getByID {
+		if t, err = api.ts.FindByID(uint(id)); gorm.IsRecordNotFoundError(err) {
+			return nil, echo.NewHTTPError(http.StatusNotFound, err.Error())
+		}
+	} else {
+		if t, err = api.ts.FindByName(idparam); gorm.IsRecordNotFoundError(err) {
+			return nil, echo.NewHTTPError(http.StatusNotFound, err.Error())
+		}
+	}
+
+	if err != nil {
+		return nil, echo.NewHTTPError(http.StatusInternalServerError, "Bad Request: "+err.Error())
+	}
+
+	return t, nil
+}
+
+func (api *TestAPI) populateTest(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		t, err := api.getTest(c)
+		if err != nil {
+			return err
+		}
+
+		c.Set("test", t)
+
+		return nil
+	}
 }
