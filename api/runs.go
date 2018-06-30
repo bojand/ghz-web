@@ -62,7 +62,7 @@ func (api *RunAPI) get(c echo.Context) error {
 	}
 
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, "Bad Request: "+err.Error())
+		return echo.NewHTTPError(http.StatusInternalServerError, "Bad Request: "+err.Error())
 	}
 
 	return c.JSON(http.StatusOK, r)
@@ -84,7 +84,7 @@ func (api *RunAPI) update(c echo.Context) error {
 	r.ID = uid
 
 	if err = api.rs.Update(r); gorm.IsRecordNotFoundError(err) {
-		return c.JSON(http.StatusNotFound, "Not Found")
+		return echo.NewHTTPError(http.StatusNotFound, "Not Found")
 	}
 
 	if err != nil {

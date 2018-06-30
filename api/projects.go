@@ -34,6 +34,7 @@ func SetupProjectAPI(g *echo.Group, ps service.ProjectService, ts service.TestSe
 
 	testsGroup := g.Group("/:pid/tests")
 
+	testsGroup.Use(api.populateProject)
 	testsGroup.GET("", api.listTests)
 
 	SetupTestAPI(testsGroup, ts)
@@ -61,27 +62,9 @@ func (api *ProjectAPI) create(c echo.Context) error {
 }
 
 func (api *ProjectAPI) get(c echo.Context) error {
-	idparam := c.Param("pid")
-	id, err := strconv.Atoi(idparam)
-	getByID := true
+	p, err := api.getProject(c)
 	if err != nil {
-		getByID = false
-	}
-
-	var p *model.Project
-
-	if getByID {
-		if p, err = api.ps.FindByID(uint(id)); gorm.IsRecordNotFoundError(err) {
-			return echo.NewHTTPError(http.StatusNotFound, err.Error())
-		}
-	} else {
-		if p, err = api.ps.FindByName(idparam); gorm.IsRecordNotFoundError(err) {
-			return echo.NewHTTPError(http.StatusNotFound, err.Error())
-		}
-	}
-
-	if err != nil {
-		return c.JSON(http.StatusInternalServerError, "Bad Request: "+err.Error())
+		return err
 	}
 
 	return c.JSON(http.StatusOK, p)
@@ -103,7 +86,7 @@ func (api *ProjectAPI) update(c echo.Context) error {
 	p.ID = uid
 
 	if err = api.ps.Update(p); gorm.IsRecordNotFoundError(err) {
-		return c.JSON(http.StatusNotFound, "Not Found")
+		return echo.NewHTTPError(http.StatusNotFound, "Not Found")
 	}
 
 	if err != nil {
@@ -168,11 +151,11 @@ func (api *ProjectAPI) listTests(c echo.Context) error {
 	count, data, err1, err2 := <-countCh, <-dataCh, <-errCh, <-errCh
 
 	if err1 != nil {
-		return c.JSON(http.StatusInternalServerError, "Bad Request: "+err1.Error())
+		return echo.NewHTTPError(http.StatusInternalServerError, "Bad Request: "+err1.Error())
 	}
 
 	if err2 != nil {
-		return c.JSON(http.StatusInternalServerError, "Bad Request: "+err2.Error())
+		return echo.NewHTTPError(http.StatusInternalServerError, "Bad Request: "+err2.Error())
 	}
 
 	tl := &TestList{Total: count, Data: data}
@@ -215,14 +198,55 @@ func (api *ProjectAPI) listProjects(c echo.Context) error {
 	count, data, err1, err2 := <-countCh, <-dataCh, <-errCh, <-errCh
 
 	if err1 != nil {
-		return c.JSON(http.StatusInternalServerError, "Bad Request: "+err1.Error())
+		return echo.NewHTTPError(http.StatusInternalServerError, "Bad Request: "+err1.Error())
 	}
 
 	if err2 != nil {
-		return c.JSON(http.StatusInternalServerError, "Bad Request: "+err2.Error())
+		return echo.NewHTTPError(http.StatusInternalServerError, "Bad Request: "+err2.Error())
 	}
 
 	pl := &ProjectList{Total: count, Data: data}
 
 	return c.JSON(http.StatusOK, pl)
+}
+
+// getProject gets Project
+func (api *ProjectAPI) getProject(c echo.Context) (*model.Project, error) {
+	idparam := c.Param("pid")
+	id, err := strconv.Atoi(idparam)
+	getByID := true
+	if err != nil {
+		getByID = false
+	}
+
+	var p *model.Project
+
+	if getByID {
+		if p, err = api.ps.FindByID(uint(id)); gorm.IsRecordNotFoundError(err) {
+			return nil, echo.NewHTTPError(http.StatusNotFound, err.Error())
+		}
+	} else {
+		if p, err = api.ps.FindByName(idparam); gorm.IsRecordNotFoundError(err) {
+			return nil, echo.NewHTTPError(http.StatusNotFound, err.Error())
+		}
+	}
+
+	if err != nil {
+		return nil, echo.NewHTTPError(http.StatusInternalServerError, "Bad Request: "+err.Error())
+	}
+
+	return p, nil
+}
+
+func (api *ProjectAPI) populateProject(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		p, err := api.getProject(c)
+		if err != nil {
+			return err
+		}
+
+		c.Set("project", p)
+
+		return nil
+	}
 }

@@ -237,8 +237,11 @@ func TestProjectAPI(t *testing.T) {
 		c.SetParamNames("pid")
 		c.SetParamValues("12345")
 
-		if assert.NoError(t, projectAPI.update(c)) {
-			assert.Equal(t, http.StatusNotFound, rec.Code)
+		err := projectAPI.update(c)
+		if assert.Error(t, err) {
+			assert.IsType(t, err, &echo.HTTPError{})
+			httpErr := err.(*echo.HTTPError)
+			assert.Equal(t, http.StatusNotFound, httpErr.Code)
 		}
 	})
 
@@ -502,6 +505,84 @@ func TestProjectAPI(t *testing.T) {
 			assert.NotEmpty(t, tl.Data[1].Name)
 			assert.NotZero(t, tl.Data[4].ID)
 			assert.NotEmpty(t, tl.Data[4].Name)
+		}
+	})
+
+	t.Run("populateProject with unknown project ID should 404", func(t *testing.T) {
+		e := echo.New()
+
+		req := httptest.NewRequest(echo.GET, "/56/1", strings.NewReader(""))
+		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+		rec := httptest.NewRecorder()
+
+		c := e.NewContext(req, rec)
+		c.SetParamNames("pid")
+		c.SetParamValues("56")
+
+		handler := func(c echo.Context) error {
+			return c.String(http.StatusOK, "test")
+		}
+
+		popMW := projectAPI.populateProject(handler)
+		err := popMW(c)
+		if assert.Error(t, err) {
+			assert.IsType(t, err, &echo.HTTPError{})
+			httpErr := err.(*echo.HTTPError)
+			assert.Equal(t, http.StatusNotFound, httpErr.Code)
+		}
+	})
+
+	t.Run("populateProject with unknown project Name should 404", func(t *testing.T) {
+		e := echo.New()
+
+		req := httptest.NewRequest(echo.GET, "/Asdfdsa/1", strings.NewReader(""))
+		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+		rec := httptest.NewRecorder()
+
+		c := e.NewContext(req, rec)
+		c.SetParamNames("pid")
+		c.SetParamValues("Asdfdsa")
+
+		handler := func(c echo.Context) error {
+			return c.String(http.StatusOK, "test")
+		}
+
+		popMW := projectAPI.populateProject(handler)
+		err := popMW(c)
+		if assert.Error(t, err) {
+			assert.IsType(t, err, &echo.HTTPError{})
+			httpErr := err.(*echo.HTTPError)
+			assert.Equal(t, http.StatusNotFound, httpErr.Code)
+		}
+	})
+
+	t.Run("populateProject with project should work", func(t *testing.T) {
+		e := echo.New()
+
+		pid := strconv.FormatUint(uint64(projectID), 10)
+
+		req := httptest.NewRequest(echo.GET, "/"+pid+"/1", strings.NewReader(""))
+		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+		rec := httptest.NewRecorder()
+
+		c := e.NewContext(req, rec)
+		c.SetParamNames("pid")
+		c.SetParamValues(pid)
+
+		handler := func(c echo.Context) error {
+			return c.String(http.StatusOK, "test")
+		}
+
+		popMW := projectAPI.populateProject(handler)
+		err := popMW(c)
+		if assert.NoError(t, err) {
+			po := c.Get("project")
+			assert.IsType(t, po, &model.Project{})
+			p := po.(*model.Project)
+			assert.NotZero(t, p.ID)
+			assert.Equal(t, projectID, p.ID)
+			assert.Equal(t, "updatedprojectname", p.Name)
+			assert.Equal(t, "My project description!", p.Description)
 		}
 	})
 }
