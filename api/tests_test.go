@@ -34,6 +34,7 @@ func TestTestAPI(t *testing.T) {
 
 	var projectID, testID uint
 	var pid, pid2, tid string
+	var project *model.Project
 
 	t.Run("create new project", func(t *testing.T) {
 		e := echo.New()
@@ -56,6 +57,7 @@ func TestTestAPI(t *testing.T) {
 			assert.Equal(t, "testprojectname", p.Name)
 			assert.Equal(t, "", p.Description)
 
+			project = p
 			projectID = p.ID
 			pid = strconv.FormatUint(uint64(projectID), 10)
 		}
@@ -234,6 +236,7 @@ func TestTestAPI(t *testing.T) {
 		}
 	})
 
+	// TODO fix this
 	t.Run("GET by unknown name should 404", func(t *testing.T) {
 		e := echo.New()
 
@@ -269,6 +272,60 @@ func TestTestAPI(t *testing.T) {
 			assert.IsType(t, err, &echo.HTTPError{})
 			httpErr := err.(*echo.HTTPError)
 			assert.Equal(t, http.StatusNotFound, httpErr.Code)
+		}
+	})
+
+	t.Run("PUT update existing test", func(t *testing.T) {
+		e := echo.New()
+
+		jsonStr := `{"name":"updatedtestname","description":"updated test description"}`
+		req := httptest.NewRequest(echo.PUT, "/"+pid+"/"+tid, strings.NewReader(jsonStr))
+		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+		rec := httptest.NewRecorder()
+
+		c := e.NewContext(req, rec)
+		c.SetParamNames("pid", "tid")
+		c.SetParamValues(pid, tid)
+		c.Set("project", project)
+
+		err := testAPI.update(c)
+		if assert.NoError(t, err) {
+			assert.Equal(t, http.StatusOK, rec.Code)
+
+			tm := new(model.Test)
+			err := json.Unmarshal(rec.Body.Bytes(), tm)
+
+			assert.NoError(t, err)
+
+			assert.NotZero(t, tm.ID)
+			assert.Equal(t, "updatedtestname", tm.Name)
+			assert.Equal(t, "updated test description", tm.Description)
+		}
+	})
+
+	t.Run("GET id verify update", func(t *testing.T) {
+		e := echo.New()
+
+		req := httptest.NewRequest(echo.GET, "/"+pid+"/"+tid, strings.NewReader(""))
+		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+		rec := httptest.NewRecorder()
+
+		c := e.NewContext(req, rec)
+		c.SetParamNames("pid", "tid")
+		c.SetParamValues(pid, tid)
+
+		if assert.NoError(t, testAPI.get(c)) {
+			assert.Equal(t, http.StatusOK, rec.Code)
+
+			tm := new(model.Test)
+
+			err := json.Unmarshal(rec.Body.Bytes(), tm)
+
+			assert.NoError(t, err)
+
+			assert.Equal(t, testID, tm.ID)
+			assert.Equal(t, "updatedtestname", tm.Name)
+			assert.Equal(t, "updated test description", tm.Description)
 		}
 	})
 }

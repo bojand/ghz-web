@@ -94,6 +94,15 @@ func (api *TestAPI) update(c echo.Context) error {
 	uid := uint(id)
 	t.ID = uid
 
+	po := c.Get("project")
+	p, ok := po.(*model.Project)
+
+	if !ok {
+		return echo.NewHTTPError(http.StatusBadRequest, "No project in context")
+	}
+
+	t.ProjectID = p.ID
+
 	if err = api.ts.Update(t); gorm.IsRecordNotFoundError(err) {
 		return echo.NewHTTPError(http.StatusNotFound, "Not Found")
 	}
