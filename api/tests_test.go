@@ -34,7 +34,7 @@ func TestTestAPI(t *testing.T) {
 
 	var projectID, testID uint
 	var pid, pid2, tid string
-	var project *model.Project
+	var project, project2 *model.Project
 
 	t.Run("create new project", func(t *testing.T) {
 		e := echo.New()
@@ -85,6 +85,7 @@ func TestTestAPI(t *testing.T) {
 			assert.Equal(t, "Asdf", p.Description)
 
 			pid2 = strconv.FormatUint(uint64(p.ID), 10)
+			project2 = p
 		}
 	})
 
@@ -99,6 +100,7 @@ func TestTestAPI(t *testing.T) {
 		c := e.NewContext(req, rec)
 		c.SetParamNames("pid")
 		c.SetParamValues(pid)
+		c.Set("project", project)
 
 		if assert.NoError(t, testAPI.create(c)) {
 			assert.Equal(t, http.StatusCreated, rec.Code)
@@ -128,6 +130,7 @@ func TestTestAPI(t *testing.T) {
 		c := e.NewContext(req, rec)
 		c.SetParamNames("pid")
 		c.SetParamValues(pid)
+		c.Set("project", project)
 
 		err := testAPI.create(c)
 		if assert.Error(t, err) {
@@ -148,6 +151,7 @@ func TestTestAPI(t *testing.T) {
 		c := e.NewContext(req, rec)
 		c.SetParamNames("pid")
 		c.SetParamValues(pid2)
+		c.Set("project", project2)
 
 		err := testAPI.create(c)
 		if assert.Error(t, err) {

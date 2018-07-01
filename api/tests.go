@@ -15,13 +15,15 @@ func SetupTestAPI(g *echo.Group, ts service.TestService) {
 	api := &TestAPI{ts: ts}
 
 	g.POST("", api.create)
+	g.Use(api.populateTest)
 	g.GET("/:tid", api.get)
 	g.PUT("/:tid", api.update)
 	g.DELETE("/:tid", api.delete)
 
 	runsGroup := g.Group("/:tid/runs")
 
-	runsGroup.Use(api.populateTest)
+	// runsGroup.Use(api.populateTest)
+	runsGroup.GET("", api.listRuns)
 	SetupRunAPI(runsGroup)
 }
 
@@ -31,19 +33,20 @@ type TestAPI struct {
 }
 
 func (api *TestAPI) create(c echo.Context) error {
-	idparam := c.Param("pid")
-	pid, err := strconv.Atoi(idparam)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusNotFound, "Invalid id")
-	}
-
 	t := new(model.Test)
-
-	if err := c.Bind(t); err != nil {
+	var err error
+	if err = c.Bind(t); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
-	t.ProjectID = uint(pid)
+	po := c.Get("project")
+	p, ok := po.(*model.Project)
+
+	if p == nil || !ok {
+		return echo.NewHTTPError(http.StatusBadRequest, "No project in context")
+	}
+
+	t.ProjectID = p.ID
 
 	err = api.ts.Create(t)
 	if err != nil {
@@ -80,7 +83,7 @@ func (api *TestAPI) update(c echo.Context) error {
 	po := c.Get("project")
 	p, ok := po.(*model.Project)
 
-	if !ok {
+	if p == nil || !ok {
 		return echo.NewHTTPError(http.StatusBadRequest, "No project in context")
 	}
 
@@ -98,6 +101,10 @@ func (api *TestAPI) update(c echo.Context) error {
 }
 
 func (api *TestAPI) delete(c echo.Context) error {
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
+}
+
+func (api *TestAPI) listRuns(c echo.Context) error {
 	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 

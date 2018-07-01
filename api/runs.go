@@ -26,21 +26,22 @@ type RunAPI struct {
 }
 
 func (api *RunAPI) create(c echo.Context) error {
-	idparam := c.Param("tid")
-	tid, err := strconv.Atoi(idparam)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusNotFound, "Invalid id")
-	}
-
 	r := new(model.Run)
 
 	if err := c.Bind(r); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
-	r.TestID = uint(tid)
+	to := c.Get("test")
+	t, ok := to.(*model.Test)
 
-	err = api.rs.Create(r)
+	if !ok {
+		return echo.NewHTTPError(http.StatusBadRequest, "No test in context")
+	}
+
+	r.TestID = t.ID
+
+	err := api.rs.Create(r)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
@@ -90,6 +91,15 @@ func (api *RunAPI) update(c echo.Context) error {
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
+
+	to := c.Get("test")
+	t, ok := to.(*model.Test)
+
+	if !ok {
+		return echo.NewHTTPError(http.StatusBadRequest, "No test in context")
+	}
+
+	r.TestID = t.ID
 
 	return c.JSON(http.StatusOK, r)
 }
