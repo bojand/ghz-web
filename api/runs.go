@@ -11,13 +11,14 @@ import (
 )
 
 // SetupRunAPI sets up the API
-func SetupRunAPI(g *echo.Group) {
-	api := &RunAPI{}
+func SetupRunAPI(g *echo.Group, rs service.RunService) {
+	api := &RunAPI{rs: rs}
 
-	g.POST("", api.create)
-	g.GET("/:rid", api.get)
-	g.PUT("/:rid", api.update)
-	g.DELETE("/:rid", api.delete)
+	g.GET("/", api.listRuns).Name = "ghz api: list runs"
+	g.POST("/", api.create).Name = "ghz api: create run"
+	g.GET("/:rid/", api.get).Name = "ghz api: get run"
+	g.PUT("/:rid/", api.update).Name = "ghz api: update run"
+	g.DELETE("/:rid/", api.delete).Name = "ghz api: delete run"
 }
 
 // RunAPI provides the api
@@ -102,6 +103,10 @@ func (api *RunAPI) update(c echo.Context) error {
 	r.TestID = t.ID
 
 	return c.JSON(http.StatusOK, r)
+}
+
+func (api *RunAPI) listRuns(c echo.Context) error {
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (api *RunAPI) delete(c echo.Context) error {

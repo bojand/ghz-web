@@ -9,18 +9,20 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/bojand/ghz-web/model"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
 	"github.com/labstack/echo"
+	"github.com/labstack/echo/middleware"
 	"github.com/stretchr/testify/assert"
+	baloo "gopkg.in/h2non/baloo.v3"
 )
 
 const dbName = "../test/api_test.db"
 
 func TestProjectAPI(t *testing.T) {
-
 	defer os.Remove(dbName)
 
 	db, err := gorm.Open("sqlite3", dbName)
@@ -32,480 +34,355 @@ func TestProjectAPI(t *testing.T) {
 	db.AutoMigrate(&model.Project{}, &model.Test{})
 	db.Exec("PRAGMA foreign_keys = ON;")
 
-	ps := model.ProjectService{DB: db}
-	ts := model.TestService{DB: db}
-	projectAPI := &ProjectAPI{ps: &ps, ts: &ts}
+	ps := &model.ProjectService{DB: db}
+	projectAPI := &ProjectAPI{ps: ps}
 
 	var projectID uint
+	var pid string
+	var httpTest *baloo.Client
+	var echoServer *echo.Echo
 
-	t.Run("POST create new", func(t *testing.T) {
-		e := echo.New()
+	echoServer = echo.New()
+	echoServer.Use(middleware.AddTrailingSlash())
+	echoServer.Use(middleware.Logger())
 
-		jsonStr := `{"name":" Test Project Name "}`
-		req := httptest.NewRequest(echo.POST, "/", strings.NewReader(jsonStr))
-		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-		rec := httptest.NewRecorder()
-		c := e.NewContext(req, rec)
+	defer echoServer.Close()
 
-		if assert.NoError(t, projectAPI.create(c)) {
-			assert.Equal(t, http.StatusCreated, rec.Code)
+	const basePath = "/projects"
 
-			p := new(model.Project)
-			err := json.Unmarshal(rec.Body.Bytes(), p)
+	t.Run("Start API", func(t *testing.T) {
+		projectGroup := echoServer.Group(basePath)
+		SetupProjectAPI(projectGroup, ps)
 
-			assert.NoError(t, err)
-
-			assert.NotZero(t, p.ID)
-			assert.Equal(t, "testprojectname", p.Name)
-			assert.Equal(t, "", p.Description)
-
-			projectID = p.ID
+		routes := echoServer.Routes()
+		for _, r := range routes {
+			index := strings.Index(r.Name, "ghz api:")
+			if index >= 0 {
+				desc := fmt.Sprintf("%+v %+v", r.Method, r.Path)
+				fmt.Println(desc)
+			}
 		}
+
+		go func() {
+			echoServer.Start("localhost:0")
+		}()
 	})
 
-	t.Run("POST create new empty", func(t *testing.T) {
-		e := echo.New()
+	t.Run("Sync to get the port", func(t *testing.T) {
+		done := make(chan bool, 1)
+		go func() {
+			time.Sleep(100 * time.Millisecond)
+			done <- true
+			close(done)
+		}()
 
-		jsonStr := `{}`
-		req := httptest.NewRequest(echo.POST, "/", strings.NewReader(jsonStr))
-		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-		rec := httptest.NewRecorder()
-		c := e.NewContext(req, rec)
+		<-done
+	})
 
-		if assert.NoError(t, projectAPI.create(c)) {
-			assert.Equal(t, http.StatusCreated, rec.Code)
+	t.Run("Create http test", func(t *testing.T) {
+		httpTest = baloo.New(echoServer.Listener.Addr().String())
+	})
 
-			p := new(model.Project)
-			err := json.Unmarshal(rec.Body.Bytes(), p)
+	t.Run("POST create new", func(t *testing.T) {
+		httpTest.Post(basePath + "/").
+			JSON(map[string]string{"name": " Test Project Name "}).
+			Expect(t).
+			Status(201).
+			Type("json").
+			AssertFunc(func(res *http.Response, req *http.Request) error {
+				p := new(model.Project)
+				json.NewDecoder(res.Body).Decode(p)
 
-			assert.NoError(t, err)
+				assert.NoError(t, err)
 
-			assert.NotZero(t, p.ID)
-			assert.NotEmpty(t, p.Name)
-			assert.Equal(t, "", p.Description)
-		}
+				assert.NotZero(t, p.ID)
+				assert.Equal(t, "testprojectname", p.Name)
+				assert.Equal(t, "", p.Description)
+
+				projectID = p.ID
+				pid = strconv.FormatUint(uint64(projectID), 10)
+
+				return nil
+			}).
+			Done()
+	})
+
+	t.Run("POST new empty project", func(t *testing.T) {
+		httpTest.Post(basePath + "/").
+			JSON(map[string]string{}).
+			Expect(t).
+			Status(201).
+			Type("json").
+			AssertFunc(func(res *http.Response, req *http.Request) error {
+				p := new(model.Project)
+				json.NewDecoder(res.Body).Decode(p)
+
+				assert.NoError(t, err)
+
+				assert.NotZero(t, p.ID)
+				assert.NotEmpty(t, p.Name)
+				assert.Equal(t, "", p.Description)
+
+				return nil
+			}).
+			Done()
 	})
 
 	t.Run("POST create new with just description", func(t *testing.T) {
-		e := echo.New()
+		httpTest.Post(basePath + "/").
+			JSON(map[string]string{"description": "asdf"}).
+			Expect(t).
+			Status(201).
+			Type("json").
+			AssertFunc(func(res *http.Response, req *http.Request) error {
+				p := new(model.Project)
+				json.NewDecoder(res.Body).Decode(p)
 
-		jsonStr := `{"description":"asdf"}`
-		req := httptest.NewRequest(echo.POST, "/", strings.NewReader(jsonStr))
-		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-		rec := httptest.NewRecorder()
-		c := e.NewContext(req, rec)
+				assert.NoError(t, err)
 
-		if assert.NoError(t, projectAPI.create(c)) {
-			assert.Equal(t, http.StatusCreated, rec.Code)
+				assert.NotZero(t, p.ID)
+				assert.NotEmpty(t, p.Name)
+				assert.Equal(t, "asdf", p.Description)
 
-			p := new(model.Project)
-			err := json.Unmarshal(rec.Body.Bytes(), p)
-
-			assert.NoError(t, err)
-
-			assert.NotZero(t, p.ID)
-			assert.NotEmpty(t, p.Name)
-			assert.Equal(t, "asdf", p.Description)
-		}
+				return nil
+			}).
+			Done()
 	})
 
 	t.Run("POST fail with same name", func(t *testing.T) {
-		e := echo.New()
-
-		jsonStr := `{"name":" Test Project Name"}`
-		req := httptest.NewRequest(echo.POST, "/", strings.NewReader(jsonStr))
-		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-		rec := httptest.NewRecorder()
-		c := e.NewContext(req, rec)
-
-		err := projectAPI.create(c)
-		if assert.Error(t, err) {
-			assert.IsType(t, err, &echo.HTTPError{})
-			httpErr := err.(*echo.HTTPError)
-			assert.Equal(t, http.StatusBadRequest, httpErr.Code)
-		}
+		httpTest.Post(basePath + "/").
+			JSON(map[string]string{"name": " Test Project Name"}).
+			Expect(t).
+			Status(400).
+			Type("json").
+			Done()
 	})
 
-	t.Run("GET id", func(t *testing.T) {
-		e := echo.New()
-		pid := strconv.FormatUint(uint64(projectID), 10)
+	t.Run("GET by id", func(t *testing.T) {
+		httpTest.Get(basePath + "/" + pid + "/").
+			Expect(t).
+			Status(200).
+			Type("json").
+			AssertFunc(func(res *http.Response, req *http.Request) error {
+				p := new(model.Project)
+				json.NewDecoder(res.Body).Decode(p)
 
-		req := httptest.NewRequest(echo.GET, "/"+pid, strings.NewReader(""))
-		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-		rec := httptest.NewRecorder()
+				assert.NoError(t, err)
 
-		c := e.NewContext(req, rec)
-		c.SetParamNames("pid")
-		c.SetParamValues(pid)
+				assert.Equal(t, projectID, p.ID)
+				assert.Equal(t, "testprojectname", p.Name)
+				assert.Equal(t, "", p.Description)
 
-		if assert.NoError(t, projectAPI.get(c)) {
-			assert.Equal(t, http.StatusOK, rec.Code)
-
-			p := new(model.Project)
-
-			err := json.Unmarshal(rec.Body.Bytes(), p)
-
-			assert.NoError(t, err)
-
-			assert.Equal(t, projectID, p.ID)
-			assert.Equal(t, "testprojectname", p.Name)
-			assert.Equal(t, "", p.Description)
-		}
+				return nil
+			}).
+			Done()
 	})
 
 	t.Run("GET name", func(t *testing.T) {
-		e := echo.New()
+		httpTest.Get(basePath + "/testprojectname/").
+			Expect(t).
+			Status(200).
+			Type("json").
+			AssertFunc(func(res *http.Response, req *http.Request) error {
+				p := new(model.Project)
+				json.NewDecoder(res.Body).Decode(p)
 
-		req := httptest.NewRequest(echo.GET, "/testprojectname", strings.NewReader(""))
-		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-		rec := httptest.NewRecorder()
+				assert.NoError(t, err)
 
-		c := e.NewContext(req, rec)
-		c.SetParamNames("pid")
-		c.SetParamValues("testprojectname")
+				assert.Equal(t, projectID, p.ID)
+				assert.Equal(t, "testprojectname", p.Name)
+				assert.Equal(t, "", p.Description)
 
-		if assert.NoError(t, projectAPI.get(c)) {
-			assert.Equal(t, http.StatusOK, rec.Code)
-
-			p := new(model.Project)
-
-			err := json.Unmarshal(rec.Body.Bytes(), p)
-
-			assert.NoError(t, err)
-
-			assert.Equal(t, projectID, p.ID)
-			assert.Equal(t, "testprojectname", p.Name)
-			assert.Equal(t, "", p.Description)
-		}
+				return nil
+			}).
+			Done()
 	})
 
-	t.Run("GET 404", func(t *testing.T) {
-		e := echo.New()
-
-		req := httptest.NewRequest(echo.GET, "/tstprj", strings.NewReader(""))
-		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-		rec := httptest.NewRecorder()
-
-		c := e.NewContext(req, rec)
-		c.SetParamNames("pid")
-		c.SetParamValues("tstprj")
-
-		err := projectAPI.get(c)
-		if assert.Error(t, err) {
-			assert.IsType(t, err, &echo.HTTPError{})
-			httpErr := err.(*echo.HTTPError)
-			assert.Equal(t, http.StatusNotFound, httpErr.Code)
-		}
+	t.Run("GET 404 on unknown", func(t *testing.T) {
+		httpTest.Get(basePath + "/tstprj/").
+			Expect(t).
+			Status(404).
+			Type("json").
+			Done()
 	})
 
 	t.Run("PUT /:id", func(t *testing.T) {
-		pid := strconv.FormatUint(uint64(projectID), 10)
-		e := echo.New()
+		httpTest.Put(basePath + "/" + pid + "/").
+			JSON(map[string]string{"name": " Updated Project Name ", "description": "My project description!"}).
+			Expect(t).
+			Status(200).
+			Type("json").
+			AssertFunc(func(res *http.Response, req *http.Request) error {
+				p := new(model.Project)
+				json.NewDecoder(res.Body).Decode(p)
 
-		jsonStr := `{"name":" Updated Project Name ","description":"My project description!"}`
-		req := httptest.NewRequest(echo.PUT, "/"+pid, strings.NewReader(jsonStr))
-		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-		rec := httptest.NewRecorder()
-		c := e.NewContext(req, rec)
+				assert.NoError(t, err)
 
-		c.SetParamNames("pid")
-		c.SetParamValues(pid)
+				assert.Equal(t, projectID, p.ID)
+				assert.Equal(t, "updatedprojectname", p.Name)
+				assert.Equal(t, "My project description!", p.Description)
 
-		if assert.NoError(t, projectAPI.update(c)) {
-			assert.Equal(t, http.StatusOK, rec.Code)
-
-			p := new(model.Project)
-			err := json.Unmarshal(rec.Body.Bytes(), p)
-
-			assert.NoError(t, err)
-
-			assert.Equal(t, projectID, p.ID)
-			assert.Equal(t, "updatedprojectname", p.Name)
-			assert.Equal(t, "My project description!", p.Description)
-		}
+				return nil
+			}).
+			Done()
 	})
 
 	t.Run("PUT invalid id num", func(t *testing.T) {
-		e := echo.New()
-
-		jsonStr := `{"name":" Updated Project Name ","description":"My project description!"}`
-		req := httptest.NewRequest(echo.PUT, "/12345", strings.NewReader(jsonStr))
-		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-		rec := httptest.NewRecorder()
-
-		c := e.NewContext(req, rec)
-		c.SetParamNames("pid")
-		c.SetParamValues("12345")
-
-		err := projectAPI.update(c)
-		if assert.Error(t, err) {
-			assert.IsType(t, err, &echo.HTTPError{})
-			httpErr := err.(*echo.HTTPError)
-			assert.Equal(t, http.StatusNotFound, httpErr.Code)
-		}
+		httpTest.Put(basePath + "/12345/").
+			JSON(map[string]string{"name": " Updated Project Name 2", "description": " My project description two!"}).
+			Expect(t).
+			Status(404).
+			Type("json").
+			Done()
 	})
 
 	t.Run("PUT invalid id string", func(t *testing.T) {
-		e := echo.New()
-
-		jsonStr := `{"name":" Updated Project Name 2","description":"My project description!"}`
-		req := httptest.NewRequest(echo.PUT, "/updatedprojectnameasdf", strings.NewReader(jsonStr))
-		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-		rec := httptest.NewRecorder()
-
-		c := e.NewContext(req, rec)
-		c.SetParamNames("pid")
-		c.SetParamValues("updatedprojectnameasdf")
-
-		err := projectAPI.update(c)
-		if assert.Error(t, err) {
-			assert.IsType(t, err, &echo.HTTPError{})
-			httpErr := err.(*echo.HTTPError)
-			assert.Equal(t, http.StatusNotFound, httpErr.Code)
-		}
+		httpTest.Put(basePath + "/updatedprojectnameasdf/").
+			JSON(map[string]string{"name": " Updated Project Name 2", "description": " My project description two!"}).
+			Expect(t).
+			Status(404).
+			Type("json").
+			Done()
 	})
 
 	t.Run("DELETE /:id", func(t *testing.T) {
-		e := echo.New()
-		pid := strconv.FormatUint(uint64(projectID), 10)
-
-		req := httptest.NewRequest(echo.DELETE, "/"+pid, strings.NewReader(""))
-		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-		rec := httptest.NewRecorder()
-
-		c := e.NewContext(req, rec)
-		c.SetParamNames("pid")
-		c.SetParamValues(pid)
-
-		err := projectAPI.delete(c)
-		if assert.Error(t, err) {
-			assert.IsType(t, err, &echo.HTTPError{})
-			httpErr := err.(*echo.HTTPError)
-			assert.Equal(t, http.StatusNotImplemented, httpErr.Code)
-		}
+		httpTest.Delete(basePath + "/" + pid + "/").
+			Expect(t).
+			Status(501).
+			Type("json").
+			Done()
 	})
 
 	t.Run("GET /", func(t *testing.T) {
-		e := echo.New()
+		httpTest.Get(basePath + "/").
+			Expect(t).
+			Status(200).
+			Type("json").
+			AssertFunc(func(res *http.Response, req *http.Request) error {
+				pl := new(ProjectList)
+				json.NewDecoder(res.Body).Decode(pl)
 
-		req := httptest.NewRequest(echo.GET, "/", strings.NewReader(""))
-		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-		rec := httptest.NewRecorder()
+				assert.NoError(t, err)
+				assert.Equal(t, uint(3), pl.Total)
+				assert.Len(t, pl.Data, 3)
+				assert.NotZero(t, pl.Data[0].ID)
+				assert.NotEmpty(t, pl.Data[0].Name)
+				assert.NotZero(t, pl.Data[1].ID)
+				assert.NotEmpty(t, pl.Data[1].Name)
+				assert.NotZero(t, pl.Data[2].ID)
+				assert.NotEmpty(t, pl.Data[2].Name)
 
-		c := e.NewContext(req, rec)
-
-		if assert.NoError(t, projectAPI.listProjects(c)) {
-			assert.Equal(t, http.StatusOK, rec.Code)
-
-			pl := new(ProjectList)
-
-			err := json.Unmarshal(rec.Body.Bytes(), &pl)
-
-			assert.NoError(t, err)
-			assert.Equal(t, uint(3), pl.Total)
-			assert.Len(t, pl.Data, 3)
-			assert.NotZero(t, pl.Data[0].ID)
-			assert.NotEmpty(t, pl.Data[0].Name)
-			assert.NotZero(t, pl.Data[1].ID)
-			assert.NotEmpty(t, pl.Data[1].Name)
-			assert.NotZero(t, pl.Data[2].ID)
-			assert.NotEmpty(t, pl.Data[2].Name)
-		}
+				return nil
+			}).
+			Done()
 	})
 
 	t.Run("GET /?sort=ID", func(t *testing.T) {
-		e := echo.New()
+		httpTest.Get(basePath + "/").
+			SetQueryParams(map[string]string{"sort": "ID"}).
+			Expect(t).
+			Status(200).
+			Type("json").
+			AssertFunc(func(res *http.Response, req *http.Request) error {
+				pl := new(ProjectList)
+				json.NewDecoder(res.Body).Decode(pl)
 
-		req := httptest.NewRequest(echo.GET, "/?sort=ID", strings.NewReader(""))
-		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-		rec := httptest.NewRecorder()
+				assert.NoError(t, err)
+				assert.Equal(t, uint(3), pl.Total)
+				assert.Len(t, pl.Data, 3)
+				assert.NotZero(t, pl.Data[0].ID)
+				assert.NotEmpty(t, pl.Data[0].Name)
+				assert.NotZero(t, pl.Data[1].ID)
+				assert.NotEmpty(t, pl.Data[1].Name)
+				assert.NotZero(t, pl.Data[2].ID)
+				assert.NotEmpty(t, pl.Data[2].Name)
+				assert.True(t, pl.Data[0].ID < pl.Data[1].ID)
+				assert.True(t, pl.Data[1].ID < pl.Data[2].ID)
 
-		c := e.NewContext(req, rec)
-
-		if assert.NoError(t, projectAPI.listProjects(c)) {
-			assert.Equal(t, http.StatusOK, rec.Code)
-
-			pl := new(ProjectList)
-
-			err := json.Unmarshal(rec.Body.Bytes(), &pl)
-
-			assert.NoError(t, err)
-			assert.Equal(t, uint(3), pl.Total)
-			assert.Len(t, pl.Data, 3)
-			assert.NotZero(t, pl.Data[0].ID)
-			assert.NotEmpty(t, pl.Data[0].Name)
-			assert.NotZero(t, pl.Data[1].ID)
-			assert.NotEmpty(t, pl.Data[1].Name)
-			assert.NotZero(t, pl.Data[2].ID)
-			assert.NotEmpty(t, pl.Data[2].Name)
-			assert.True(t, pl.Data[0].ID < pl.Data[1].ID)
-			assert.True(t, pl.Data[1].ID < pl.Data[2].ID)
-		}
+				return nil
+			}).
+			Done()
 	})
 
 	t.Run("GET /?sort=ID&order=desc", func(t *testing.T) {
-		e := echo.New()
+		httpTest.Get(basePath + "/").
+			SetQueryParams(map[string]string{"sort": "ID", "order": "desc"}).
+			Expect(t).
+			Status(200).
+			Type("json").
+			AssertFunc(func(res *http.Response, req *http.Request) error {
+				pl := new(ProjectList)
+				json.NewDecoder(res.Body).Decode(pl)
 
-		req := httptest.NewRequest(echo.GET, "/?sort=ID&order=desc", strings.NewReader(""))
-		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-		rec := httptest.NewRecorder()
+				assert.NoError(t, err)
+				assert.Equal(t, uint(3), pl.Total)
+				assert.Len(t, pl.Data, 3)
+				assert.NotZero(t, pl.Data[0].ID)
+				assert.NotEmpty(t, pl.Data[0].Name)
+				assert.NotZero(t, pl.Data[1].ID)
+				assert.NotEmpty(t, pl.Data[1].Name)
+				assert.NotZero(t, pl.Data[2].ID)
+				assert.NotEmpty(t, pl.Data[2].Name)
+				assert.True(t, pl.Data[0].ID > pl.Data[1].ID)
+				assert.True(t, pl.Data[1].ID > pl.Data[2].ID)
 
-		c := e.NewContext(req, rec)
-
-		if assert.NoError(t, projectAPI.listProjects(c)) {
-			assert.Equal(t, http.StatusOK, rec.Code)
-
-			pl := new(ProjectList)
-
-			err := json.Unmarshal(rec.Body.Bytes(), &pl)
-
-			assert.NoError(t, err)
-			assert.Equal(t, uint(3), pl.Total)
-			assert.Len(t, pl.Data, 3)
-			assert.NotZero(t, pl.Data[0].ID)
-			assert.NotEmpty(t, pl.Data[0].Name)
-			assert.NotZero(t, pl.Data[1].ID)
-			assert.NotEmpty(t, pl.Data[1].Name)
-			assert.NotZero(t, pl.Data[2].ID)
-			assert.NotEmpty(t, pl.Data[2].Name)
-			assert.True(t, pl.Data[0].ID > pl.Data[1].ID)
-			assert.True(t, pl.Data[1].ID > pl.Data[2].ID)
-		}
+				return nil
+			}).
+			Done()
 	})
 
 	t.Run("GET /?sort=name&order=desc", func(t *testing.T) {
-		e := echo.New()
+		httpTest.Get(basePath + "/").
+			SetQueryParams(map[string]string{"sort": "name", "order": "desc"}).
+			Expect(t).
+			Status(200).
+			Type("json").
+			AssertFunc(func(res *http.Response, req *http.Request) error {
+				pl := new(ProjectList)
+				json.NewDecoder(res.Body).Decode(pl)
 
-		req := httptest.NewRequest(echo.GET, "/?sort=name&order=desc", strings.NewReader(""))
-		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-		rec := httptest.NewRecorder()
+				assert.NoError(t, err)
+				assert.Equal(t, uint(3), pl.Total)
+				assert.Len(t, pl.Data, 3)
+				assert.NotZero(t, pl.Data[0].ID)
+				assert.NotEmpty(t, pl.Data[0].Name)
+				assert.NotZero(t, pl.Data[1].ID)
+				assert.NotEmpty(t, pl.Data[1].Name)
+				assert.NotZero(t, pl.Data[2].ID)
+				assert.NotEmpty(t, pl.Data[2].Name)
+				assert.Equal(t, 1, strings.Compare(pl.Data[0].Name, pl.Data[1].Name))
+				assert.Equal(t, 1, strings.Compare(pl.Data[1].Name, pl.Data[2].Name))
 
-		c := e.NewContext(req, rec)
-
-		if assert.NoError(t, projectAPI.listProjects(c)) {
-			assert.Equal(t, http.StatusOK, rec.Code)
-
-			pl := new(ProjectList)
-
-			err := json.Unmarshal(rec.Body.Bytes(), &pl)
-
-			assert.NoError(t, err)
-			assert.Equal(t, uint(3), pl.Total)
-			assert.Len(t, pl.Data, 3)
-			assert.NotZero(t, pl.Data[0].ID)
-			assert.NotEmpty(t, pl.Data[0].Name)
-			assert.NotZero(t, pl.Data[1].ID)
-			assert.NotEmpty(t, pl.Data[1].Name)
-			assert.NotZero(t, pl.Data[2].ID)
-			assert.NotEmpty(t, pl.Data[2].Name)
-			assert.Equal(t, 1, strings.Compare(pl.Data[0].Name, pl.Data[1].Name))
-			assert.Equal(t, 1, strings.Compare(pl.Data[1].Name, pl.Data[2].Name))
-		}
+				return nil
+			}).
+			Done()
 	})
 
 	t.Run("GET /?sort=name&order=asc", func(t *testing.T) {
-		e := echo.New()
+		httpTest.Get(basePath + "/").
+			SetQueryParams(map[string]string{"sort": "name", "order": "asc"}).
+			Expect(t).
+			Status(200).
+			Type("json").
+			AssertFunc(func(res *http.Response, req *http.Request) error {
+				pl := new(ProjectList)
+				json.NewDecoder(res.Body).Decode(pl)
 
-		req := httptest.NewRequest(echo.GET, "/?sort=name&order=asc", strings.NewReader(""))
-		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-		rec := httptest.NewRecorder()
+				assert.NoError(t, err)
+				assert.Equal(t, uint(3), pl.Total)
+				assert.Len(t, pl.Data, 3)
+				assert.NotZero(t, pl.Data[0].ID)
+				assert.NotEmpty(t, pl.Data[0].Name)
+				assert.NotZero(t, pl.Data[1].ID)
+				assert.NotEmpty(t, pl.Data[1].Name)
+				assert.NotZero(t, pl.Data[2].ID)
+				assert.NotEmpty(t, pl.Data[2].Name)
+				assert.Equal(t, -1, strings.Compare(pl.Data[0].Name, pl.Data[1].Name))
+				assert.Equal(t, -1, strings.Compare(pl.Data[1].Name, pl.Data[2].Name))
 
-		c := e.NewContext(req, rec)
-
-		if assert.NoError(t, projectAPI.listProjects(c)) {
-			assert.Equal(t, http.StatusOK, rec.Code)
-
-			pl := new(ProjectList)
-
-			err := json.Unmarshal(rec.Body.Bytes(), &pl)
-
-			assert.NoError(t, err)
-			assert.Equal(t, uint(3), pl.Total)
-			assert.Len(t, pl.Data, 3)
-			assert.NotZero(t, pl.Data[0].ID)
-			assert.NotEmpty(t, pl.Data[0].Name)
-			assert.NotZero(t, pl.Data[1].ID)
-			assert.NotEmpty(t, pl.Data[1].Name)
-			assert.NotZero(t, pl.Data[2].ID)
-			assert.NotEmpty(t, pl.Data[2].Name)
-			assert.Equal(t, -1, strings.Compare(pl.Data[0].Name, pl.Data[1].Name))
-			assert.Equal(t, -1, strings.Compare(pl.Data[1].Name, pl.Data[2].Name))
-		}
-	})
-
-	t.Run("GET /:pid/tests", func(t *testing.T) {
-		e := echo.New()
-		pid := strconv.FormatUint(uint64(projectID), 10)
-
-		// create sample tests
-		for i := 0; i < 25; i++ {
-			t := &model.Test{
-				ProjectID: projectID,
-				Name:      "test" + strconv.FormatInt(int64(i), 10),
-			}
-			ts.Create(t)
-		}
-
-		req := httptest.NewRequest(echo.GET, "/"+pid+"/tests", strings.NewReader(""))
-		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-		rec := httptest.NewRecorder()
-
-		c := e.NewContext(req, rec)
-		c.SetParamNames("pid")
-		c.SetParamValues(pid)
-
-		if assert.NoError(t, projectAPI.listTests(c)) {
-
-			assert.Equal(t, http.StatusOK, rec.Code)
-
-			tl := new(TestList)
-			err := json.Unmarshal(rec.Body.Bytes(), &tl)
-
-			fmt.Printf("%#v\n\n", tl.Total)
-
-			assert.NoError(t, err)
-			assert.Len(t, tl.Data, 20)
-
-			assert.Equal(t, 25, int(tl.Total))
-			assert.NotZero(t, tl.Data[0].ID)
-			assert.NotEmpty(t, tl.Data[0].Name)
-			assert.NotZero(t, tl.Data[1].ID)
-			assert.NotEmpty(t, tl.Data[1].Name)
-			assert.NotZero(t, tl.Data[19].ID)
-			assert.NotEmpty(t, tl.Data[19].Name)
-		}
-	})
-
-	t.Run("GET /:pid/tests?page=1", func(t *testing.T) {
-		e := echo.New()
-		pid := strconv.FormatUint(uint64(projectID), 10)
-
-		req := httptest.NewRequest(echo.GET, "/"+pid+"/tests?page=1", strings.NewReader(""))
-		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-		rec := httptest.NewRecorder()
-
-		c := e.NewContext(req, rec)
-		c.SetParamNames("pid")
-		c.SetParamValues(pid)
-
-		if assert.NoError(t, projectAPI.listTests(c)) {
-
-			assert.Equal(t, http.StatusOK, rec.Code)
-
-			tl := new(TestList)
-			err := json.Unmarshal(rec.Body.Bytes(), &tl)
-
-			assert.NoError(t, err)
-			assert.Len(t, tl.Data, 5)
-
-			assert.Equal(t, 25, int(tl.Total))
-			assert.NotZero(t, tl.Data[0].ID)
-			assert.NotEmpty(t, tl.Data[0].Name)
-			assert.NotZero(t, tl.Data[1].ID)
-			assert.NotEmpty(t, tl.Data[1].Name)
-			assert.NotZero(t, tl.Data[4].ID)
-			assert.NotEmpty(t, tl.Data[4].Name)
-		}
+				return nil
+			}).
+			Done()
 	})
 
 	t.Run("populateProject with unknown project ID should 404", func(t *testing.T) {

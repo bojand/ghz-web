@@ -6,7 +6,17 @@ import (
 )
 
 // Setup sets up the application API
-func Setup(g *echo.Group, ps service.ProjectService, ts service.TestService) {
+func Setup(g *echo.Group,
+	ps service.ProjectService,
+	ts service.TestService,
+	rs service.RunService) {
+
 	projectGroup := g.Group("/projects")
-	SetupProjectAPI(projectGroup, ps, ts)
+	SetupProjectAPI(projectGroup, ps)
+
+	testsGroup := projectGroup.Group("/:pid/tests")
+	SetupTestAPI(testsGroup, ts)
+
+	runsGroup := testsGroup.Group("/:tid/runs")
+	SetupRunAPI(runsGroup, rs)
 }

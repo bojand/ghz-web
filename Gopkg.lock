@@ -138,6 +138,24 @@
 
 [[projects]]
   branch = "master"
+  name = "github.com/xeipuuv/gojsonpointer"
+  packages = ["."]
+  revision = "4e3ac2762d5f479393488629ee9370b50873b3a6"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/xeipuuv/gojsonreference"
+  packages = ["."]
+  revision = "bd5ef7bd5415a7ac448318e64f11a24cd21e594b"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/xeipuuv/gojsonschema"
+  packages = ["."]
+  revision = "1d523034197ff1f222f6429836dd36a2457a1874"
+
+[[projects]]
+  branch = "master"
   name = "golang.org/x/crypto"
   packages = [
     "acme",
@@ -148,9 +166,68 @@
 
 [[projects]]
   branch = "master"
+  name = "golang.org/x/net"
+  packages = [
+    "idna",
+    "publicsuffix"
+  ]
+  revision = "4cb1c02c05b0e749b0365f61ae859a8e0cfceed9"
+
+[[projects]]
+  branch = "master"
   name = "golang.org/x/sys"
   packages = ["unix"]
   revision = "7c87d13f8e835d2fb3a70a2912c811ed0c1d241b"
+
+[[projects]]
+  name = "golang.org/x/text"
+  packages = [
+    "collate",
+    "collate/build",
+    "internal/colltab",
+    "internal/gen",
+    "internal/tag",
+    "internal/triegen",
+    "internal/ucd",
+    "language",
+    "secure/bidirule",
+    "transform",
+    "unicode/bidi",
+    "unicode/cldr",
+    "unicode/norm",
+    "unicode/rangetable"
+  ]
+  revision = "f21a4dfb5e38f5895301dc265a8def02365cc3d0"
+  version = "v0.3.0"
+
+[[projects]]
+  name = "gopkg.in/h2non/baloo.v3"
+  packages = [
+    ".",
+    "assert"
+  ]
+  revision = "bcac7e061d45d1443121ab1868b8907c0d233f38"
+  version = "v3.0.0"
+
+[[projects]]
+  name = "gopkg.in/h2non/gentleman.v2"
+  packages = [
+    ".",
+    "context",
+    "middleware",
+    "mux",
+    "plugin",
+    "plugins/body",
+    "plugins/bodytype",
+    "plugins/cookies",
+    "plugins/headers",
+    "plugins/multipart",
+    "plugins/query",
+    "plugins/url",
+    "utils"
+  ]
+  revision = "e0f81be2f4064ea7aa7470e9daddd2dc8e8152c7"
+  version = "v2.0.3"
 
 [[projects]]
   name = "gopkg.in/yaml.v2"
@@ -161,6 +238,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "1106a2c4e5cc06a08788ca8a474d44e2130db9fefc76364ac992328c7b010fe2"
+  inputs-digest = "350348cb532e7d3a9e86b19d88c14b76f0bbb5cd4ea42dbf758e6964fe4ac33c"
   solver-name = "gps-cdcl"
   solver-version = 1

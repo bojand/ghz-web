@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"sort"
 	"strings"
 	"time"
 
@@ -96,7 +95,7 @@ func (app *Application) setupServer() {
 
 	s.Use(middleware.CORS())
 
-	s.Pre(middleware.RemoveTrailingSlash())
+	s.Pre(middleware.AddTrailingSlash())
 
 	root := s.Group(app.Config.Server.RootURL)
 
@@ -108,25 +107,19 @@ func (app *Application) setupServer() {
 
 	ps := model.ProjectService{DB: app.DB}
 	ts := model.TestService{DB: app.DB}
+	rs := model.RunService{DB: app.DB}
 
-	api.Setup(apiRoot, &ps, &ts)
+	api.Setup(apiRoot, &ps, &ts, &rs)
 
-	s.Static("/", "ui/dist")
+	s.Static("/", "ui/dist").Name = "ghz api: static"
 
-	rs := s.Routes()
-	our := make([]string, 0, 5)
-	for _, r := range rs {
-		index := strings.Index(r.Name, "api")
-		if index > 0 {
+	routes := s.Routes()
+	for _, r := range routes {
+		index := strings.Index(r.Name, "ghz api:")
+		if index >= 0 {
 			desc := fmt.Sprintf("%+v %+v", r.Method, r.Path)
-			our = append(our, desc)
+			fmt.Println(desc)
 		}
-	}
-
-	sort.Strings(our)
-
-	for _, r := range our {
-		fmt.Println(r)
 	}
 }
 
