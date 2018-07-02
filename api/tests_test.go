@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/http/httptest"
 	"os"
 	"strconv"
 	"strings"
@@ -32,12 +33,10 @@ func TestTestAPI(t *testing.T) {
 
 	ts := &model.TestService{DB: db}
 	ps := &model.ProjectService{DB: db}
-	// projectAPI := &ProjectAPI{ps: ps}
-	// testAPI := &TestAPI{ts: ts}
+	testAPI := &TestAPI{ts: ts}
 
-	var projectID, testID uint
-	var pid, pid2, tid string
-	var project, project2 *model.Project
+	var projectID, projectID2, testID uint
+	var pid, pid2, pid3, tid string
 
 	var httpTest *baloo.Client
 	var echoServer *echo.Echo
@@ -102,7 +101,6 @@ func TestTestAPI(t *testing.T) {
 				assert.Equal(t, "testprojectname", p.Name)
 				assert.Equal(t, "", p.Description)
 
-				project = p
 				projectID = p.ID
 				pid = strconv.FormatUint(uint64(projectID), 10)
 
@@ -128,7 +126,30 @@ func TestTestAPI(t *testing.T) {
 				assert.Equal(t, "Asdf", p.Description)
 
 				pid2 = strconv.FormatUint(uint64(p.ID), 10)
-				project2 = p
+				projectID2 = p.ID
+
+				return nil
+			}).
+			Done()
+	})
+
+	t.Run("Create 3nd project", func(t *testing.T) {
+		httpTest.Post(basePath + "/").
+			JSON(map[string]string{"name": " Test Project Name Three", "description": "Three 3"}).
+			Expect(t).
+			Status(201).
+			Type("json").
+			AssertFunc(func(res *http.Response, req *http.Request) error {
+				p := new(model.Project)
+				json.NewDecoder(res.Body).Decode(p)
+
+				assert.NoError(t, err)
+
+				assert.NotZero(t, p.ID)
+				assert.Equal(t, "testprojectnamethree", p.Name)
+				assert.Equal(t, "Three 3", p.Description)
+
+				pid3 = strconv.FormatUint(uint64(p.ID), 10)
 
 				return nil
 			}).
@@ -153,6 +174,333 @@ func TestTestAPI(t *testing.T) {
 
 				testID = tm.ID
 				tid = strconv.FormatUint(uint64(testID), 10)
+				return nil
+			}).
+			Done()
+	})
+
+	t.Run("POST fail with same test name", func(t *testing.T) {
+		httpTest.Post(basePath + "/" + pid + "/tests/").
+			JSON(map[string]string{"name": " Test Name"}).
+			Expect(t).
+			Status(400).
+			Type("json").
+			Done()
+	})
+
+	t.Run("POST fail with same test name for project 2", func(t *testing.T) {
+		httpTest.Post(basePath + "/" + pid2 + "/tests/").
+			JSON(map[string]string{"name": " Test Name"}).
+			Expect(t).
+			Status(400).
+			Type("json").
+			Done()
+	})
+
+	t.Run("GET id", func(t *testing.T) {
+		httpTest.Get(basePath + "/" + pid + "/tests/" + tid + "/").
+			Expect(t).
+			Status(200).
+			Type("json").
+			AssertFunc(func(res *http.Response, req *http.Request) error {
+				tm := new(model.Test)
+				json.NewDecoder(res.Body).Decode(tm)
+
+				assert.NoError(t, err)
+
+				assert.Equal(t, testID, tm.ID)
+				assert.Equal(t, "testname", tm.Name)
+				assert.Equal(t, "Test description", tm.Description)
+
+				return nil
+			}).
+			Done()
+	})
+
+	t.Run("GET name", func(t *testing.T) {
+		httpTest.Get(basePath + "/" + pid + "/tests/testname/").
+			Expect(t).
+			Status(200).
+			Type("json").
+			AssertFunc(func(res *http.Response, req *http.Request) error {
+				tm := new(model.Test)
+				json.NewDecoder(res.Body).Decode(tm)
+
+				assert.NoError(t, err)
+
+				assert.Equal(t, testID, tm.ID)
+				assert.Equal(t, "testname", tm.Name)
+				assert.Equal(t, "Test description", tm.Description)
+
+				return nil
+			}).
+			Done()
+	})
+
+	// TODO fix this
+	t.Run("GET by name for project 2 should 404", func(t *testing.T) {
+		httpTest.Get(basePath + "/" + pid2 + "/tests/testname/").
+			Expect(t).
+			Status(200).
+			Type("json").
+			AssertFunc(func(res *http.Response, req *http.Request) error {
+				tm := new(model.Test)
+				json.NewDecoder(res.Body).Decode(tm)
+
+				assert.NoError(t, err)
+
+				assert.Equal(t, testID, tm.ID)
+				assert.Equal(t, "testname", tm.Name)
+				assert.Equal(t, "Test description", tm.Description)
+
+				return nil
+			}).
+			Done()
+	})
+
+	t.Run("GET by unknown name should 404", func(t *testing.T) {
+		httpTest.Get(basePath + "/" + pid + "/tests/testnamebgt/").
+			Expect(t).
+			Status(404).
+			Type("json").
+			Done()
+	})
+
+	t.Run("GET by unknown ID should 404", func(t *testing.T) {
+		httpTest.Get(basePath + "/" + pid + "/tests/5454/").
+			Expect(t).
+			Status(404).
+			Type("json").
+			Done()
+	})
+
+	t.Run("PUT update existing test", func(t *testing.T) {
+		httpTest.Put(basePath + "/" + pid + "/tests/" + tid + "/").
+			JSON(map[string]string{"name": "updatedtestname", "description": "updated test description"}).
+			Expect(t).
+			Status(200).
+			Type("json").
+			AssertFunc(func(res *http.Response, req *http.Request) error {
+				tm := new(model.Test)
+				json.NewDecoder(res.Body).Decode(tm)
+
+				assert.NoError(t, err)
+
+				assert.NoError(t, err)
+
+				assert.NotZero(t, tm.ID)
+				assert.Equal(t, "updatedtestname", tm.Name)
+				assert.Equal(t, "updated test description", tm.Description)
+
+				return nil
+			}).
+			Done()
+	})
+
+	t.Run("GET id verify update", func(t *testing.T) {
+		httpTest.Get(basePath + "/" + pid + "/tests/" + tid + "/").
+			Expect(t).
+			Status(200).
+			Type("json").
+			AssertFunc(func(res *http.Response, req *http.Request) error {
+				tm := new(model.Test)
+				json.NewDecoder(res.Body).Decode(tm)
+
+				assert.NoError(t, err)
+
+				assert.Equal(t, testID, tm.ID)
+				assert.Equal(t, "updatedtestname", tm.Name)
+				assert.Equal(t, "updated test description", tm.Description)
+
+				return nil
+			}).
+			Done()
+	})
+
+	t.Run("populateTest with unknown ID should 404", func(t *testing.T) {
+		e := echo.New()
+
+		req := httptest.NewRequest(echo.GET, "/"+pid+"/156", strings.NewReader(""))
+		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+		rec := httptest.NewRecorder()
+
+		c := e.NewContext(req, rec)
+		c.SetParamNames("pid", "tid")
+		c.SetParamValues(pid, "156")
+
+		handler := func(c echo.Context) error {
+			return c.String(http.StatusOK, "test")
+		}
+
+		popMW := testAPI.populateTest(handler)
+		err := popMW(c)
+		if assert.Error(t, err) {
+			assert.IsType(t, err, &echo.HTTPError{})
+			httpErr := err.(*echo.HTTPError)
+			assert.Equal(t, http.StatusNotFound, httpErr.Code)
+		}
+	})
+
+	t.Run("populateTest with unknown test name should 404", func(t *testing.T) {
+		e := echo.New()
+
+		req := httptest.NewRequest(echo.GET, "/"+pid+"/asdfdsa", strings.NewReader(""))
+		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+		rec := httptest.NewRecorder()
+
+		c := e.NewContext(req, rec)
+		c.SetParamNames("pid", "tid")
+		c.SetParamValues(pid, "asdfdsa")
+
+		handler := func(c echo.Context) error {
+			return c.String(http.StatusOK, "test")
+		}
+
+		popMW := testAPI.populateTest(handler)
+		err := popMW(c)
+		if assert.Error(t, err) {
+			assert.IsType(t, err, &echo.HTTPError{})
+			httpErr := err.(*echo.HTTPError)
+			assert.Equal(t, http.StatusNotFound, httpErr.Code)
+		}
+	})
+
+	t.Run("populateTest with valid id should work", func(t *testing.T) {
+		e := echo.New()
+
+		req := httptest.NewRequest(echo.GET, "/"+pid+"/"+tid, strings.NewReader(""))
+		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+		rec := httptest.NewRecorder()
+
+		c := e.NewContext(req, rec)
+		c.SetParamNames("pid", "tid")
+		c.SetParamValues(pid, tid)
+
+		handler := func(c echo.Context) error {
+			return c.String(http.StatusOK, "test")
+		}
+
+		popMW := testAPI.populateTest(handler)
+		err := popMW(c)
+		if assert.NoError(t, err) {
+			to := c.Get("test")
+			assert.IsType(t, to, &model.Test{})
+			tm := to.(*model.Test)
+			assert.NotZero(t, tm.ID)
+			assert.Equal(t, testID, tm.ID)
+			assert.Equal(t, "updatedtestname", tm.Name)
+			assert.Equal(t, "updated test description", tm.Description)
+		}
+	})
+
+	t.Run("populateTest with valid name should work", func(t *testing.T) {
+		e := echo.New()
+
+		req := httptest.NewRequest(echo.GET, "/"+pid+"/updatedtestname", strings.NewReader(""))
+		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+		rec := httptest.NewRecorder()
+
+		c := e.NewContext(req, rec)
+		c.SetParamNames("pid", "tid")
+		c.SetParamValues(pid, "updatedtestname")
+
+		handler := func(c echo.Context) error {
+			return c.String(http.StatusOK, "test")
+		}
+
+		popMW := testAPI.populateTest(handler)
+		err := popMW(c)
+		if assert.NoError(t, err) {
+			to := c.Get("test")
+			assert.IsType(t, to, &model.Test{})
+			tm := to.(*model.Test)
+			assert.NotZero(t, tm.ID)
+			assert.Equal(t, testID, tm.ID)
+			assert.Equal(t, "updatedtestname", tm.Name)
+			assert.Equal(t, "updated test description", tm.Description)
+		}
+	})
+
+	t.Run("GET /:pid/tests", func(t *testing.T) {
+		// create sample tests
+		for i := 0; i < 25; i++ {
+			t := &model.Test{
+				ProjectID: projectID2,
+				Name:      "test" + strconv.FormatInt(int64(i), 10),
+			}
+			ts.Create(t)
+		}
+
+		httpTest.Get(basePath + "/" + pid2 + "/tests/").
+			Expect(t).
+			Status(200).
+			Type("json").
+			AssertFunc(func(res *http.Response, req *http.Request) error {
+				tl := new(TestList)
+				json.NewDecoder(res.Body).Decode(tl)
+
+				fmt.Printf("%#v\n\n", tl.Total)
+
+				assert.NoError(t, err)
+				assert.Len(t, tl.Data, 20)
+
+				assert.Equal(t, 25, int(tl.Total))
+				assert.NotZero(t, tl.Data[0].ID)
+				assert.NotEmpty(t, tl.Data[0].Name)
+				assert.NotZero(t, tl.Data[1].ID)
+				assert.NotEmpty(t, tl.Data[1].Name)
+				assert.NotZero(t, tl.Data[19].ID)
+				assert.NotEmpty(t, tl.Data[19].Name)
+
+				return nil
+			}).
+			Done()
+	})
+
+	t.Run("GET /:pid/tests?page=1", func(t *testing.T) {
+		httpTest.Get(basePath + "/" + pid2 + "/tests/").
+			SetQueryParams(map[string]string{"page": "1"}).
+			Expect(t).
+			Status(200).
+			Type("json").
+			AssertFunc(func(res *http.Response, req *http.Request) error {
+				tl := new(TestList)
+				json.NewDecoder(res.Body).Decode(tl)
+
+				fmt.Printf("%#v\n\n", tl.Total)
+
+				assert.NoError(t, err)
+				assert.Len(t, tl.Data, 5)
+
+				assert.Equal(t, 25, int(tl.Total))
+				assert.NotZero(t, tl.Data[0].ID)
+				assert.NotEmpty(t, tl.Data[0].Name)
+				assert.NotZero(t, tl.Data[1].ID)
+				assert.NotEmpty(t, tl.Data[1].Name)
+				assert.NotZero(t, tl.Data[4].ID)
+				assert.NotEmpty(t, tl.Data[4].Name)
+
+				return nil
+			}).
+			Done()
+	})
+
+	t.Run("GET /:pid/tests on empty project", func(t *testing.T) {
+		httpTest.Get(basePath + "/" + pid3 + "/tests/").
+			Expect(t).
+			Status(200).
+			Type("json").
+			AssertFunc(func(res *http.Response, req *http.Request) error {
+				tl := new(TestList)
+				json.NewDecoder(res.Body).Decode(tl)
+
+				fmt.Printf("%#v\n\n", tl.Total)
+
+				assert.NoError(t, err)
+				assert.Len(t, tl.Data, 0)
+
+				assert.Equal(t, 0, int(tl.Total))
+
 				return nil
 			}).
 			Done()

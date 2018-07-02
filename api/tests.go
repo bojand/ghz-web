@@ -10,6 +10,12 @@ import (
 	"github.com/labstack/echo"
 )
 
+// TestList response
+type TestList struct {
+	Total uint          `json:"total"`
+	Data  []*model.Test `json:"data"`
+}
+
 // SetupTestAPI sets up the API
 func SetupTestAPI(g *echo.Group, ts service.TestService) {
 	api := &TestAPI{ts: ts}

@@ -16,12 +16,6 @@ type ProjectList struct {
 	Data  []*model.Project `json:"data"`
 }
 
-// TestList response
-type TestList struct {
-	Total uint          `json:"total"`
-	Data  []*model.Test `json:"data"`
-}
-
 // SetupProjectAPI sets up the API
 func SetupProjectAPI(g *echo.Group, ps service.ProjectService) {
 	api := &ProjectAPI{ps: ps}

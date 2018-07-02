@@ -240,7 +240,6 @@ func TestTestAPI(t *testing.T) {
 		}
 	})
 
-	// TODO fix this
 	t.Run("GET by unknown name should 404", func(t *testing.T) {
 		e := echo.New()
 
