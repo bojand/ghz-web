@@ -86,6 +86,15 @@ func (api *RunAPI) update(c echo.Context) error {
 
 	r.ID = rm.ID
 
+	to := c.Get("test")
+	t, ok := to.(*model.Test)
+
+	if !ok {
+		return echo.NewHTTPError(http.StatusBadRequest, "No test in context")
+	}
+
+	r.TestID = t.ID
+
 	var err error
 
 	if err = api.rs.Update(r); gorm.IsRecordNotFoundError(err) {
@@ -95,15 +104,6 @@ func (api *RunAPI) update(c echo.Context) error {
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
-
-	to := c.Get("test")
-	t, ok := to.(*model.Test)
-
-	if !ok {
-		return echo.NewHTTPError(http.StatusBadRequest, "No test in context")
-	}
-
-	r.TestID = t.ID
 
 	return c.JSON(http.StatusOK, r)
 }
@@ -167,7 +167,7 @@ func (api *RunAPI) listRuns(c echo.Context) error {
 }
 
 func (api *RunAPI) delete(c echo.Context) error {
-	return c.String(http.StatusOK, "Delete Run")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (api *RunAPI) getRun(c echo.Context) (*model.Run, error) {

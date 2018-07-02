@@ -253,6 +253,14 @@ func TestProjectAPI(t *testing.T) {
 			Done()
 	})
 
+	t.Run("DELETE 404 on unknown id", func(t *testing.T) {
+		httpTest.Delete(basePath + "/5432/").
+			Expect(t).
+			Status(404).
+			Type("json").
+			Done()
+	})
+
 	t.Run("GET /", func(t *testing.T) {
 		httpTest.Get(basePath + "/").
 			Expect(t).

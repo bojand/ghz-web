@@ -505,4 +505,20 @@ func TestTestAPI(t *testing.T) {
 			}).
 			Done()
 	})
+
+	t.Run("DELETE /:id", func(t *testing.T) {
+		httpTest.Delete(basePath + "/" + pid + "/tests/" + tid + "/").
+			Expect(t).
+			Status(501).
+			Type("json").
+			Done()
+	})
+
+	t.Run("DELETE should 404 on unknown id", func(t *testing.T) {
+		httpTest.Delete(basePath + "/" + pid + "/tests/5354/").
+			Expect(t).
+			Status(404).
+			Type("json").
+			Done()
+	})
 }
