@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/http/httptest"
 	"os"
 	"strconv"
 	"strings"
@@ -35,9 +36,9 @@ func TestRunAPI(t *testing.T) {
 	rs := &model.RunService{DB: db}
 	// projectAPI := &ProjectAPI{ps: ps}
 	// testAPI := &TestAPI{ts: ts}
-	// runAPI := &RunAPI{rs: rs}
+	runAPI := &RunAPI{rs: rs}
 
-	var projectID, projectID2, testID, testID2 uint
+	var projectID, projectID2, testID, testID2, runID uint
 	var pid, pid2, tid, tid2, rid string
 	// var project, project2 *model.Project
 	// var test, test2 *model.Test
@@ -180,7 +181,7 @@ func TestRunAPI(t *testing.T) {
 				assert.Equal(t, "Test description two", tm.Description)
 
 				testID2 = tm.ID
-				tid2 = strconv.FormatUint(uint64(testID), 10)
+				tid2 = strconv.FormatUint(uint64(testID2), 10)
 
 				return nil
 			}).
@@ -210,6 +211,7 @@ func TestRunAPI(t *testing.T) {
 				assert.Equal(t, 6543.21, r.Rps)
 
 				rid = strconv.FormatUint(uint64(r.ID), 10)
+				runID = r.ID
 
 				return nil
 			}).
@@ -331,6 +333,188 @@ func TestRunAPI(t *testing.T) {
 			Expect(t).
 			Status(404).
 			Type("json").
+			Done()
+	})
+
+	t.Run("populateRun with unknown ID should 404", func(t *testing.T) {
+		e := echo.New()
+
+		req := httptest.NewRequest(echo.GET, "/"+tid+"/"+"runs"+"/156", strings.NewReader(""))
+		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+		rec := httptest.NewRecorder()
+
+		c := e.NewContext(req, rec)
+		c.SetParamNames("tid", "rid")
+		c.SetParamValues(tid, "156")
+
+		handler := func(c echo.Context) error {
+			return c.String(http.StatusOK, "test")
+		}
+
+		popMW := runAPI.populateRun(handler)
+		err := popMW(c)
+		if assert.Error(t, err) {
+			assert.IsType(t, err, &echo.HTTPError{})
+			httpErr := err.(*echo.HTTPError)
+			assert.Equal(t, http.StatusNotFound, httpErr.Code)
+		}
+	})
+
+	t.Run("populateRun with valid id should work", func(t *testing.T) {
+		e := echo.New()
+
+		req := httptest.NewRequest(echo.GET, "/"+tid+"/"+"runs"+"/"+rid, strings.NewReader(""))
+		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+		rec := httptest.NewRecorder()
+
+		c := e.NewContext(req, rec)
+		c.SetParamNames("tid", "rid")
+		c.SetParamValues(tid, rid)
+
+		handler := func(c echo.Context) error {
+			return c.String(http.StatusOK, "test")
+		}
+
+		popMW := runAPI.populateRun(handler)
+		err := popMW(c)
+		if assert.NoError(t, err) {
+			ro := c.Get("run")
+			assert.IsType(t, ro, &model.Run{})
+			rm := ro.(*model.Run)
+			assert.NotZero(t, rm.ID)
+			assert.Equal(t, runID, rm.ID)
+		}
+	})
+
+	t.Run("GET /:tid/runs should get empty list for test with no runs", func(t *testing.T) {
+		httpTest.Get(basePath + "/" + pid + "/tests/" + tid2 + "/runs/").
+			Expect(t).
+			Status(200).
+			Type("json").
+			AssertFunc(func(res *http.Response, req *http.Request) error {
+				rl := new(RunList)
+				json.NewDecoder(res.Body).Decode(rl)
+
+				assert.NoError(t, err)
+				assert.Len(t, rl.Data, 0)
+				assert.Equal(t, 0, int(rl.Total))
+
+				return nil
+			}).
+			Done()
+	})
+
+	t.Run("GET /:tid/runs", func(t *testing.T) {
+		// create sample tests
+		for i := 0; i < 25; i++ {
+			nr := &model.Run{
+				TestID:  testID2,
+				Count:   200 + uint64(i),
+				Total:   1000 * time.Millisecond,
+				Average: time.Duration(5+i) * time.Millisecond,
+				Fastest: 1 * time.Millisecond,
+				Slowest: 500 * time.Millisecond,
+				Rps:     float64(5000 + i),
+			}
+			err := rs.Create(nr)
+
+			assert.NoError(t, err)
+		}
+
+		httpTest.Get(basePath + "/" + pid + "/tests/" + tid2 + "/runs/").
+			Expect(t).
+			Status(200).
+			Type("json").
+			AssertFunc(func(res *http.Response, req *http.Request) error {
+				rl := new(RunList)
+				json.NewDecoder(res.Body).Decode(rl)
+
+				assert.NoError(t, err)
+				assert.Len(t, rl.Data, 20)
+
+				assert.Equal(t, 25, int(rl.Total))
+				assert.NotZero(t, rl.Data[0].ID)
+				assert.NotZero(t, 200, rl.Data[0].Count)
+				assert.NotZero(t, rl.Data[1].ID)
+				assert.NotZero(t, 201, rl.Data[1].Count)
+				assert.NotZero(t, rl.Data[19].ID)
+				assert.NotZero(t, 219, rl.Data[19].Count)
+
+				return nil
+			}).
+			Done()
+	})
+
+	t.Run("GET /:tid/runs?sort=average&order=desc", func(t *testing.T) {
+
+		httpTest.Get(basePath + "/" + pid + "/tests/" + tid2 + "/runs/").
+			SetQueryParams(map[string]string{"sort": "average", "order": "desc"}).
+			Expect(t).
+			Status(200).
+			Type("json").
+			AssertFunc(func(res *http.Response, req *http.Request) error {
+				rl := new(RunList)
+				json.NewDecoder(res.Body).Decode(rl)
+
+				assert.NoError(t, err)
+				assert.Len(t, rl.Data, 20)
+
+				assert.Equal(t, 25, int(rl.Total))
+				assert.NotZero(t, rl.Data[0].ID)
+				assert.NotZero(t, time.Duration(5+19)*time.Millisecond, rl.Data[0].Average)
+				assert.NotZero(t, rl.Data[1].ID)
+				assert.NotZero(t, time.Duration(5+18)*time.Millisecond, rl.Data[1].Average)
+				assert.NotZero(t, rl.Data[19].ID)
+				assert.NotZero(t, time.Duration(5+0)*time.Millisecond, rl.Data[19].Average)
+
+				return nil
+			}).
+			Done()
+	})
+
+	t.Run("GET /:tid/runs?sort=average&order=desc&page=1", func(t *testing.T) {
+		httpTest.Get(basePath + "/" + pid + "/tests/" + tid2 + "/runs/").
+			SetQueryParams(map[string]string{"sort": "average", "order": "desc", "page": "1"}).
+			Expect(t).
+			Status(200).
+			Type("json").
+			AssertFunc(func(res *http.Response, req *http.Request) error {
+				rl := new(RunList)
+				json.NewDecoder(res.Body).Decode(rl)
+
+				assert.NoError(t, err)
+				assert.Len(t, rl.Data, 5)
+
+				assert.Equal(t, 25, int(rl.Total))
+				assert.NotZero(t, rl.Data[0].ID)
+				assert.NotZero(t, time.Duration(5+24)*time.Millisecond, rl.Data[0].Average)
+				assert.NotZero(t, rl.Data[1].ID)
+				assert.NotZero(t, time.Duration(5+23)*time.Millisecond, rl.Data[1].Average)
+				assert.NotZero(t, rl.Data[4].ID)
+				assert.NotZero(t, time.Duration(5+20)*time.Millisecond, rl.Data[4].Average)
+
+				return nil
+			}).
+			Done()
+	})
+
+	t.Run("GET /:tid/runs?sort=average&order=desc&page=2", func(t *testing.T) {
+		httpTest.Get(basePath + "/" + pid + "/tests/" + tid2 + "/runs/").
+			SetQueryParams(map[string]string{"sort": "average", "order": "desc", "page": "2"}).
+			Expect(t).
+			Status(200).
+			Type("json").
+			AssertFunc(func(res *http.Response, req *http.Request) error {
+				rl := new(RunList)
+				json.NewDecoder(res.Body).Decode(rl)
+
+				assert.NoError(t, err)
+				assert.Len(t, rl.Data, 0)
+
+				assert.Equal(t, 25, int(rl.Total))
+
+				return nil
+			}).
 			Done()
 	})
 }

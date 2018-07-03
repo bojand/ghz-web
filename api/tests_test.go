@@ -439,8 +439,6 @@ func TestTestAPI(t *testing.T) {
 				tl := new(TestList)
 				json.NewDecoder(res.Body).Decode(tl)
 
-				fmt.Printf("%#v\n\n", tl.Total)
-
 				assert.NoError(t, err)
 				assert.Len(t, tl.Data, 20)
 
@@ -467,8 +465,6 @@ func TestTestAPI(t *testing.T) {
 				tl := new(TestList)
 				json.NewDecoder(res.Body).Decode(tl)
 
-				fmt.Printf("%#v\n\n", tl.Total)
-
 				assert.NoError(t, err)
 				assert.Len(t, tl.Data, 5)
 
@@ -493,8 +489,6 @@ func TestTestAPI(t *testing.T) {
 			AssertFunc(func(res *http.Response, req *http.Request) error {
 				tl := new(TestList)
 				json.NewDecoder(res.Body).Decode(tl)
-
-				fmt.Printf("%#v\n\n", tl.Total)
 
 				assert.NoError(t, err)
 				assert.Len(t, tl.Data, 0)
