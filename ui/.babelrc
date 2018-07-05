@@ -1,10 +1,11 @@
 {
   "presets": [
-    "env",
+    ["env", {
+      "targets": {
+        "node": "8.0"
+      }
+    }],
     "vue"
   ],
-  "plugins": [
-    "transform-async-to-generator",
-    "transform-runtime"
-  ]
+  "plugins": [ "transform-runtime" ]
 }

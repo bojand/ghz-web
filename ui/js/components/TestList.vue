@@ -43,7 +43,7 @@
         </b-table-column>
 
         <b-table-column width="100">
-          <router-link :to="{ path: '/' }" class="button is-info" @click="detailsClicked(props.row.id, $event)">Details</router-link>
+          <router-link :to="{ name: 'test', params: { projectId: projectId, testId: props.row.id } }" class="button is-info">Details</router-link>
         </b-table-column>
       </template>
 
@@ -119,10 +119,6 @@ export default {
       this.sortField = field
       this.sortOrder = order
       this.loadData()
-    },
-
-    detailsClicked(id, ev) {
-      console.log(id)
     }
   },
   filters: {

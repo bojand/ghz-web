@@ -133,6 +133,7 @@ func TestThresholdSetting_UnmarshalJSON(t *testing.T) {
 	}{
 		{"just status", `{"status":"ok"}`, ThresholdSetting{Status: StatusOK}},
 		{"status and duration", `{"status":"ok","threshold":1000000}`, ThresholdSetting{Status: StatusOK, Threshold: milli1}},
+		{"status and duration 2", `{"status":"fail","threshold":2000000}`, ThresholdSetting{Status: StatusFail, Threshold: milli2}},
 	}
 
 	for _, tt := range tests {

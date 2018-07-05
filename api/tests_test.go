@@ -179,6 +179,59 @@ func TestTestAPI(t *testing.T) {
 			Done()
 	})
 
+	t.Run("POST create another test", func(t *testing.T) {
+		httpTest.Post(basePath + "/" + pid + "/tests/").
+			JSON(map[string]string{"name": " Test Name Another", "description": "Test description", "status": "fail"}).
+			Expect(t).
+			Status(201).
+			Type("json").
+			AssertFunc(func(res *http.Response, req *http.Request) error {
+				tm := new(model.Test)
+				json.NewDecoder(res.Body).Decode(tm)
+
+				assert.NoError(t, err)
+
+				assert.NotZero(t, tm.ID)
+				assert.Equal(t, "testnameanother", tm.Name)
+				assert.Equal(t, "Test description", tm.Description)
+				assert.Equal(t, model.StatusFail, tm.Status)
+
+				return nil
+			}).
+			Done()
+	})
+
+	t.Run("POST create test with thresholds", func(t *testing.T) {
+		httpTest.Post(basePath+"/"+pid+"/tests/").
+			AddHeader("Content-Type", "application/json; charset=UTF-8").
+			BodyString(`{"name":"threshold Test","description":"a description","status":"fail","thresholds":{"median":{"status":"fail","threshold":10000},"mean":{"status":"ok","threshold":20000},"99th":{"status":"ok","threshold":40000},"95th":{"status":"ok","threshold":30000}}}`).
+			Expect(t).
+			Status(201).
+			Type("json").
+			AssertFunc(func(res *http.Response, req *http.Request) error {
+				tm := new(model.Test)
+				json.NewDecoder(res.Body).Decode(tm)
+
+				assert.NoError(t, err)
+
+				assert.NotZero(t, tm.ID)
+				assert.Equal(t, "thresholdtest", tm.Name)
+				assert.Equal(t, "a description", tm.Description)
+				assert.Equal(t, model.StatusFail, tm.Status)
+
+				expectedTH := map[model.Threshold]*model.ThresholdSetting{
+					model.ThresholdMedian: &model.ThresholdSetting{Threshold: time.Duration(10000), Status: model.StatusFail},
+					model.ThresholdMean:   &model.ThresholdSetting{Threshold: time.Duration(20000), Status: model.StatusOK},
+					model.Threshold95th:   &model.ThresholdSetting{Threshold: time.Duration(30000), Status: model.StatusOK},
+					model.Threshold99th:   &model.ThresholdSetting{Threshold: time.Duration(40000), Status: model.StatusOK}}
+
+				assert.Equal(t, expectedTH, tm.Thresholds)
+
+				return nil
+			}).
+			Done()
+	})
+
 	t.Run("POST fail with same test name", func(t *testing.T) {
 		httpTest.Post(basePath + "/" + pid + "/tests/").
 			JSON(map[string]string{"name": " Test Name"}).

@@ -20,10 +20,10 @@ export default {
     }
   },
   created() {
-    this.projectId = this.$route.params.id
+    this.projectId = this.$route.params.projectId
   },
   async beforeRouteUpdate(to, from, next) {
-    this.projectId = to.params.id
+    this.projectId = to.params.projectId
     next()
   },
   methods: {

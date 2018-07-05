@@ -67,6 +67,25 @@ type Test struct {
 	ThresholdsJSON string                          `json:"-" gorm:"column:thresholds"`
 }
 
+// UnmarshalJSON prases a Test value from JSON string
+func (t *Test) UnmarshalJSON(data []byte) error {
+	type Alias Test
+	aux := &struct {
+		Status string `json:"status"`
+		*Alias
+	}{
+		Alias: (*Alias)(t),
+	}
+
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
+	}
+
+	t.Status = StatusFromString(aux.Status)
+
+	return nil
+}
+
 // BeforeCreate is a GORM hook called when a model is created
 func (t *Test) BeforeCreate() error {
 	if t.Name == "" {

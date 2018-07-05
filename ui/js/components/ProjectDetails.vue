@@ -2,43 +2,44 @@
   <section>
     <h2 class="subtitle strong"><strong>Project Details</strong></h2>
     <div class="box">
-      <article class="media">
-        <div class="media-left">
-          <div class="media-content">
-            <div class="content" v-if="!editMode">
-                <p>
-                <strong>{{ model.name }}</strong>
-                <br>
-                {{ model.description }}
-                </p>
-            </div>
-            <div class="content" v-if="editMode">
-              <b-field>
-                <b-input :placeholder="model.name" v-model="model.name"></b-input>
-              </b-field>
-              <b-field>
-                <b-input :placeholder="model.description" v-model="model.description"></b-input>
-              </b-field>
-            </div>
-            <nav class="level is-mobile">
-              <div class="level-left">
-                <a class="level-item" aria-label="reply">
-                  <button :class="['button', editMode ? 'is-primary' : '']" @click="editClicked">
-                    <b-icon :icon="editMode ? 'check' : 'pencil'" size="is-small"></b-icon>
-                    <span>{{ editMode ? 'Save' : 'Edit' }}</span>
-                  </button>
-                </a>
-                <a v-if="editMode" class="level-item" aria-label="reply">
-                  <button class="button" @click="cancelClicked">
-                    <b-icon icon="cancel" size="is-small"></b-icon>
-                    <span>Cancel</span>
-                  </button>
-                </a>
-              </div>
-            </nav>
+      
+      <div class="content" v-if="!editMode">
+        <span class="title is-5"><strong>{{ model.name }}</strong></span>
+        <p>
+        {{ model.description }}
+        </p>
+      </div>
+
+      <div class="content" v-if="editMode">
+        <div class="media">
+          <div class="media-left">
+            <b-field>
+              <b-input placeholder="name" v-model="model.name" required></b-input>
+            </b-field>
+            <b-field>
+              <b-input placeholder="description" v-model="model.description"></b-input>
+            </b-field>
           </div>
         </div>
-      </article>
+      </div>
+      
+      <nav class="level">
+        <div class="level-left">
+          <a class="level-item" aria-label="reply">
+            <button :class="['button', editMode ? 'is-primary' : '']" @click="editClicked">
+              <b-icon :icon="editMode ? 'check' : 'pencil'" size="is-small"></b-icon>
+              <span>{{ editMode ? 'Save' : 'Edit' }}</span>
+            </button>
+          </a>
+          <a v-if="editMode" class="level-item" aria-label="reply">
+            <button class="button" @click="cancelClicked">
+              <b-icon icon="cancel" size="is-small"></b-icon>
+              <span>Cancel</span>
+            </button>
+          </a>
+        </div>
+      </nav>
+
     </div>
   </section>
 </template>
@@ -66,18 +67,18 @@ export default {
       this.loadData()
     }
   },
+  store: [ 'project' ],
   methods: {
     async loadData() {
       this.loading = true
       try {
-        const { data } = await axios.get(
-          `http://localhost:3000/api/projects/${this.projectId}`
-        )
+        if (!this.project) {
+          this.project = await this.$store.fetchProject(this.projectId)
+        }
 
-        this.model = data
+        Object.assign(this.model, this.project)
+
         this.loading = false
-
-        this.$store.project = this.model
       } catch (e) {
         this.loading = false
 
@@ -94,12 +95,9 @@ export default {
         this.loading = true
 
         try {
-          const { data } = await axios.put(
-            `http://localhost:3000/api/projects/${this.projectId}`,
-            this.model
-          )
+          this.project = await this.$store.updateProject(this.model)
+          Object.assign(this.model, this.project)
 
-          this.model = data
           this.loading = false
         } catch (e) {
           this.loading = false
@@ -123,15 +121,6 @@ export default {
   },
   mounted() {
     this.loadData()
-  },
-  beforeDestroy () {
-    console.log('ProjectDetails beforeDestroy')
-    this.$store.project = null
-  },
-  beforeRouteLeave (to, from, next) {
-    console.log('ProjectDetails beforeRouteLeave')
-    this.$store.project = null
-    next()
   }
 }
 </script>

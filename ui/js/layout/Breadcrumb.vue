@@ -4,7 +4,10 @@
         <router-link v-for="(part, index) in parts" v-if="part" :key="index" tag="li" 
             :class="index == parts.length -1 ? 'is-active' : ''" 
             :to="{ name: part.link.name, params: part.link.params }">
-            <a>{{part.label}}</a>
+            <a>
+              <b-icon v-if="part.icon" :icon="part.icon" size="is-small"></b-icon>
+              {{part.label}}
+            </a>
         </router-link>
     </ul>
   </nav>
@@ -18,6 +21,7 @@ export default {
     return {
       parts: [
         {
+          icon: 'view-dashboard',
           label: 'Projects',
           link: {
             name: 'projects'
@@ -36,24 +40,50 @@ export default {
         this.parts.splice(1)
       }
 
-      if (
-        this.project &&
-        (_.find(this.$route.matched, ['name', 'project']) || this.$route.name === 'project')
-      ) {
+      if (this.project && this.$route.params.projectId) {
         this.parts.push(this.getProjectPart())
       }
 
-      if (
-        this.test &&
-        (_.find(this.$route.matched, ['name', 'test']) || this.$route.name === 'test')
-      ) {
-        this.parts.push({
-          label: 'Tests',
-          link: {
-            name: 'tests'
+      if (this.project && this.test && this.$route.params.testId) {
+        this.parts.push(
+          {
+            icon: 'gauge',
+            label: 'Tests',
+            link: {
+              name: 'project',
+              params: { projectId: this.project.id }
+            }
+          },
+          {
+            label: this.test.name,
+            link: {
+              name: 'test',
+              params: { projectId: this.project.id, testId: this.test.id }
+            }
           }
-        })
+        )
       }
+
+      if (this.project && this.test && this.run && this.$route.params.runId) {
+        this.parts.push(
+          {
+            icon: 'pull-box',
+            label: 'Runs',
+            link: {
+              name: 'test',
+              params: { projectId: this.project.id, testId: this.test.id }
+            }
+          },
+          {
+            label: this.run.id,
+            link: {
+              name: 'run',
+              params: { projectId: this.project.id, testId: this.test.id, runId: this.run.id }
+            }
+          }
+        )
+      }
+
     },
     getProjectPart() {
       if (this.project) {
@@ -73,6 +103,9 @@ export default {
       this.buildParts()
     },
     project() {
+      this.buildParts()
+    },
+    test() {
       this.buildParts()
     }
   }

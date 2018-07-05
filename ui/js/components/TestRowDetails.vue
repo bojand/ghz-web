@@ -43,6 +43,12 @@ export default {
         )
 
         this.model = data
+        data.thresholds = {
+          '50th': 1000,
+          '90th': 2000,
+          '95th': 3000,
+          '99th': 4000
+        }
         console.log(JSON.stringify(data))
       } catch (e) {
         this.model = {}
