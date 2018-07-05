@@ -19,7 +19,8 @@
     "lodash": "^4.17.10",
     "vue": "^2.5.16",
     "vue-hot-reload-api": "^2.3.0",
-    "vue-router": "^3.0.1"
+    "vue-router": "^3.0.1",
+    "vue-stash": "^2.0.1-beta"
   },
   "devDependencies": {
     "@vue/component-compiler-utils": "^1.3.1",

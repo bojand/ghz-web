@@ -21,6 +21,7 @@
 
 <script>
 import VueRouter from 'vue-router'
+
 import ProjectListPage from './components/ProjectListPage.vue'
 import ProjectPage from './components/ProjectPage.vue'
 import Navbar from './layout/Navbar.vue'

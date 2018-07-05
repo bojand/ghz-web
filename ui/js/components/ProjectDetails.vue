@@ -76,6 +76,8 @@ export default {
 
         this.model = data
         this.loading = false
+
+        this.$store.project = this.model
       } catch (e) {
         this.loading = false
 
@@ -121,6 +123,14 @@ export default {
   },
   mounted() {
     this.loadData()
+  },
+  beforeDestroy () {
+    console.log('beforeDestroy')
+    this.$store.project = null
+  },
+  beforeRouteLeave (to, from, next) {
+    console.log('beforeRouteLeave')
+    this.$store.project = null
   }
 }
 </script>
