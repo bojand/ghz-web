@@ -4,6 +4,7 @@
     <div class="box">
 
       <div class="content" v-if="!editMode">
+        
         <span class="title is-4">
           <strong>{{ model.name }}</strong>
           <b-icon 
@@ -13,19 +14,30 @@
             :type="model.status === 'ok' ? 'is-success' : 'is-danger'"
           ></b-icon>
         </span>
-        <section class="columns">
-          <div class="column">
-            <p>
-              {{ model.description }}
-            </p>
-          </div>
-          <div class="column" v-if="model.thresholds">
-            <strong>Thresholds</strong>
-            <div v-for="(value, key) in model.thresholds" :key="key">
-              {{ key }}: {{ value }}
+        <div class="level-left" style="padding-top:5px; padding-bottom:10px" v-if="model.thresholds">
+          <div class="level-item" v-for="(value, key) in model.thresholds" :key="key">
+            <div class="control">
+              <b-taglist attached>
+                  <b-tag type="is-info">{{ key }} </b-tag>
+                  <b-tag :type="value.status === 'ok' ? 'is-success' : 'is-danger'">{{ value.threshold }} ms</b-tag>
+              </b-taglist>
             </div>
+            <!-- {{ key }}: {{ value.threshold }}
+            <b-icon 
+              :icon="value.status === 'ok' ? 'checkbox-marked-circle-outline' : 'alert-circle-outline'" 
+              size="is-small"
+              custom-size="mdi-18px"
+              :type="value.status === 'ok' ? 'is-success' : 'is-danger'"
+            ></b-icon> -->
           </div>
-        </section>
+        </div>
+        
+        <div>
+          <p>
+            {{ model.description }}
+          </p>
+        </div>
+
       </div>
 
       <div class="content" v-if="editMode">
@@ -120,9 +132,11 @@ export default {
         }
 
         Object.assign(this.model, this.test)
-        this.model.thresholds = {
-          median: 10000,
-          mean: 20000
+        if (!this.model.thresholds) {
+          this.model.thresholds = {
+            median: { status: 'ok', threshold: 10000 },
+            mean: { status: 'fail', threshold: 20000 }
+          }
         }
         this.loading = false
       } catch (e) {
@@ -168,15 +182,19 @@ export default {
     setThreshold() {
       if (!this.model.thresholds) {
         this.model.thresholds = {
-          mean: 0,
-          median: 0,
-          '96th': 0,
-          '99th': 0,
+          mean: { status: 'ok', threshold: 0 },
+          median: { status: 'ok', threshold: 0 },
+          '96th': { status: 'ok', threshold: 0 },
+          '99th': { status: 'ok', threshold: 0 }
         }
       }
 
+      if (!this.model.thresholds[this.selectedThreshold]) {
+        this.model.thresholds[this.selectedThreshold] = { status: 'ok', threshold: 0 }
+      }
+
       const val = parseInt(this.selectedThresholdValue, 10)
-      this.model.thresholds[this.selectedThreshold] = val
+      this.model.thresholds[this.selectedThreshold].threshold = val
     },
 
     selectedChaged() {
@@ -185,15 +203,18 @@ export default {
         return
       }
 
-      this.selectedThresholdValue = this.model.thresholds[this.selectedThreshold] || 0
+      if (!this.model.thresholds[this.selectedThreshold]) {
+        this.selectedThresholdValue = 0
+        return
+      }
+
+      this.selectedThresholdValue = this.model.thresholds[this.selectedThreshold].threshold || 0
     }
   },
   mounted() {
     this.loadData()
 
-    if (this.model.thresholds) {
-      this.selectedThresholdValue = this.model.thresholds[this.selectedThreshold]
-    }
+    this.selectedChaged()
   }
 }
 </script>
