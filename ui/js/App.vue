@@ -4,6 +4,8 @@
         <div class="hero-body">
           <div class="container">
             <navbar></navbar>
+            <br />
+            <bread></bread>
           </div>
         </div>
       </section>
@@ -23,6 +25,7 @@ import ProjectListPage from './components/ProjectListPage.vue'
 import ProjectPage from './components/ProjectPage.vue'
 import Navbar from './layout/Navbar.vue'
 import VFooter from './layout/Footer.vue'
+import Bread from './layout/Breadcrumb.vue'
 
 const routes = [
   { path: '/', redirect: '/projects' },
@@ -38,7 +41,8 @@ export default {
   name: 'app',
   components: {
     Navbar,
-    VFooter
+    VFooter,
+    Bread
   },
   router
 }
