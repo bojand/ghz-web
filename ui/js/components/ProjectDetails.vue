@@ -125,12 +125,13 @@ export default {
     this.loadData()
   },
   beforeDestroy () {
-    console.log('beforeDestroy')
+    console.log('ProjectDetails beforeDestroy')
     this.$store.project = null
   },
   beforeRouteLeave (to, from, next) {
-    console.log('beforeRouteLeave')
+    console.log('ProjectDetails beforeRouteLeave')
     this.$store.project = null
+    next()
   }
 }
 </script>

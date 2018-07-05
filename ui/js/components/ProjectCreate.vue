@@ -33,13 +33,10 @@ export default {
       let description = this.projectDesc
 
       try {
-        const { data } = await axios.post(
-          'http://localhost:3000/api/projects',
-          {
-            name,
-            description
-          }
-        )
+        const { data } = await axios.post('http://localhost:3000/api/projects', {
+          name,
+          description
+        })
 
         name = data.name
         description = data.description

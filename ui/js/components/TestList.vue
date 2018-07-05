@@ -86,9 +86,7 @@ export default {
   methods: {
     async loadData() {
       const page = this.page - 1 || 0
-      const params = `page=${page}&sort=${this.sortField}&order=${
-        this.sortOrder
-      }`
+      const params = `page=${page}&sort=${this.sortField}&order=${this.sortOrder}`
 
       this.loading = true
       try {

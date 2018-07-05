@@ -60,9 +60,7 @@ export default {
 
       this.loading = true
       try {
-        const { data } = await axios.get(
-          `http://localhost:3000/api/projects?${params}`
-        )
+        const { data } = await axios.get(`http://localhost:3000/api/projects?${params}`)
 
         this.data = data.data
         this.total = data.total

@@ -13,8 +13,7 @@ import ProjectList from './ProjectList.vue'
 
 export default {
   data() {
-    return {
-    }
+    return {}
   },
   methods: {
     projectCreated(p) {

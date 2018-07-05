@@ -28,11 +28,6 @@ export default {
   },
   store: ['project', 'test', 'run'],
   mounted() {
-    console.log('mounted')
-    console.log(this.$route.matched)
-    console.log(this.$route.name)
-    console.log(this.$route.params)
-
     this.buildParts()
   },
   methods: {
@@ -41,8 +36,23 @@ export default {
         this.parts.splice(1)
       }
 
-      if (this.project && this.$route.name ==='project') {
+      if (
+        this.project &&
+        (_.find(this.$route.matched, ['name', 'project']) || this.$route.name === 'project')
+      ) {
         this.parts.push(this.getProjectPart())
+      }
+
+      if (
+        this.test &&
+        (_.find(this.$route.matched, ['name', 'test']) || this.$route.name === 'test')
+      ) {
+        this.parts.push({
+          label: 'Tests',
+          link: {
+            name: 'tests'
+          }
+        })
       }
     },
     getProjectPart() {

@@ -39,12 +39,11 @@ export default {
     async loadData() {
       try {
         const { data } = await axios.get(
-          `http://localhost:3000/api/projects/${this.projectId}/tests/${
-            this.testId
-          }`
+          `http://localhost:3000/api/projects/${this.projectId}/tests/${this.testId}`
         )
 
         this.model = data
+        console.log(JSON.stringify(data))
       } catch (e) {
         this.model = {}
 
