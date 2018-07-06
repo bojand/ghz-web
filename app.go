@@ -41,7 +41,8 @@ func (app *Application) Start() {
 
 	app.setupServer()
 
-	app.testEmbeddedStuff()
+	// app.testEmbeddedStuff()
+	app.testStuff()
 
 	app.Logger.Fatal(app.Server.Start(app.Config.Server.GetHostPort()))
 }
@@ -187,27 +188,19 @@ func (app *Application) testStuff() {
 		app.Logger.Infof("Saved: %+v", t1.ID)
 	}
 
-	o := &model.Test{
-		ProjectID:   project.ID,
-		Name:        " Test 222 ",
-		Description: " Test Description 2 ",
-	}
-	o.ID = t1.ID
+	tRead := new(model.Test)
+	tdao.DB.First(&tRead, t1.ID)
+	fmt.Printf("Read after create:\n%+v\n\n", tRead)
 
-	// Status:      model.StatusFail,
-	// 	Thresholds: map[model.Threshold]*model.ThresholdSetting{
-	// 		model.Threshold95th:   &model.ThresholdSetting{Threshold: milli4, Status: model.StatusOK},
-	// 		model.Threshold99th:   &model.ThresholdSetting{Threshold: milli5, Status: model.StatusFail},
-	// 		model.ThresholdMedian: &model.ThresholdSetting{Threshold: milli3, Status: model.StatusOK},
-	// 		model.ThresholdMean:   &model.ThresholdSetting{Threshold: milli2, Status: model.StatusOK},
-	// 	},
+	t2 := &model.Test{Name: " Test Product 333 "}
+	t2.ID = tRead.ID
+	t2.ProjectID = tRead.ProjectID
 
-	err = tdao.Update(o)
-	if err != nil {
-		app.Logger.Errorf("Error: %+v\n", err.Error())
-	} else {
-		app.Logger.Infof("Saved: %+v", o.ID)
-	}
+	tdao.DB.Model(tRead).Updates(t2)
+
+	tRead = new(model.Test)
+	tdao.DB.First(&tRead, t1.ID)
+	fmt.Printf("Read after update:\n%+v\n\n", tRead)
 
 	/*t1 := &model.Test{
 		Project: project,

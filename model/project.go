@@ -34,10 +34,15 @@ func (p *Project) BeforeUpdate() error {
 }
 
 // BeforeSave is a GORM hook called when a model is created
-func (p *Project) BeforeSave() error {
+func (p *Project) BeforeSave(scope *gorm.Scope) error {
 	name := strings.Replace(p.Name, " ", "", -1)
 	p.Name = strings.ToLower(name)
 	p.Description = strings.TrimSpace(p.Description)
+
+	if scope != nil {
+		scope.SetColumn("name", p.Name)
+		scope.SetColumn("description", p.Description)
+	}
 
 	return nil
 }

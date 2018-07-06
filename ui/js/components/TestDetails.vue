@@ -165,7 +165,7 @@ export default {
         this.model.thresholds = {
           mean: { status: 'ok', threshold: 0 },
           median: { status: 'ok', threshold: 0 },
-          '96th': { status: 'ok', threshold: 0 },
+          '95th': { status: 'ok', threshold: 0 },
           '99th': { status: 'ok', threshold: 0 }
         }
       }

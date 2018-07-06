@@ -239,7 +239,7 @@ func TestTestModel_BeforeSave(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := tt.in.BeforeSave()
+			err := tt.in.BeforeSave(nil)
 			if tt.expectError {
 				assert.Error(t, err)
 			} else {

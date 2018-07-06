@@ -23,7 +23,7 @@ const (
 	// Threshold95th is the threshold for the 95th percentile
 	Threshold95th = Threshold("95th")
 
-	// Threshold99th is the threshold for the 96th percentile
+	// Threshold99th is the threshold for the 99th percentile
 	Threshold99th = Threshold("99th")
 )
 
@@ -105,7 +105,7 @@ func (t *Test) BeforeUpdate() error {
 }
 
 // BeforeSave is called by GORM before save
-func (t *Test) BeforeSave() error {
+func (t *Test) BeforeSave(scope *gorm.Scope) error {
 	if t.ProjectID == 0 && t.Project == nil {
 		return errors.New("Test must belong to a project")
 	}
@@ -124,6 +124,12 @@ func (t *Test) BeforeSave() error {
 	name := strings.Replace(t.Name, " ", "", -1)
 	t.Name = strings.ToLower(name)
 	t.Description = strings.TrimSpace(t.Description)
+
+	if scope != nil {
+		scope.SetColumn("name", t.Name)
+		scope.SetColumn("description", t.Description)
+		scope.SetColumn("thresholds", t.ThresholdsJSON)
+	}
 
 	return nil
 }

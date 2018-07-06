@@ -31,7 +31,7 @@ type Run struct {
 }
 
 // BeforeSave is called by GORM before save
-func (r *Run) BeforeSave() error {
+func (r *Run) BeforeSave(scope *gorm.Scope) error {
 	if r.TestID == 0 && r.Test == nil {
 		return errors.New("Run must belong to a test")
 	}
@@ -61,6 +61,12 @@ func (r *Run) BeforeSave() error {
 	}
 
 	r.StatusCodeDistJSON = string(statusCodeDist)
+
+	if scope != nil {
+		scope.SetColumn("status", r.Status)
+		scope.SetColumn("error_dist", r.ErrorDistJSON)
+		scope.SetColumn("status_code_dist", r.StatusCodeDistJSON)
+	}
 
 	return nil
 }
