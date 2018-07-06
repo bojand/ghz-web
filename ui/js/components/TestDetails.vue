@@ -14,24 +14,8 @@
             :type="model.status === 'ok' ? 'is-success' : 'is-danger'"
           ></b-icon>
         </span>
-        <div class="level-left" style="padding-top:5px; padding-bottom:10px" v-if="model.thresholds">
-          <div class="level-item" v-for="(value, key) in model.thresholds" :key="key">
-            <div class="control">
-              <b-taglist attached>
-                  <b-tag type="is-info">{{ key }} </b-tag>
-                  <b-tag :type="value.status === 'ok' ? 'is-success' : 'is-danger'">{{ value.threshold }} ms</b-tag>
-              </b-taglist>
-            </div>
-            <!-- {{ key }}: {{ value.threshold }}
-            <b-icon 
-              :icon="value.status === 'ok' ? 'checkbox-marked-circle-outline' : 'alert-circle-outline'" 
-              size="is-small"
-              custom-size="mdi-18px"
-              :type="value.status === 'ok' ? 'is-success' : 'is-danger'"
-            ></b-icon> -->
-          </div>
-        </div>
-        
+        <component-status-tags :thresholds="model.thresholds" v-if="model.thresholds"></component-status-tags>
+       
         <div>
           <p>
             {{ model.description }}
@@ -94,6 +78,8 @@
 <script>
 import axios from 'axios'
 
+import StatusTags from './StatusTags.vue'
+
 export default {
   data() {
     return {
@@ -132,12 +118,7 @@ export default {
         }
 
         Object.assign(this.model, this.test)
-        if (!this.model.thresholds) {
-          this.model.thresholds = {
-            median: { status: 'ok', threshold: 10000 },
-            mean: { status: 'fail', threshold: 20000 }
-          }
-        }
+
         this.loading = false
       } catch (e) {
         this.loading = false
@@ -215,6 +196,9 @@ export default {
     this.loadData()
 
     this.selectedChaged()
+  },
+  components: {
+    'component-status-tags': StatusTags
   }
 }
 </script>

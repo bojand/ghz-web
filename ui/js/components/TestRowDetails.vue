@@ -1,26 +1,21 @@
 <template>
     <article class="media">
         <div class="media-content">
-            <div class="columns">
-              <div class="column">
-                <strong>{{ model.name }}</strong>
-                <div v-if="model.description">
-                  {{ model.description }}
-                </div>
-              </div>
-              <div class="column" v-if="model.thresholds">
-                  <strong>Thresholds</strong>
-                  <div v-for="(value, key) in model.thresholds" :key="key">
-                    {{ key }}: {{ value }}
-                  </div>
-              </div>
-            </div>
+          <strong>{{ model.name }}</strong>
+          <component-status-tags :thresholds="model.thresholds" v-if="model.thresholds"></component-status-tags>
+          <div v-if="model.description">
+            <p>
+              {{ model.description }}
+            </p>
+          </div>
         </div>
     </article>
 </template>
 
 <script>
 import axios from 'axios'
+
+import StatusTags from './StatusTags.vue'
 
 export default {
   data() {
@@ -43,13 +38,6 @@ export default {
         )
 
         this.model = data
-        data.thresholds = {
-          '50th': 1000,
-          '90th': 2000,
-          '95th': 3000,
-          '99th': 4000
-        }
-        console.log(JSON.stringify(data))
       } catch (e) {
         this.model = {}
 
@@ -60,6 +48,9 @@ export default {
         })
       }
     }
+  },
+  components: {
+    'component-status-tags': StatusTags
   }
 }
 </script>
