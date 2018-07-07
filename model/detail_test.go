@@ -668,3 +668,101 @@ func TestDetailService_FindByRunIDSorted(t *testing.T) {
 		assert.Len(t, runs, 0)
 	})
 }
+
+func TestDetailService_Update(t *testing.T) {
+	defer os.Remove(dbName)
+
+	db, err := gorm.Open("sqlite3", dbName)
+	if err != nil {
+		assert.FailNow(t, err.Error())
+	}
+	defer db.Close()
+
+	db.AutoMigrate(&Project{}, &Test{}, &Run{}, &Detail{})
+	db.Exec("PRAGMA foreign_keys = ON;")
+
+	dao := DetailService{DB: db}
+	var tid, pid, rid, did uint
+
+	t.Run("new detail with run, test and project", func(t *testing.T) {
+		p := &Project{}
+
+		o := &Test{
+			Project:     p,
+			Name:        "Test 111 ",
+			Description: "Test Description Asdf ",
+		}
+
+		r := &Run{
+			Test:    o,
+			Count:   100,
+			Total:   milli1000,
+			Average: milli5,
+			Fastest: milli1,
+			Slowest: milli500,
+		}
+
+		d := &Detail{
+			Run:     r,
+			Latency: 123.45,
+			Status:  "OK",
+		}
+
+		err := dao.Create(d)
+
+		assert.NoError(t, err)
+
+		tid = o.ID
+		pid = p.ID
+		rid = r.ID
+		did = d.ID
+	})
+
+	t.Run("update", func(t *testing.T) {
+		d := &Detail{
+			RunID:   rid,
+			Latency: 234.56,
+			Status:  "OK",
+		}
+		d.ID = did
+
+		err := dao.Update(d)
+
+		assert.NoError(t, err)
+
+		cd := &Detail{}
+		err = db.First(cd, did).Error
+		assert.NoError(t, err)
+		assert.Equal(t, rid, cd.RunID)
+		assert.Equal(t, d.ID, cd.RunID)
+		assert.Equal(t, d.Latency, cd.Latency)
+		assert.Equal(t, d.Status, cd.Status)
+		assert.Equal(t, d.Error, cd.Error)
+	})
+
+	t.Run("fail update on unknown id", func(t *testing.T) {
+		d := &Detail{
+			RunID:   rid,
+			Latency: 234.56,
+			Status:  "OK",
+		}
+		d.ID = 123
+
+		err := dao.Update(d)
+
+		assert.Error(t, err)
+	})
+
+	t.Run("fail update on unknown run id", func(t *testing.T) {
+		d := &Detail{
+			RunID:   1212,
+			Latency: 234.56,
+			Status:  "OK",
+		}
+		d.ID = did
+
+		err := dao.Update(d)
+
+		assert.Error(t, err)
+	})
+}

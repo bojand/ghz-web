@@ -116,7 +116,12 @@ func (ds *DetailService) Update(d *Detail) error {
 	return ds.DB.Save(d).Error
 }
 
-// Delete deletes a run
+// Delete deletes a detial
 func (ds *DetailService) Delete(r *Detail) error {
+	return errors.New("Not Implemented Yet")
+}
+
+// DeleteAll deletes all details for a run
+func (ds *DetailService) DeleteAll(rid uint) error {
 	return errors.New("Not Implemented Yet")
 }

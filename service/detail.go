@@ -11,4 +11,5 @@ type DetailService interface {
 	Create(m *model.Detail) error
 	Update(m *model.Detail) error
 	Delete(m *model.Detail) error
+	DeleteAll(rid uint) error
 }
