@@ -19,7 +19,6 @@ func SetupDetailAPI(g *echo.Group, ds service.DetailService) {
 	api := &DetailAPI{ds: ds}
 
 	g.GET("/", api.listDetails).Name = "ghz api: list details"
-	g.POST("/", api.create).Name = "ghz api: create details"
 	g.DELETE("/", api.deleteAll).Name = "ghz api: delete all details"
 }
 
@@ -82,30 +81,6 @@ func (api *DetailAPI) listDetails(c echo.Context) error {
 	pl := &DetailList{Total: count, Data: data}
 
 	return c.JSON(http.StatusOK, pl)
-}
-
-func (api *DetailAPI) create(c echo.Context) error {
-	d := new(model.Detail)
-
-	if err := c.Bind(d); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
-	}
-
-	ro := c.Get("run")
-	r, ok := ro.(*model.Run)
-
-	if !ok {
-		return echo.NewHTTPError(http.StatusBadRequest, "No test in context")
-	}
-
-	d.RunID = r.ID
-
-	err := api.ds.Create(d)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
-	}
-
-	return c.JSON(http.StatusCreated, r)
 }
 
 func (api *DetailAPI) deleteAll(c echo.Context) error {

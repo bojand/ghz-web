@@ -22,6 +22,7 @@ func SetupRunAPI(g *echo.Group, rs service.RunService) {
 
 	g.GET("/", api.listRuns).Name = "ghz api: list runs"
 	g.POST("/", api.create).Name = "ghz api: create run"
+	g.POST("/raw", api.createRaw).Name = "ghz api: create raw"
 
 	g.Use(api.populateRun)
 
@@ -201,4 +202,8 @@ func (api *RunAPI) populateRun(next echo.HandlerFunc) echo.HandlerFunc {
 
 		return next(c)
 	}
+}
+
+func (api *RunAPI) createRaw(c echo.Context) error {
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }

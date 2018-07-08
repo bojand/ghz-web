@@ -2,7 +2,9 @@ package model
 
 import (
 	"errors"
+	"fmt"
 	"strings"
+	"sync/atomic"
 
 	"github.com/jinzhu/gorm"
 )
@@ -124,4 +126,40 @@ func (ds *DetailService) Delete(r *Detail) error {
 // DeleteAll deletes all details for a run
 func (ds *DetailService) DeleteAll(rid uint) error {
 	return errors.New("Not Implemented Yet")
+}
+
+// CreateBatch creates a batch of details returning the number successfully created,
+// and the number failed
+func (ds *DetailService) CreateBatch(rid uint, s []*Detail) (uint, uint) {
+	NC := 1
+	nReq := len(s)
+
+	var nErr uint32
+
+	sem := make(chan bool, NC)
+
+	for _, item := range s {
+		sem <- true
+
+		go func(d *Detail) {
+			defer func() { <-sem }()
+
+			d.RunID = rid
+			err := ds.Create(d)
+
+			if err != nil {
+				fmt.Println(err)
+				atomic.AddUint32(&nErr, 1)
+			}
+		}(item)
+	}
+
+	for i := 0; i < cap(sem); i++ {
+		sem <- true
+	}
+
+	errCount := uint(atomic.LoadUint32(&nErr))
+	nCreated := uint(nReq) - errCount
+
+	return nCreated, errCount
 }

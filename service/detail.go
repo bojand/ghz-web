@@ -9,6 +9,7 @@ type DetailService interface {
 	FindByRunID(rid uint, limit, page uint) ([]*model.Detail, error)
 	FindByRunIDSorted(rid, num, page uint, sortField, order string) ([]*model.Detail, error)
 	Create(m *model.Detail) error
+	CreateBatch(uint, []*model.Detail) (uint, uint)
 	Update(m *model.Detail) error
 	Delete(m *model.Detail) error
 	DeleteAll(rid uint) error
