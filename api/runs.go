@@ -2,7 +2,6 @@ package api
 
 import (
 	"net/http"
-	"strconv"
 
 	"github.com/bojand/ghz-web/model"
 	"github.com/bojand/ghz-web/service"
@@ -22,7 +21,6 @@ func SetupRunAPI(g *echo.Group, rs service.RunService) {
 
 	g.GET("/", api.listRuns).Name = "ghz api: list runs"
 	g.POST("/", api.create).Name = "ghz api: create run"
-	g.POST("/raw", api.createRaw).Name = "ghz api: create raw"
 
 	g.Use(api.populateRun)
 
@@ -47,7 +45,7 @@ func (api *RunAPI) create(c echo.Context) error {
 	t, ok := to.(*model.Test)
 
 	if !ok {
-		return echo.NewHTTPError(http.StatusBadRequest, "No test in context")
+		return echo.NewHTTPError(http.StatusInternalServerError, "No test in context")
 	}
 
 	r.TestID = t.ID
@@ -65,7 +63,7 @@ func (api *RunAPI) get(c echo.Context) error {
 	r, ok := ro.(*model.Run)
 
 	if r == nil || !ok {
-		return echo.NewHTTPError(http.StatusBadRequest, "No Run in context")
+		return echo.NewHTTPError(http.StatusInternalServerError, "No Run in context")
 	}
 
 	return c.JSON(http.StatusOK, r)
@@ -82,7 +80,7 @@ func (api *RunAPI) update(c echo.Context) error {
 	rm, ok := ro.(*model.Run)
 
 	if rm == nil || !ok {
-		return echo.NewHTTPError(http.StatusBadRequest, "No Run in context")
+		return echo.NewHTTPError(http.StatusInternalServerError, "No Run in context")
 	}
 
 	r.ID = rm.ID
@@ -91,7 +89,7 @@ func (api *RunAPI) update(c echo.Context) error {
 	t, ok := to.(*model.Test)
 
 	if !ok {
-		return echo.NewHTTPError(http.StatusBadRequest, "No test in context")
+		return echo.NewHTTPError(http.StatusInternalServerError, "No test in context")
 	}
 
 	r.TestID = t.ID
@@ -103,7 +101,7 @@ func (api *RunAPI) update(c echo.Context) error {
 	}
 
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
 	return c.JSON(http.StatusOK, r)
@@ -114,7 +112,7 @@ func (api *RunAPI) listRuns(c echo.Context) error {
 	t, ok := to.(*model.Test)
 
 	if !ok {
-		return echo.NewHTTPError(http.StatusBadRequest, "No test in context")
+		return echo.NewHTTPError(http.StatusInternalServerError, "No test in context")
 	}
 
 	tid := t.ID
@@ -171,29 +169,9 @@ func (api *RunAPI) delete(c echo.Context) error {
 	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
-func (api *RunAPI) getRun(c echo.Context) (*model.Run, error) {
-	idparam := c.Param("rid")
-	id, err := strconv.Atoi(idparam)
-	if err != nil {
-		return nil, echo.NewHTTPError(http.StatusNotFound, "Invalid id")
-	}
-
-	var r *model.Run
-
-	if r, err = api.rs.FindByID(uint(id)); gorm.IsRecordNotFoundError(err) {
-		return nil, echo.NewHTTPError(http.StatusNotFound, err.Error())
-	}
-
-	if err != nil {
-		return nil, echo.NewHTTPError(http.StatusInternalServerError, "Bad Request: "+err.Error())
-	}
-
-	return r, nil
-}
-
 func (api *RunAPI) populateRun(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		r, err := api.getRun(c)
+		r, err := getRun(api.rs, c)
 		if err != nil {
 			return err
 		}
@@ -202,8 +180,4 @@ func (api *RunAPI) populateRun(next echo.HandlerFunc) echo.HandlerFunc {
 
 		return next(c)
 	}
-}
-
-func (api *RunAPI) createRaw(c echo.Context) error {
-	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }

@@ -2,7 +2,6 @@ package api
 
 import (
 	"net/http"
-	"strconv"
 
 	"github.com/bojand/ghz-web/model"
 	"github.com/bojand/ghz-web/service"
@@ -55,7 +54,7 @@ func (api *ProjectAPI) get(c echo.Context) error {
 	p, ok := po.(*model.Project)
 
 	if p == nil || !ok {
-		return echo.NewHTTPError(http.StatusBadRequest, "No project in context")
+		return echo.NewHTTPError(http.StatusInternalServerError, "No project in context")
 	}
 
 	return c.JSON(http.StatusOK, p)
@@ -72,7 +71,7 @@ func (api *ProjectAPI) update(c echo.Context) error {
 	ep, ok := po.(*model.Project)
 
 	if ep == nil || !ok {
-		return echo.NewHTTPError(http.StatusBadRequest, "No project in context")
+		return echo.NewHTTPError(http.StatusInternalServerError, "No project in context")
 	}
 
 	p.ID = ep.ID
@@ -84,7 +83,7 @@ func (api *ProjectAPI) update(c echo.Context) error {
 	}
 
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
 	return c.JSON(http.StatusOK, p)
@@ -141,37 +140,9 @@ func (api *ProjectAPI) listProjects(c echo.Context) error {
 	return c.JSON(http.StatusOK, pl)
 }
 
-// getProject gets Project
-func (api *ProjectAPI) getProject(c echo.Context) (*model.Project, error) {
-	idparam := c.Param("pid")
-	id, err := strconv.Atoi(idparam)
-	getByID := true
-	if err != nil {
-		getByID = false
-	}
-
-	var p *model.Project
-
-	if getByID {
-		if p, err = api.ps.FindByID(uint(id)); gorm.IsRecordNotFoundError(err) {
-			return nil, echo.NewHTTPError(http.StatusNotFound, err.Error())
-		}
-	} else {
-		if p, err = api.ps.FindByName(idparam); gorm.IsRecordNotFoundError(err) {
-			return nil, echo.NewHTTPError(http.StatusNotFound, err.Error())
-		}
-	}
-
-	if err != nil {
-		return nil, echo.NewHTTPError(http.StatusInternalServerError, "Bad Request: "+err.Error())
-	}
-
-	return p, nil
-}
-
 func (api *ProjectAPI) populateProject(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		p, err := api.getProject(c)
+		p, err := getProject(api.ps, c)
 		if err != nil {
 			return err
 		}

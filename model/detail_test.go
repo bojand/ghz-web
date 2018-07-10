@@ -4,6 +4,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/bojand/ghz-web/config"
 	"github.com/jinzhu/gorm"
 	"github.com/stretchr/testify/assert"
 )
@@ -46,7 +47,7 @@ func TestDetailService_Create(t *testing.T) {
 	db.AutoMigrate(&Project{}, &Test{}, &Run{}, &Detail{})
 	db.Exec("PRAGMA foreign_keys = ON;")
 
-	dao := DetailService{DB: db}
+	dao := DetailService{DB: db, Config: &config.DBConfig{Type: "sqlite3"}}
 	var tid, pid, rid, did uint
 
 	t.Run("fail new without run", func(t *testing.T) {
@@ -175,7 +176,7 @@ func TestDetailService_CreateBatch(t *testing.T) {
 	db.AutoMigrate(&Project{}, &Test{}, &Run{}, &Detail{})
 	db.Exec("PRAGMA foreign_keys = ON;")
 
-	dao := DetailService{DB: db}
+	dao := DetailService{DB: db, Config: &config.DBConfig{Type: "sqlite3"}}
 	var tid, pid, rid, did uint
 
 	t.Run("new detail with run, test and project", func(t *testing.T) {
@@ -323,7 +324,7 @@ func TestDetailService_Count(t *testing.T) {
 	db.AutoMigrate(&Project{}, &Test{}, &Run{}, &Detail{})
 	db.Exec("PRAGMA foreign_keys = ON;")
 
-	dao := DetailService{DB: db}
+	dao := DetailService{DB: db, Config: &config.DBConfig{Type: "sqlite3"}}
 	var tid, rid, rid2 uint
 
 	t.Run("new details for run, test and project", func(t *testing.T) {
@@ -440,7 +441,7 @@ func TestDetailService_FindByID(t *testing.T) {
 	db.AutoMigrate(&Project{}, &Test{}, &Run{}, &Detail{})
 	db.Exec("PRAGMA foreign_keys = ON;")
 
-	dao := DetailService{DB: db}
+	dao := DetailService{DB: db, Config: &config.DBConfig{Type: "sqlite3"}}
 	var rid, did uint
 
 	t.Run("fail new without run", func(t *testing.T) {
@@ -527,7 +528,7 @@ func TestDetailService_FindByRunID(t *testing.T) {
 	db.AutoMigrate(&Project{}, &Test{}, &Run{}, &Detail{})
 	db.Exec("PRAGMA foreign_keys = ON;")
 
-	dao := DetailService{DB: db}
+	dao := DetailService{DB: db, Config: &config.DBConfig{Type: "sqlite3"}}
 	var tid, rid1, rid2 uint
 
 	t.Run("new details for run, test and project", func(t *testing.T) {
@@ -666,7 +667,7 @@ func TestDetailService_FindByRunIDSorted(t *testing.T) {
 	db.AutoMigrate(&Project{}, &Test{}, &Run{}, &Detail{})
 	db.Exec("PRAGMA foreign_keys = ON;")
 
-	dao := DetailService{DB: db}
+	dao := DetailService{DB: db, Config: &config.DBConfig{Type: "sqlite3"}}
 	var tid, rid1, rid2 uint
 
 	t.Run("new details for run, test and project", func(t *testing.T) {
@@ -826,7 +827,7 @@ func TestDetailService_Update(t *testing.T) {
 	db.AutoMigrate(&Project{}, &Test{}, &Run{}, &Detail{})
 	db.Exec("PRAGMA foreign_keys = ON;")
 
-	dao := DetailService{DB: db}
+	dao := DetailService{DB: db, Config: &config.DBConfig{Type: "sqlite3"}}
 	var rid, did uint
 
 	t.Run("new detail with run, test and project", func(t *testing.T) {

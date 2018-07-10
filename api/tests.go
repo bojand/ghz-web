@@ -2,7 +2,6 @@ package api
 
 import (
 	"net/http"
-	"strconv"
 
 	"github.com/bojand/ghz-web/model"
 	"github.com/bojand/ghz-web/service"
@@ -46,7 +45,7 @@ func (api *TestAPI) create(c echo.Context) error {
 	p, ok := po.(*model.Project)
 
 	if p == nil || !ok {
-		return echo.NewHTTPError(http.StatusBadRequest, "No project in context")
+		return echo.NewHTTPError(http.StatusInternalServerError, "No project in context")
 	}
 
 	t.ProjectID = p.ID
@@ -64,7 +63,7 @@ func (api *TestAPI) get(c echo.Context) error {
 	t, ok := to.(*model.Test)
 
 	if t == nil || !ok {
-		return echo.NewHTTPError(http.StatusBadRequest, "No Test in context")
+		return echo.NewHTTPError(http.StatusInternalServerError, "No Test in context")
 	}
 
 	return c.JSON(http.StatusOK, t)
@@ -81,7 +80,7 @@ func (api *TestAPI) update(c echo.Context) error {
 	tm, ok := to.(*model.Test)
 
 	if tm == nil || !ok {
-		return echo.NewHTTPError(http.StatusBadRequest, "No Test in context")
+		return echo.NewHTTPError(http.StatusInternalServerError, "No Test in context")
 	}
 
 	t.ID = tm.ID
@@ -90,7 +89,7 @@ func (api *TestAPI) update(c echo.Context) error {
 	p, ok := po.(*model.Project)
 
 	if p == nil || !ok {
-		return echo.NewHTTPError(http.StatusBadRequest, "No project in context")
+		return echo.NewHTTPError(http.StatusInternalServerError, "No project in context")
 	}
 
 	t.ProjectID = p.ID
@@ -102,7 +101,7 @@ func (api *TestAPI) update(c echo.Context) error {
 	}
 
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
 	return c.JSON(http.StatusOK, t)
@@ -112,39 +111,12 @@ func (api *TestAPI) delete(c echo.Context) error {
 	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
-func (api *TestAPI) getTest(c echo.Context) (*model.Test, error) {
-	idparam := c.Param("tid")
-	id, err := strconv.Atoi(idparam)
-	getByID := true
-	if err != nil {
-		getByID = false
-	}
-
-	var t *model.Test
-
-	if getByID {
-		if t, err = api.ts.FindByID(uint(id)); gorm.IsRecordNotFoundError(err) {
-			return nil, echo.NewHTTPError(http.StatusNotFound, err.Error())
-		}
-	} else {
-		if t, err = api.ts.FindByName(idparam); gorm.IsRecordNotFoundError(err) {
-			return nil, echo.NewHTTPError(http.StatusNotFound, err.Error())
-		}
-	}
-
-	if err != nil {
-		return nil, echo.NewHTTPError(http.StatusInternalServerError, "Bad Request: "+err.Error())
-	}
-
-	return t, nil
-}
-
 func (api *TestAPI) listTests(c echo.Context) error {
 	po := c.Get("project")
 	p, ok := po.(*model.Project)
 
 	if p == nil || !ok {
-		return echo.NewHTTPError(http.StatusBadRequest, "No project in context")
+		return echo.NewHTTPError(http.StatusInternalServerError, "No project in context")
 	}
 
 	pid := p.ID
@@ -199,7 +171,7 @@ func (api *TestAPI) listTests(c echo.Context) error {
 
 func (api *TestAPI) populateTest(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		t, err := api.getTest(c)
+		t, err := getTest(api.ts, c)
 		if err != nil {
 			return err
 		}
