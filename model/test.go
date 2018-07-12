@@ -68,15 +68,17 @@ var durationConstants = [6]Threshold{ThresholdMean, ThresholdMedian, Threshold95
 // Test represents a test
 type Test struct {
 	Model
-	ProjectID      uint                            `json:"projectID" gorm:"type:integer REFERENCES projects(id)"`
-	Project        *Project                        `json:"-"`
-	Name           string                          `json:"name" gorm:"unique_index;not null" validate:"required"`
-	Description    string                          `json:"description"`
-	Status         Status                          `json:"status" validate:"oneof=ok fail"`
-	Thresholds     map[Threshold]*ThresholdSetting `json:"thresholds,omitempty" gorm:"-"`
-	KPI            Threshold                       `json:"kpi"`
-	FailOnError    bool                            `json:"failOnError"`
-	ThresholdsJSON string                          `json:"-" gorm:"column:thresholds"`
+	ProjectID       uint                            `json:"projectID" gorm:"type:integer REFERENCES projects(id)"`
+	Project         *Project                        `json:"-"`
+	Name            string                          `json:"name" gorm:"unique_index;not null" validate:"required"`
+	Description     string                          `json:"description"`
+	Status          Status                          `json:"status" validate:"oneof=ok fail"`
+	Thresholds      map[Threshold]*ThresholdSetting `json:"thresholds,omitempty" gorm:"-"`
+	KPI             Threshold                       `json:"kpi"`
+	FailOnError     bool                            `json:"failOnError"`
+	FailOnThreshold bool                            `json:"failOnThreshold"`
+	FailOnKPI       bool                            `json:"failOnKPI"`
+	ThresholdsJSON  string                          `json:"-" gorm:"column:thresholds"`
 }
 
 // UnmarshalJSON prases a Test value from JSON string
@@ -185,7 +187,14 @@ func (t *Test) SetStatus(tMean, tMedian, t95, t99, fastest, slowest time.Duratio
 
 			if t.Thresholds[thc].Threshold > 0 && val > 0 && val > t.Thresholds[thc].Threshold {
 				t.Thresholds[thc].Status = StatusFail
-				t.Status = StatusFail
+
+				if t.FailOnThreshold {
+					t.Status = StatusFail
+				}
+
+				if t.KPI == thc && t.FailOnKPI {
+					t.Status = StatusFail
+				}
 			}
 		}
 	}
@@ -197,7 +206,14 @@ func (t *Test) SetStatus(tMean, tMedian, t95, t99, fastest, slowest time.Duratio
 		if t.Thresholds[ThresholdRPS].NumericalThreshold > 0.0 && rps > 0.0 &&
 			rps < t.Thresholds[ThresholdRPS].NumericalThreshold {
 			t.Thresholds[ThresholdRPS].Status = StatusFail
-			t.Status = StatusFail
+
+			if t.FailOnThreshold {
+				t.Status = StatusFail
+			}
+
+			if t.KPI == ThresholdRPS && t.FailOnKPI {
+				t.Status = StatusFail
+			}
 		}
 	}
 

@@ -35,19 +35,41 @@
             </b-field>
             <b-field>
               <b-select placeholder="Threshold" v-model="selectedThreshold" @input="selectedChaged">
-                <option>median</option>
-                <option>mean</option>
-                <option>95th</option>
-                <option>99th</option>
+                <option
+                    v-for="option in metrics"
+                    :value="option"
+                    :key="option">
+                    {{ option }}
+                </option>
               </b-select>
               <b-input type="number" min="0" placeholder="0" v-model="selectedThresholdValue"></b-input>
               <p class="control">
                 <button class="button is-success" @click="setThreshold">Set</button>
               </p>
-          </b-field>
-          <div class="field">
+            </b-field>
+            <b-field label="KPI Metric">
+              <b-select placeholder="KPI Metric" v-model="model.kpi">
+                  <option>none</option>
+                  <option
+                      v-for="option in metrics"
+                      :value="option" :key="option">
+                      {{ option }}
+                  </option>
+              </b-select>
+            </b-field>
+            <div class="field">
               <b-tooltip label="Fail the test if last run has any errors" position="is-right" type="is-light">
                 <b-switch v-model="model.failOnError" type="is-danger">Fail on error</b-switch>
+              </b-tooltip>
+            </div>
+            <div class="field">
+              <b-tooltip label="Fail the test if any of the threshold settings are not met" position="is-right" type="is-light">
+                <b-switch v-model="model.failOnThreshold" type="is-danger">Fail on any unmet threshold</b-switch>
+              </b-tooltip>
+            </div>
+            <div class="field">
+              <b-tooltip label="Fail the test if key performance metric is not met" position="is-right" type="is-light">
+                <b-switch v-model="model.failOnThreshold" type="is-danger">Fail on unmet KPI</b-switch>
               </b-tooltip>
             </div>
           </div>
@@ -93,7 +115,8 @@ export default {
         thresholds: null
       },
       selectedThreshold: 'median',
-      selectedThresholdValue: 0
+      selectedThresholdValue: 0,
+      metrics: ['median', 'mean', '95th', '99th', 'fastest', 'slowest', 'RPS']
     }
   },
   props: {
@@ -136,6 +159,10 @@ export default {
         this.loading = true
 
         try {
+          if (this.model.kpi === "none") {
+            this.model.kpi = ""
+          }
+
           this.test = await this.$store.updateTest(this.projectId, this.model)
           Object.assign(this.model, this.test)
 
@@ -166,7 +193,10 @@ export default {
           mean: { status: 'ok', threshold: 0 },
           median: { status: 'ok', threshold: 0 },
           '95th': { status: 'ok', threshold: 0 },
-          '99th': { status: 'ok', threshold: 0 }
+          '99th': { status: 'ok', threshold: 0 },
+          fastest: { status: 'ok', threshold: 0 },
+          slowest: { status: 'ok', threshold: 0 },
+          rps: { status: 'ok', threshold: 0 }
         }
       }
 
