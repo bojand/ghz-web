@@ -25,12 +25,22 @@ const (
 
 	// Threshold99th is the threshold for the 99th percentile
 	Threshold99th = Threshold("99th")
+
+	// ThresholdFastest is the threshold for the fastest metric
+	ThresholdFastest = Threshold("fastest")
+
+	// ThresholdSlowest is the threshold for the slowest metric
+	ThresholdSlowest = Threshold("slowest")
+
+	// ThresholdRPS is the threshold for the RPS metric
+	ThresholdRPS = Threshold("rps")
 )
 
 // ThresholdSetting setting
 type ThresholdSetting struct {
-	Status    Status        `json:"status" validate:"oneof=ok fail"`
-	Threshold time.Duration `json:"threshold"`
+	Status             Status        `json:"status" validate:"oneof=ok fail"`
+	Threshold          time.Duration `json:"threshold,omitempty"`
+	NumericalThreshold float64       `json:"numericalThreshold,omitempty"`
 }
 
 // UnmarshalJSON prases a ThresholdSetting value from JSON string
@@ -52,7 +62,8 @@ func (m *ThresholdSetting) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-var constants = [4]Threshold{ThresholdMean, ThresholdMedian, Threshold95th, Threshold99th}
+var durationConstants = [6]Threshold{ThresholdMean, ThresholdMedian, Threshold95th, Threshold99th,
+	ThresholdSlowest, ThresholdFastest}
 
 // Test represents a test
 type Test struct {
@@ -63,6 +74,7 @@ type Test struct {
 	Description    string                          `json:"description"`
 	Status         Status                          `json:"status" validate:"oneof=ok fail"`
 	Thresholds     map[Threshold]*ThresholdSetting `json:"thresholds,omitempty" gorm:"-"`
+	KPI            Threshold                       `json:"kpi"`
 	FailOnError    bool                            `json:"failOnError"`
 	ThresholdsJSON string                          `json:"-" gorm:"column:thresholds"`
 }
@@ -157,13 +169,13 @@ func (t *Test) AfterFind() error {
 }
 
 // SetStatus sets this test's status based on the settings and the values in params
-func (t *Test) SetStatus(tMean, tMedian, t95, t99 time.Duration, hasError bool) {
+func (t *Test) SetStatus(tMean, tMedian, t95, t99, fastest, slowest time.Duration, rps float64, hasError bool) {
 	// reset our status
 	t.Status = StatusOK
 
-	compareVal := []time.Duration{tMean, tMedian, t95, t99}
+	compareVal := []time.Duration{tMean, tMedian, t95, t99, fastest, slowest}
 
-	for i, thc := range constants {
+	for i, thc := range durationConstants {
 		if t.Thresholds[thc] != nil {
 
 			// reset each threshold status
@@ -175,6 +187,17 @@ func (t *Test) SetStatus(tMean, tMedian, t95, t99 time.Duration, hasError bool) 
 				t.Thresholds[thc].Status = StatusFail
 				t.Status = StatusFail
 			}
+		}
+	}
+
+	if t.Thresholds[ThresholdRPS] != nil {
+		// reset
+		t.Thresholds[ThresholdRPS].Status = StatusOK
+
+		if t.Thresholds[ThresholdRPS].NumericalThreshold > 0.0 && rps > 0.0 &&
+			rps < t.Thresholds[ThresholdRPS].NumericalThreshold {
+			t.Thresholds[ThresholdRPS].Status = StatusFail
+			t.Status = StatusFail
 		}
 	}
 
