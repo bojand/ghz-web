@@ -141,9 +141,9 @@ func (api *RunAPI) listRuns(c echo.Context) error {
 		var runs []*model.Run
 		err = nil
 		if doSort {
-			runs, err = api.rs.FindByTestIDSorted(tid, limit, page, sort, order)
+			runs, err = api.rs.FindByTestIDSorted(tid, limit, page, sort, order, false)
 		} else {
-			runs, err = api.rs.FindByTestID(tid, limit, page)
+			runs, err = api.rs.FindByTestID(tid, limit, page, false)
 		}
 		errCh <- err
 		dataCh <- runs

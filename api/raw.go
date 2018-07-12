@@ -11,13 +11,35 @@ import (
 
 // RawRequest request to the create raw api
 type RawRequest struct {
-	Count   uint64          `json:"count"`
-	Total   time.Duration   `json:"total"`
-	Average time.Duration   `json:"average"`
-	Fastest time.Duration   `json:"fastest"`
-	Slowest time.Duration   `json:"slowest"`
-	Rps     float64         `json:"rps"`
-	Details []*model.Detail `json:"details"`
+	Count               uint64                    `json:"count"`
+	Total               time.Duration             `json:"total"`
+	Average             time.Duration             `json:"average"`
+	Fastest             time.Duration             `json:"fastest"`
+	Slowest             time.Duration             `json:"slowest"`
+	Rps                 float64                   `json:"rps"`
+	ErrorDist           map[string]int            `json:"errorDistribution,omitempty"`
+	StatusCodeDist      map[string]int            `json:"statusCodeDistribution,omitempty"`
+	Details             []*model.Detail           `json:"details"`
+	LatencyDistribution []*RawLatencyDistribution `json:"latencyDistribution"`
+	Histogram           []*RawBucket              `json:"histogram"`
+}
+
+// RawLatencyDistribution holds latency distribution data
+type RawLatencyDistribution struct {
+	Percentage int           `json:"percentage"`
+	Latency    time.Duration `json:"latency"`
+}
+
+// RawBucket holds histogram data
+type RawBucket struct {
+	// The Mark for histogram bucket in seconds
+	Mark float64 `json:"mark"`
+
+	// The count in the bucket
+	Count int `json:"count"`
+
+	// The frequency of results in the bucket as a decimal percentage
+	Frequency float64 `json:"frequency"`
 }
 
 // RawResponse is the response to the raw endpoint
@@ -51,8 +73,8 @@ func SetupRawAPI(g *echo.Group,
 
 	api := &RawAPI{ps: ps, ts: ts, rs: rs, ds: ds}
 
-	g.POST("/projects/:pid/tests/:tid/runs/:rid/raw", api.createRaw).Name = "ghz api: create raw"
-	g.POST("/raw", api.createNew).Name = "ghz api: create raw 2"
+	g.POST("/projects/:pid/tests/:tid/runs/:rid/raw/", api.createRaw).Name = "ghz api: create raw"
+	g.POST("/raw/", api.createNew).Name = "ghz api: create raw 2"
 }
 
 func (api *RawAPI) createRaw(c echo.Context) error {
@@ -89,6 +111,55 @@ func (api *RawAPI) createNew(c echo.Context) error {
 	r.Fastest = rr.Fastest
 	r.Slowest = rr.Slowest
 	r.Rps = rr.Rps
+	r.ErrorDist = rr.ErrorDist
+	r.StatusCodeDist = rr.StatusCodeDist
+
+	latencies := len(rr.LatencyDistribution)
+
+	var median, nine5, nine9 time.Duration
+
+	if latencies > 0 {
+		r.LatencyDistribution = make([]*model.LatencyDistribution, latencies)
+		for i, l := range rr.LatencyDistribution {
+			r.LatencyDistribution[i] = new(model.LatencyDistribution)
+			r.LatencyDistribution[i].Latency = l.Latency
+			r.LatencyDistribution[i].Percentage = l.Percentage
+
+			// record median
+			if l.Percentage == 50 {
+				median = l.Latency
+			}
+
+			// record 95th
+			if l.Percentage == 95 {
+				nine5 = l.Latency
+			}
+
+			// record 95th
+			if l.Percentage == 99 {
+				nine9 = l.Latency
+			}
+		}
+	}
+
+	buckets := len(rr.Histogram)
+	if buckets > 0 {
+		r.Histogram = make([]*model.Bucket, buckets)
+		for i, b := range rr.Histogram {
+			r.Histogram[i] = new(model.Bucket)
+			r.Histogram[i].Mark = b.Mark
+			r.Histogram[i].Count = b.Count
+			r.Histogram[i].Frequency = b.Frequency
+		}
+	}
+
+	hasErrors := false
+	if rr.ErrorDist != nil && len(rr.ErrorDist) > 0 {
+		hasErrors = true
+	}
+
+	t.SetStatus(rr.Average, median, nine5, nine9, rr.Fastest, rr.Slowest,
+		rr.Rps, hasErrors)
 
 	err = api.rs.Create(r)
 	if err != nil {

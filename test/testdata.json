@@ -1,0 +1,140 @@
+{
+  "count": 50000,
+  "total": 1143976279,
+  "average": 1053909,
+  "fastest": 177325,
+  "slowest": 10013750,
+  "rps": 43707.19998119821,
+  "errorDistribution": {
+    "rpc error: code = Internal desc = Internal error.": 1554,
+    "rpc error: code = PermissionDenied desc = Permission denied.": 985,
+    "rpc error: code = Unavailable desc = Service unavialable.": 444
+  },
+  "statusCodeDistribution": {
+    "OK": 47017
+  },
+  "latencyDistribution": [
+    {
+      "percentage": 10,
+      "latency": 556277
+    },
+    {
+      "percentage": 25,
+      "latency": 702806
+    },
+    {
+      "percentage": 50,
+      "latency": 899724
+    },
+    {
+      "percentage": 75,
+      "latency": 1175303
+    },
+    {
+      "percentage": 90,
+      "latency": 1616597
+    },
+    {
+      "percentage": 95,
+      "latency": 2149936
+    },
+    {
+      "percentage": 99,
+      "latency": 5567701
+    }
+  ],
+  "histogram": [
+    {
+      "mark": 0.000177325,
+      "count": 1,
+      "frequency": 0.000021268902737307782
+    },
+    {
+      "mark": 0.0011609675,
+      "count": 34857,
+      "frequency": 0.7413701427143373
+    },
+    {
+      "mark": 0.00214461,
+      "count": 9801,
+      "frequency": 0.20845651572835358
+    },
+    {
+      "mark": 0.0031282525,
+      "count": 400,
+      "frequency": 0.008507561094923113
+    },
+    {
+      "mark": 0.004111895,
+      "count": 216,
+      "frequency": 0.004594082991258481
+    },
+    {
+      "mark": 0.0050955374999999995,
+      "count": 818,
+      "frequency": 0.017397962439117766
+    },
+    {
+      "mark": 0.00607918,
+      "count": 800,
+      "frequency": 0.017015122189846226
+    },
+    {
+      "mark": 0.0070628225000000005,
+      "count": 104,
+      "frequency": 0.0022119658846800096
+    },
+    {
+      "mark": 0.008046465000000001,
+      "count": 6,
+      "frequency": 0.00012761341642384669
+    },
+    {
+      "mark": 0.0090301075,
+      "count": 4,
+      "frequency": 0.00008507561094923113
+    },
+    {
+      "mark": 0.01001375,
+      "count": 10,
+      "frequency": 0.00021268902737307783
+    }
+  ],
+  "details": [
+    {
+      "latency": 2612529,
+      "error": "",
+      "status": "OK"
+    },
+    {
+      "latency": 2670133,
+      "error": "",
+      "status": "OK"
+    },
+    {
+      "latency": 2948714,
+      "error": "",
+      "status": "OK"
+    },
+    {
+      "latency": 2415887,
+      "error": "",
+      "status": "OK"
+    },
+    {
+      "latency": 2714190,
+      "error": "rpc error: code = Internal desc = Internal error.",
+      "status": "Internal"
+    },
+    {
+      "latency": 2657785,
+      "error": "",
+      "status": "OK"
+    },
+    {
+      "latency": 3238742,
+      "error": "",
+      "status": "OK"
+    }
+  ]
+}

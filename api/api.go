@@ -9,7 +9,8 @@ import (
 func Setup(g *echo.Group,
 	ps service.ProjectService,
 	ts service.TestService,
-	rs service.RunService) {
+	rs service.RunService,
+	ds service.DetailService) {
 
 	projectGroup := g.Group("/projects")
 	SetupProjectAPI(projectGroup, ps)
@@ -19,4 +20,9 @@ func Setup(g *echo.Group,
 
 	runsGroup := testsGroup.Group("/:tid/runs")
 	SetupRunAPI(runsGroup, rs)
+
+	detailGroup := runsGroup.Group("/:rid/details")
+	SetupDetailAPI(detailGroup, ds)
+
+	SetupRawAPI(g, ps, ts, rs, ds)
 }

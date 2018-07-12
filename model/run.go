@@ -9,6 +9,29 @@ import (
 	"github.com/jinzhu/gorm"
 )
 
+// LatencyDistribution holds latency distribution data
+type LatencyDistribution struct {
+	Model
+	RunID      uint          `json:"runId"`
+	Percentage int           `json:"percentage"`
+	Latency    time.Duration `json:"latency"`
+}
+
+// Bucket holds histogram data
+type Bucket struct {
+	Model
+	RunID uint `json:"runId"`
+
+	// The Mark for histogram bucket in seconds
+	Mark float64 `json:"mark"`
+
+	// The count in the bucket
+	Count int `json:"count"`
+
+	// The frequency of results in the bucket as a decimal percentage
+	Frequency float64 `json:"frequency"`
+}
+
 // Run represents a project
 type Run struct {
 	Model
@@ -26,6 +49,10 @@ type Run struct {
 	ErrorDist      map[string]int `json:"errorDistribution,omitempty" gorm:"-"`
 	StatusCodeDist map[string]int `json:"statusCodeDistribution,omitempty" gorm:"-"`
 
+	LatencyDistribution []*LatencyDistribution `json:"latencyDistribution"`
+	Histogram           []*Bucket              `json:"histogram"`
+
+	// temp conversion vars
 	ErrorDistJSON      string `json:"-" gorm:"column:error_dist"`
 	StatusCodeDistJSON string `json:"-" gorm:"column:status_code_dist"`
 }
@@ -125,15 +152,36 @@ func (rs *RunService) Count(tid uint) (uint, error) {
 // FindByID finds run by id
 func (rs *RunService) FindByID(id uint) (*Run, error) {
 	r := new(Run)
-	err := rs.DB.First(r, id).Error
+	r.Histogram = make([]*Bucket, 10)
+	r.LatencyDistribution = make([]*LatencyDistribution, 10)
+
+	err := rs.DB.First(r, id).Related(&r.Histogram).Related(&r.LatencyDistribution).Error
+
 	if err != nil {
 		r = nil
 	}
+
+	return r, err
+}
+
+// Latest returns the latest created run for test
+func (rs *RunService) Latest(tid uint) (*Run, error) {
+	r := new(Run)
+	r.Histogram = make([]*Bucket, 10)
+	r.LatencyDistribution = make([]*LatencyDistribution, 10)
+
+	err := rs.DB.Model(&Run{}).Where("test_id = ?", tid).Order("created_at desc").First(r).
+		Related(&r.Histogram).Related(&r.LatencyDistribution).Error
+
+	if err != nil {
+		r = nil
+	}
+
 	return r, err
 }
 
 // FindByTestID finds tests by project
-func (rs *RunService) FindByTestID(tid, num, page uint) ([]*Run, error) {
+func (rs *RunService) FindByTestID(tid, num, page uint, populate bool) ([]*Run, error) {
 	t := &Test{}
 	t.ID = tid
 
@@ -146,11 +194,31 @@ func (rs *RunService) FindByTestID(tid, num, page uint) ([]*Run, error) {
 
 	err := rs.DB.Offset(offset).Limit(num).Order("id desc").Model(t).Related(&s).Error
 
+	if populate {
+		if err != nil {
+			return nil, err
+		}
+
+		for _, run := range s {
+			run.LatencyDistribution = make([]*LatencyDistribution, 10)
+			err := rs.DB.Model(run).Related(&run.LatencyDistribution).Error
+			if err != nil {
+				return nil, err
+			}
+
+			run.Histogram = make([]*Bucket, 10)
+			err = rs.DB.Model(run).Related(&run.Histogram).Error
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+
 	return s, err
 }
 
 // FindByTestIDSorted lists tests using sorting
-func (rs *RunService) FindByTestIDSorted(tid, num, page uint, sortField, order string) ([]*Run, error) {
+func (rs *RunService) FindByTestIDSorted(tid, num, page uint, sortField, order string, populate bool) ([]*Run, error) {
 	if (sortField != "id" && sortField != "count" && sortField != "total" && sortField != "average" &&
 		sortField != "fastest" && sortField != "slowest" && sortField != "rps") ||
 		(order != "asc" && order != "desc") {
@@ -170,6 +238,26 @@ func (rs *RunService) FindByTestIDSorted(tid, num, page uint, sortField, order s
 	s := make([]*Run, num)
 
 	err := rs.DB.Order(orderSQL).Offset(offset).Limit(num).Model(t).Related(&s).Error
+
+	if populate {
+		if err != nil {
+			return nil, err
+		}
+
+		for _, run := range s {
+			run.LatencyDistribution = make([]*LatencyDistribution, 10)
+			err := rs.DB.Model(run).Related(&run.LatencyDistribution).Error
+			if err != nil {
+				return nil, err
+			}
+
+			run.Histogram = make([]*Bucket, 10)
+			err = rs.DB.Model(run).Related(&run.Histogram).Error
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
 
 	return s, err
 }

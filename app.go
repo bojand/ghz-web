@@ -42,7 +42,7 @@ func (app *Application) Start() {
 	app.setupServer()
 
 	// app.testEmbeddedStuff()
-	app.testStuff()
+	// app.testStuff()
 
 	app.Logger.Fatal(app.Server.Start(app.Config.Server.GetHostPort()))
 }
@@ -79,7 +79,14 @@ func (app *Application) setupDatabase() error {
 	}
 
 	// Migrate the schema
-	db.AutoMigrate(&model.Project{}, &model.Test{})
+	db.AutoMigrate(
+		&model.Project{},
+		&model.Test{},
+		&model.Run{},
+		&model.Detail{},
+		&model.LatencyDistribution{},
+		&model.Bucket{},
+	)
 
 	if dbType == "sqlite3" {
 		// for sqlite we need this for foreign key constraint
@@ -109,8 +116,9 @@ func (app *Application) setupServer() {
 	ps := model.ProjectService{DB: app.DB}
 	ts := model.TestService{DB: app.DB}
 	rs := model.RunService{DB: app.DB}
+	ds := model.DetailService{DB: app.DB, Config: &app.Config.Database}
 
-	api.Setup(apiRoot, &ps, &ts, &rs)
+	api.Setup(apiRoot, &ps, &ts, &rs, &ds)
 
 	s.Static("/", "ui/dist").Name = "ghz api: static"
 

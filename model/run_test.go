@@ -123,7 +123,7 @@ func TestRunService_Create(t *testing.T) {
 	}
 	defer db.Close()
 
-	db.AutoMigrate(&Project{}, &Test{}, &Run{})
+	db.AutoMigrate(&Project{}, &Test{}, &Run{}, &Detail{}, &Bucket{}, &LatencyDistribution{})
 	db.Exec("PRAGMA foreign_keys = ON;")
 
 	dao := RunService{DB: db}
@@ -274,7 +274,7 @@ func TestRunService_Count(t *testing.T) {
 	}
 	defer db.Close()
 
-	db.AutoMigrate(&Project{}, &Test{}, &Run{})
+	db.AutoMigrate(&Project{}, &Test{}, &Run{}, &Detail{}, &Bucket{}, &LatencyDistribution{})
 	db.Exec("PRAGMA foreign_keys = ON;")
 
 	dao := RunService{DB: db}
@@ -390,7 +390,7 @@ func TestRunService_FindByID(t *testing.T) {
 	}
 	defer db.Close()
 
-	db.AutoMigrate(&Project{}, &Test{}, &Run{})
+	db.AutoMigrate(&Project{}, &Test{}, &Run{}, &Detail{}, &Bucket{}, &LatencyDistribution{})
 	db.Exec("PRAGMA foreign_keys = ON;")
 
 	dao := RunService{DB: db}
@@ -431,14 +431,17 @@ func TestRunService_FindByID(t *testing.T) {
 		o, err := dao.FindByID(rid)
 
 		assert.NoError(t, err)
-		assert.Equal(t, rid, o.ID)
-		assert.Equal(t, tid, o.TestID)
-		assert.Equal(t, cr.Status, o.Status)
-		assert.Empty(t, o.StatusCodeDistJSON)
-		assert.Empty(t, o.ErrorDistJSON)
-		assert.Equal(t, cr.ErrorDistJSON, o.ErrorDistJSON)
-		assert.True(t, cr.CreatedAt.Equal(o.CreatedAt))
-		assert.True(t, cr.UpdatedAt.Equal(o.CreatedAt))
+		assert.NotNil(t, o)
+		if o != nil {
+			assert.Equal(t, rid, o.ID)
+			assert.Equal(t, tid, o.TestID)
+			assert.Equal(t, cr.Status, o.Status)
+			assert.Empty(t, o.StatusCodeDistJSON)
+			assert.Empty(t, o.ErrorDistJSON)
+			assert.Equal(t, cr.ErrorDistJSON, o.ErrorDistJSON)
+			assert.True(t, cr.CreatedAt.Equal(o.CreatedAt))
+			assert.True(t, cr.UpdatedAt.Equal(o.CreatedAt))
+		}
 	})
 
 	t.Run("find invalid", func(t *testing.T) {
@@ -458,7 +461,7 @@ func TestRunService_FindByTestID(t *testing.T) {
 	}
 	defer db.Close()
 
-	db.AutoMigrate(&Project{}, &Test{}, &Run{})
+	db.AutoMigrate(&Project{}, &Test{}, &Run{}, &Detail{}, &Bucket{}, &LatencyDistribution{})
 	db.Exec("PRAGMA foreign_keys = ON;")
 
 	dao := RunService{DB: db}
@@ -544,21 +547,21 @@ func TestRunService_FindByTestID(t *testing.T) {
 	})
 
 	t.Run("find for test 1", func(t *testing.T) {
-		runs, err := dao.FindByTestID(tid1, 10, 0)
+		runs, err := dao.FindByTestID(tid1, 10, 0, false)
 
 		assert.NoError(t, err)
 		assert.Len(t, runs, 10)
 	})
 
 	t.Run("find for test 2", func(t *testing.T) {
-		runs, err := dao.FindByTestID(tid2, 30, 0)
+		runs, err := dao.FindByTestID(tid2, 30, 0, false)
 
 		assert.NoError(t, err)
 		assert.Len(t, runs, 20)
 	})
 
 	t.Run("find for test 2 paged", func(t *testing.T) {
-		runs, err := dao.FindByTestID(tid2, 5, 0)
+		runs, err := dao.FindByTestID(tid2, 5, 0, false)
 
 		assert.NoError(t, err)
 		assert.Len(t, runs, 5)
@@ -569,7 +572,7 @@ func TestRunService_FindByTestID(t *testing.T) {
 	})
 
 	t.Run("find for test 2 paged 2", func(t *testing.T) {
-		runs, err := dao.FindByTestID(tid2, 5, 1)
+		runs, err := dao.FindByTestID(tid2, 5, 1, false)
 
 		assert.NoError(t, err)
 		assert.Len(t, runs, 5)
@@ -580,7 +583,7 @@ func TestRunService_FindByTestID(t *testing.T) {
 	})
 
 	t.Run("find invalid", func(t *testing.T) {
-		runs, err := dao.FindByTestID(1235, 5, 0)
+		runs, err := dao.FindByTestID(1235, 5, 0, false)
 
 		assert.NoError(t, err)
 		assert.Len(t, runs, 0)
@@ -596,7 +599,7 @@ func TestRunService_FindByTestIDSorted(t *testing.T) {
 	}
 	defer db.Close()
 
-	db.AutoMigrate(&Project{}, &Test{}, &Run{})
+	db.AutoMigrate(&Project{}, &Test{}, &Run{}, &Detail{}, &Bucket{}, &LatencyDistribution{})
 	db.Exec("PRAGMA foreign_keys = ON;")
 
 	dao := RunService{DB: db}
@@ -684,7 +687,7 @@ func TestRunService_FindByTestIDSorted(t *testing.T) {
 	})
 
 	t.Run("find for test 1 by id asc", func(t *testing.T) {
-		runs, err := dao.FindByTestIDSorted(tid1, 20, 0, "id", "asc")
+		runs, err := dao.FindByTestIDSorted(tid1, 20, 0, "id", "asc", false)
 
 		fmt.Printf("%#v\n\n", runs)
 
@@ -695,7 +698,7 @@ func TestRunService_FindByTestIDSorted(t *testing.T) {
 	})
 
 	t.Run("find for test 1 by id desc", func(t *testing.T) {
-		runs, err := dao.FindByTestIDSorted(tid1, 20, 0, "id", "desc")
+		runs, err := dao.FindByTestIDSorted(tid1, 20, 0, "id", "desc", false)
 
 		assert.NoError(t, err)
 		assert.Len(t, runs, 10)
@@ -704,7 +707,7 @@ func TestRunService_FindByTestIDSorted(t *testing.T) {
 	})
 
 	t.Run("find for test 2 by count asc", func(t *testing.T) {
-		runs, err := dao.FindByTestIDSorted(tid2, 30, 0, "count", "asc")
+		runs, err := dao.FindByTestIDSorted(tid2, 30, 0, "count", "asc", false)
 
 		assert.NoError(t, err)
 		assert.Len(t, runs, 20)
@@ -713,7 +716,7 @@ func TestRunService_FindByTestIDSorted(t *testing.T) {
 	})
 
 	t.Run("find for test 2 by total desc paged", func(t *testing.T) {
-		runs, err := dao.FindByTestIDSorted(tid2, 5, 1, "total", "desc")
+		runs, err := dao.FindByTestIDSorted(tid2, 5, 1, "total", "desc", false)
 
 		assert.NoError(t, err)
 		assert.Len(t, runs, 5)
@@ -722,7 +725,7 @@ func TestRunService_FindByTestIDSorted(t *testing.T) {
 	})
 
 	t.Run("find for test 2 by average asc paged", func(t *testing.T) {
-		runs, err := dao.FindByTestIDSorted(tid2, 7, 1, "average", "asc")
+		runs, err := dao.FindByTestIDSorted(tid2, 7, 1, "average", "asc", false)
 
 		assert.NoError(t, err)
 		assert.Len(t, runs, 7)
@@ -731,7 +734,7 @@ func TestRunService_FindByTestIDSorted(t *testing.T) {
 	})
 
 	t.Run("find for test 2 by fastest asc paged", func(t *testing.T) {
-		runs, err := dao.FindByTestIDSorted(tid2, 6, 1, "fastest", "asc")
+		runs, err := dao.FindByTestIDSorted(tid2, 6, 1, "fastest", "asc", false)
 
 		assert.NoError(t, err)
 		assert.Len(t, runs, 6)
@@ -740,7 +743,7 @@ func TestRunService_FindByTestIDSorted(t *testing.T) {
 	})
 
 	t.Run("find for test 2 by slowest desc paged", func(t *testing.T) {
-		runs, err := dao.FindByTestIDSorted(tid2, 5, 1, "fastest", "desc")
+		runs, err := dao.FindByTestIDSorted(tid2, 5, 1, "fastest", "desc", false)
 
 		assert.NoError(t, err)
 		assert.Len(t, runs, 5)
@@ -749,7 +752,7 @@ func TestRunService_FindByTestIDSorted(t *testing.T) {
 	})
 
 	t.Run("find for test 2 by rps desc paged", func(t *testing.T) {
-		runs, err := dao.FindByTestIDSorted(tid2, 5, 1, "rps", "desc")
+		runs, err := dao.FindByTestIDSorted(tid2, 5, 1, "rps", "desc", false)
 
 		assert.NoError(t, err)
 		assert.Len(t, runs, 5)
@@ -758,19 +761,19 @@ func TestRunService_FindByTestIDSorted(t *testing.T) {
 	})
 
 	t.Run("error on invalid sort param", func(t *testing.T) {
-		_, err := dao.FindByTestIDSorted(tid2, 0, 1, "asdf", "asc")
+		_, err := dao.FindByTestIDSorted(tid2, 0, 1, "asdf", "asc", false)
 
 		assert.Error(t, err)
 	})
 
 	t.Run("error on invalid order param", func(t *testing.T) {
-		_, err := dao.FindByTestIDSorted(tid2, 0, 1, "count", "asce")
+		_, err := dao.FindByTestIDSorted(tid2, 0, 1, "count", "asce", false)
 
 		assert.Error(t, err)
 	})
 
 	t.Run("0 for invalid test id", func(t *testing.T) {
-		runs, err := dao.FindByTestIDSorted(1234, 5, 1, "rps", "desc")
+		runs, err := dao.FindByTestIDSorted(1234, 5, 1, "rps", "desc", false)
 
 		assert.NoError(t, err)
 		assert.Len(t, runs, 0)
@@ -786,7 +789,7 @@ func TestRunService_Update(t *testing.T) {
 	}
 	defer db.Close()
 
-	db.AutoMigrate(&Project{}, &Test{}, &Run{})
+	db.AutoMigrate(&Project{}, &Test{}, &Run{}, &Detail{}, &Bucket{}, &LatencyDistribution{})
 	db.Exec("PRAGMA foreign_keys = ON;")
 
 	dao := RunService{DB: db}

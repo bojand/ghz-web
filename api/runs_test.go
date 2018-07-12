@@ -28,7 +28,8 @@ func TestRunAPI(t *testing.T) {
 	}
 	defer db.Close()
 
-	db.AutoMigrate(&model.Project{}, &model.Test{}, &model.Run{})
+	db.AutoMigrate(&model.Project{}, &model.Test{}, &model.Run{}, &model.Detail{},
+		&model.Bucket{}, &model.LatencyDistribution{})
 	db.Exec("PRAGMA foreign_keys = ON;")
 
 	ts := &model.TestService{DB: db}
