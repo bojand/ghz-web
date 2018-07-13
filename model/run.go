@@ -132,6 +132,44 @@ func (r *Run) AfterFind() error {
 	return nil
 }
 
+// GetThresholdValues gets median, 95th and 995h values
+func (r *Run) GetThresholdValues() (time.Duration, time.Duration, time.Duration) {
+	var median, nine5, nine9 time.Duration
+
+	latencies := len(r.LatencyDistribution)
+
+	if latencies > 0 {
+		for _, l := range r.LatencyDistribution {
+			// record median
+			if l.Percentage == 50 {
+				median = l.Latency
+			}
+
+			// record 95th
+			if l.Percentage == 95 {
+				nine5 = l.Latency
+			}
+
+			// record 95th
+			if l.Percentage == 99 {
+				nine9 = l.Latency
+			}
+		}
+	}
+
+	return median, nine5, nine9
+}
+
+// HasErrors returns whether run has any errors
+func (r *Run) HasErrors() bool {
+	hasErrors := false
+	if r.ErrorDist != nil && len(r.ErrorDist) > 0 {
+		hasErrors = true
+	}
+
+	return hasErrors
+}
+
 // RunService is our implementation
 type RunService struct {
 	DB *gorm.DB

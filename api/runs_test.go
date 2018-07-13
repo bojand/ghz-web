@@ -35,14 +35,11 @@ func TestRunAPI(t *testing.T) {
 	ts := &model.TestService{DB: db}
 	ps := &model.ProjectService{DB: db}
 	rs := &model.RunService{DB: db}
-	// projectAPI := &ProjectAPI{ps: ps}
-	// testAPI := &TestAPI{ts: ts}
+
 	runAPI := &RunAPI{rs: rs}
 
-	var projectID, projectID2, testID, testID2, runID uint
-	var pid, pid2, tid, tid2, rid string
-	// var project, project2 *model.Project
-	// var test, test2 *model.Test
+	var projectID, testID, testID2, runID uint
+	var pid, tid, tid2, rid string
 
 	var httpTest *baloo.Client
 	var echoServer *echo.Echo
@@ -60,7 +57,7 @@ func TestRunAPI(t *testing.T) {
 		SetupProjectAPI(projectGroup, ps)
 
 		testsGroup := projectGroup.Group("/:pid/tests")
-		SetupTestAPI(testsGroup, ts)
+		SetupTestAPI(testsGroup, ts, rs)
 
 		runsGroup := testsGroup.Group("/:tid/runs")
 		SetupRunAPI(runsGroup, rs)
@@ -133,9 +130,6 @@ func TestRunAPI(t *testing.T) {
 				assert.NotZero(t, p.ID)
 				assert.Equal(t, "testprojectnametwo", p.Name)
 				assert.Equal(t, "Asdf", p.Description)
-
-				pid2 = strconv.FormatUint(uint64(p.ID), 10)
-				projectID2 = p.ID
 
 				return nil
 			}).

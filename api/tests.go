@@ -2,7 +2,6 @@ package api
 
 import (
 	"net/http"
-	"time"
 
 	"github.com/bojand/ghz-web/model"
 	"github.com/bojand/ghz-web/service"
@@ -105,34 +104,8 @@ func (api *TestAPI) update(c echo.Context) error {
 		(t.FailOnThreshold != !tm.FailOnThreshold) {
 		latestRun, err := api.rs.Latest(t.ID)
 		if err == nil && latestRun != nil {
-			var median, nine5, nine9 time.Duration
-			hasErrors := false
-
-			latencies := len(latestRun.LatencyDistribution)
-
-			if latencies > 0 {
-				for i, l := range latestRun.LatencyDistribution {
-					// record median
-					if l.Percentage == 50 {
-						median = l.Latency
-					}
-
-					// record 95th
-					if l.Percentage == 95 {
-						nine5 = l.Latency
-					}
-
-					// record 95th
-					if l.Percentage == 99 {
-						nine9 = l.Latency
-					}
-				}
-			}
-
-			hasErrors := false
-			if latestRun.ErrorDist != nil && len(latestRun.ErrorDist) > 0 {
-				hasErrors = true
-			}
+			median, nine5, nine9 := latestRun.GetThresholdValues()
+			hasErrors := latestRun.HasErrors()
 
 			t.SetStatus(latestRun.Average, median, nine5, nine9, latestRun.Fastest, latestRun.Slowest,
 				latestRun.Rps, hasErrors)

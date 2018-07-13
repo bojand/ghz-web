@@ -116,29 +116,12 @@ func (api *RawAPI) createNew(c echo.Context) error {
 
 	latencies := len(rr.LatencyDistribution)
 
-	var median, nine5, nine9 time.Duration
-
 	if latencies > 0 {
 		r.LatencyDistribution = make([]*model.LatencyDistribution, latencies)
 		for i, l := range rr.LatencyDistribution {
 			r.LatencyDistribution[i] = new(model.LatencyDistribution)
 			r.LatencyDistribution[i].Latency = l.Latency
 			r.LatencyDistribution[i].Percentage = l.Percentage
-
-			// record median
-			if l.Percentage == 50 {
-				median = l.Latency
-			}
-
-			// record 95th
-			if l.Percentage == 95 {
-				nine5 = l.Latency
-			}
-
-			// record 95th
-			if l.Percentage == 99 {
-				nine9 = l.Latency
-			}
 		}
 	}
 
@@ -153,10 +136,8 @@ func (api *RawAPI) createNew(c echo.Context) error {
 		}
 	}
 
-	hasErrors := false
-	if rr.ErrorDist != nil && len(rr.ErrorDist) > 0 {
-		hasErrors = true
-	}
+	median, nine5, nine9 := r.GetThresholdValues()
+	hasErrors := r.HasErrors()
 
 	t.SetStatus(rr.Average, median, nine5, nine9, rr.Fastest, rr.Slowest,
 		rr.Rps, hasErrors)

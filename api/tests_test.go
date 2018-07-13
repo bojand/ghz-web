@@ -33,6 +33,8 @@ func TestTestAPI(t *testing.T) {
 
 	ts := &model.TestService{DB: db}
 	ps := &model.ProjectService{DB: db}
+	runService := &model.RunService{DB: db}
+
 	testAPI := &TestAPI{ts: ts}
 
 	var projectID, projectID2, testID uint
@@ -54,7 +56,7 @@ func TestTestAPI(t *testing.T) {
 		SetupProjectAPI(projectGroup, ps)
 
 		testsGroup := projectGroup.Group("/:pid/tests")
-		SetupTestAPI(testsGroup, ts)
+		SetupTestAPI(testsGroup, ts, runService)
 
 		routes := echoServer.Routes()
 		for _, r := range routes {

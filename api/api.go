@@ -16,7 +16,7 @@ func Setup(g *echo.Group,
 	SetupProjectAPI(projectGroup, ps)
 
 	testsGroup := projectGroup.Group("/:pid/tests")
-	SetupTestAPI(testsGroup, ts)
+	SetupTestAPI(testsGroup, ts, rs)
 
 	runsGroup := testsGroup.Group("/:tid/runs")
 	SetupRunAPI(runsGroup, rs)
