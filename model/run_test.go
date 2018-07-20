@@ -590,6 +590,165 @@ func TestRunService_FindByTestID(t *testing.T) {
 	})
 }
 
+func TestRunService_FindLatest(t *testing.T) {
+	defer os.Remove(dbName)
+
+	db, err := gorm.Open("sqlite3", dbName)
+	if err != nil {
+		assert.FailNow(t, err.Error())
+	}
+	defer db.Close()
+
+	db.AutoMigrate(&Project{}, &Test{}, &Run{}, &Detail{}, &Bucket{}, &LatencyDistribution{})
+	db.Exec("PRAGMA foreign_keys = ON;")
+	db.LogMode(true)
+
+	dao := RunService{DB: db}
+	var tid1, tid2, pid uint
+
+	t.Run("new run and test and project", func(t *testing.T) {
+		p := &Project{}
+
+		o := &Test{
+			Project:     p,
+			Name:        "Test 111 ",
+			Description: "Test Description Asdf ",
+		}
+
+		r := &Run{
+			Test:    o,
+			Count:   100,
+			Total:   milli1000,
+			Average: milli5,
+			Fastest: milli1,
+			Slowest: milli500,
+		}
+
+		err := dao.Create(r)
+
+		assert.NoError(t, err)
+
+		tid1 = o.ID
+		pid = p.ID
+
+		// create more runs
+		for n := 1; n < 10; n++ {
+			nr := &Run{
+				TestID:  tid1,
+				Count:   100 + uint64(n),
+				Total:   milli1000,
+				Average: milli5,
+				Fastest: milli1,
+				Slowest: milli500,
+			}
+
+			latencies := n + 2
+			nr.LatencyDistribution = make([]*LatencyDistribution, latencies)
+			for li := 0; li < latencies; li++ {
+				nr.LatencyDistribution[li] = new(LatencyDistribution)
+				nr.LatencyDistribution[li].Latency = milli1
+				nr.LatencyDistribution[li].Percentage = li
+			}
+
+			buckets := n + 3
+			nr.Histogram = make([]*Bucket, buckets)
+			for bi := 0; bi < buckets; bi++ {
+				nr.Histogram[bi] = new(Bucket)
+				nr.Histogram[bi].Mark = float64(bi)
+				nr.Histogram[bi].Count = bi
+				nr.Histogram[bi].Frequency = float64(bi)
+			}
+
+			err := dao.Create(nr)
+
+			assert.NoError(t, err)
+		}
+	})
+
+	t.Run("new runs and different test", func(t *testing.T) {
+		o := &Test{
+			ProjectID:   pid,
+			Name:        "Test 222 ",
+			Description: "Test Description 2 Asdf 2",
+		}
+
+		r := &Run{
+			Test:    o,
+			Count:   210,
+			Total:   milli1000,
+			Average: milli5,
+			Fastest: milli1,
+			Slowest: milli500,
+		}
+
+		err := dao.Create(r)
+
+		assert.NoError(t, err)
+
+		tid2 = o.ID
+
+		// create more runs
+		for n := 1; n < 20; n++ {
+			nr := &Run{
+				TestID:  tid2,
+				Count:   210 + uint64(n),
+				Total:   milli1000,
+				Average: milli5,
+				Fastest: milli1,
+				Slowest: milli500,
+			}
+
+			latencies := n + 4
+			nr.LatencyDistribution = make([]*LatencyDistribution, latencies)
+			for li := 0; li < latencies; li++ {
+				nr.LatencyDistribution[li] = new(LatencyDistribution)
+				nr.LatencyDistribution[li].Latency = milli1000
+				nr.LatencyDistribution[li].Percentage = li
+			}
+
+			buckets := n + 5
+			nr.Histogram = make([]*Bucket, buckets)
+			for bi := 0; bi < buckets; bi++ {
+				nr.Histogram[bi] = new(Bucket)
+				nr.Histogram[bi].Mark = float64(bi)
+				nr.Histogram[bi].Count = bi
+				nr.Histogram[bi].Frequency = float64(bi)
+			}
+
+			err := dao.Create(nr)
+
+			assert.NoError(t, err)
+		}
+	})
+
+	t.Run("find latest for test 1", func(t *testing.T) {
+		run, err := dao.FindLatest(tid1)
+
+		fmt.Printf("%+v\n\n", run)
+
+		assert.NoError(t, err)
+		assert.Equal(t, uint64(109), run.Count)
+		assert.Len(t, run.LatencyDistribution, 11)
+		assert.Len(t, run.Histogram, 12)
+	})
+
+	t.Run("find for test 2", func(t *testing.T) {
+		run, err := dao.FindLatest(tid2)
+
+		assert.NoError(t, err)
+		assert.Equal(t, uint64(229), run.Count)
+		assert.Len(t, run.LatencyDistribution, 23)
+		assert.Len(t, run.Histogram, 24)
+	})
+
+	t.Run("find for unknown test", func(t *testing.T) {
+		run, err := dao.FindLatest(123)
+
+		assert.NoError(t, err)
+		assert.Nil(t, run)
+	})
+}
+
 func TestRunService_FindByTestIDSorted(t *testing.T) {
 	defer os.Remove(dbName)
 

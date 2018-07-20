@@ -440,6 +440,32 @@ func TestRunAPI(t *testing.T) {
 			Done()
 	})
 
+	t.Run("GET /:tid/runs/latest", func(t *testing.T) {
+
+		httpTest.Get(basePath + "/" + pid + "/tests/" + tid2 + "/runs/latest/").
+			Expect(t).
+			Status(200).
+			Type("json").
+			AssertFunc(func(res *http.Response, req *http.Request) error {
+				r := new(model.Run)
+				json.NewDecoder(res.Body).Decode(r)
+
+				assert.NoError(t, err)
+
+				assert.NotZero(t, r.ID)
+				assert.Equal(t, testID2, r.TestID)
+				assert.Equal(t, 224, int(r.Count))
+				assert.Equal(t, 1000*time.Millisecond, r.Total)
+				assert.Equal(t, 29*time.Millisecond, r.Average)
+				assert.Equal(t, 1*time.Millisecond, r.Fastest)
+				assert.Equal(t, 500*time.Millisecond, r.Slowest)
+				assert.Equal(t, 5024.0, r.Rps)
+
+				return nil
+			}).
+			Done()
+	})
+
 	t.Run("GET /:tid/runs?sort=average&order=desc", func(t *testing.T) {
 
 		httpTest.Get(basePath + "/" + pid + "/tests/" + tid2 + "/runs/").

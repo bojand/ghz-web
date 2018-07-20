@@ -94,6 +94,22 @@
       </nav>
 
     </div>
+
+    <b-collapse class="card" v-if="latestRun">
+      <div slot="trigger" slot-scope="props" class="card-header">
+          <p class="card-header-title">
+              Latest Run
+          </p>
+          <a class="card-header-icon">
+              <b-icon
+                  :icon="props.open ? 'menu-down' : 'menu-up'">
+              </b-icon>
+          </a>
+      </div>
+      <div class="card-content">
+        <component-run-detail :run="latestRun"></component-run-detail>
+      </div>
+    </b-collapse>
   </section>
 </template>
 
@@ -101,6 +117,7 @@
 import axios from 'axios'
 
 import StatusTags from './StatusTags.vue'
+import RunDetail from './RunDetail.vue'
 
 export default {
   data() {
@@ -116,7 +133,8 @@ export default {
       },
       selectedThreshold: 'median',
       selectedThresholdValue: 0,
-      metrics: ['median', 'mean', '95th', '99th', 'fastest', 'slowest', 'RPS']
+      metrics: ['median', 'mean', '95th', '99th', 'fastest', 'slowest', 'RPS'],
+      latestRun: null
     }
   },
   props: {
@@ -138,6 +156,10 @@ export default {
       try {
         if (!this.test) {
           this.test = await this.$store.fetchTest(this.projectId, this.testId)
+        }
+
+        if (!this.latestRun) {
+          this.latestRun = await this.$store.fetchLatestRun(this.projectId, this.testId)
         }
 
         Object.assign(this.model, this.test)
@@ -228,7 +250,8 @@ export default {
     this.selectedChaged()
   },
   components: {
-    'component-status-tags': StatusTags
+    'component-status-tags': StatusTags,
+    'component-run-detail': RunDetail
   }
 }
 </script>

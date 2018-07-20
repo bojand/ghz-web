@@ -19,8 +19,9 @@ type RunList struct {
 func SetupRunAPI(g *echo.Group, rs service.RunService) {
 	api := &RunAPI{rs: rs}
 
-	g.GET("/", api.listRuns).Name = "ghz api: list runs"
 	g.POST("/", api.create).Name = "ghz api: create run"
+	g.GET("/", api.listRuns).Name = "ghz api: list runs"
+	g.GET("/latest/", api.getLatest).Name = "ghz api: list runs"
 
 	g.Use(api.populateRun)
 
@@ -64,6 +65,27 @@ func (api *RunAPI) get(c echo.Context) error {
 
 	if r == nil || !ok {
 		return echo.NewHTTPError(http.StatusInternalServerError, "No Run in context")
+	}
+
+	return c.JSON(http.StatusOK, r)
+}
+
+func (api *RunAPI) getLatest(c echo.Context) error {
+	to := c.Get("test")
+	t, ok := to.(*model.Test)
+
+	if !ok {
+		return echo.NewHTTPError(http.StatusInternalServerError, "No test in context")
+	}
+
+	r, err := api.rs.FindLatest(t.ID)
+
+	if gorm.IsRecordNotFoundError(err) {
+		return echo.NewHTTPError(http.StatusNotFound, "Not Found")
+	}
+
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
 	return c.JSON(http.StatusOK, r)

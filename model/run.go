@@ -3,6 +3,7 @@ package model
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"strings"
 	"time"
 
@@ -202,15 +203,22 @@ func (rs *RunService) FindByID(id uint) (*Run, error) {
 	return r, err
 }
 
-// Latest returns the latest created run for test
-func (rs *RunService) Latest(tid uint) (*Run, error) {
+// FindLatest returns the latest created run for test
+func (rs *RunService) FindLatest(tid uint) (*Run, error) {
 	r := new(Run)
-	r.Histogram = make([]*Bucket, 10)
-	r.LatencyDistribution = make([]*LatencyDistribution, 10)
+	r.Histogram = make([]*Bucket, 100)
+	r.LatencyDistribution = make([]*LatencyDistribution, 100)
 
-	err := rs.DB.Model(&Run{}).Where("test_id = ?", tid).Order("created_at desc").First(r).
-		Related(&r.Histogram).Related(&r.LatencyDistribution).Error
+	fmt.Printf("Quering\n\n")
 
+	err := rs.DB.Model(&Run{}).Where("test_id = ?", tid).Order("created_at desc").First(r).Error
+
+	if err != nil {
+		r = nil
+		return r, nil
+	}
+
+	err = rs.DB.Model(r).Related(&r.Histogram).Related(&r.LatencyDistribution).Error
 	if err != nil {
 		r = nil
 	}

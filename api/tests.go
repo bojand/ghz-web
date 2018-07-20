@@ -97,19 +97,15 @@ func (api *TestAPI) update(c echo.Context) error {
 
 	var err error
 
-	// we've changed one of fail settings
-	// update them accordingly to the latest run
-	if (t.FailOnError != tm.FailOnError) ||
-		(t.FailOnKPI != !tm.FailOnKPI) ||
-		(t.FailOnThreshold != !tm.FailOnThreshold) {
-		latestRun, err := api.rs.Latest(t.ID)
-		if err == nil && latestRun != nil {
-			median, nine5, nine9 := latestRun.GetThresholdValues()
-			hasErrors := latestRun.HasErrors()
+	// we've may have changed a setting that effects the status
+	// so update accordingly
+	latestRun, err := api.rs.FindLatest(t.ID)
+	if err == nil && latestRun != nil {
+		median, nine5, nine9 := latestRun.GetThresholdValues()
+		hasErrors := latestRun.HasErrors()
 
-			t.SetStatus(latestRun.Average, median, nine5, nine9, latestRun.Fastest, latestRun.Slowest,
-				latestRun.Rps, hasErrors)
-		}
+		t.SetStatus(latestRun.Average, median, nine5, nine9, latestRun.Fastest, latestRun.Slowest,
+			latestRun.Rps, hasErrors)
 	}
 
 	if err = api.ts.Update(t); gorm.IsRecordNotFoundError(err) {
