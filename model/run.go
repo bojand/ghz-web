@@ -264,7 +264,8 @@ func (rs *RunService) FindByTestID(tid, num, page uint, populate bool) ([]*Run, 
 }
 
 // FindByTestIDSorted lists tests using sorting
-func (rs *RunService) FindByTestIDSorted(tid, num, page uint, sortField, order string, populate bool) ([]*Run, error) {
+func (rs *RunService) FindByTestIDSorted(tid, num, page uint, sortField, order string,
+	histogram bool, latency bool) ([]*Run, error) {
 	if (sortField != "id" && sortField != "count" && sortField != "total" && sortField != "average" &&
 		sortField != "fastest" && sortField != "slowest" && sortField != "rps") ||
 		(order != "asc" && order != "desc") {
@@ -285,20 +286,24 @@ func (rs *RunService) FindByTestIDSorted(tid, num, page uint, sortField, order s
 
 	err := rs.DB.Order(orderSQL).Offset(offset).Limit(num).Model(t).Related(&s).Error
 
-	if populate {
-		if err != nil {
-			return nil, err
-		}
+	if err != nil {
+		return nil, err
+	}
 
+	if histogram {
 		for _, run := range s {
-			run.LatencyDistribution = make([]*LatencyDistribution, 10)
-			err := rs.DB.Model(run).Related(&run.LatencyDistribution).Error
+			run.Histogram = make([]*Bucket, 10)
+			err = rs.DB.Model(run).Related(&run.Histogram).Error
 			if err != nil {
 				return nil, err
 			}
+		}
+	}
 
-			run.Histogram = make([]*Bucket, 10)
-			err = rs.DB.Model(run).Related(&run.Histogram).Error
+	if latency {
+		for _, run := range s {
+			run.LatencyDistribution = make([]*LatencyDistribution, 10)
+			err := rs.DB.Model(run).Related(&run.LatencyDistribution).Error
 			if err != nil {
 				return nil, err
 			}

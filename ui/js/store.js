@@ -4,6 +4,7 @@ export default {
   project: null,
   test: null,
   run: null,
+  runs: null,
 
   async fetchProject (id) {
     const { data } = await axios.get(`http://localhost:3000/api/projects/${id}`)
@@ -47,6 +48,18 @@ export default {
       `http://localhost:3000/api/projects/${projectId}/tests/${testId}/runs/latest`
     )
 
+    return data
+  },
+
+  async fetchRuns (projectId, testId, histogram, latency) {
+    histogram = histogram === true ? histogram : false
+    latency = latency === true ? latency : false
+
+    const { data } = await axios.get(
+      `http://localhost:3000/api/projects/${projectId}/tests/${testId}/runs?histogram=${histogram}&latency=${latency}`
+    )
+
+    this.runs = data
     return data
   }
 }

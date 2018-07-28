@@ -846,7 +846,7 @@ func TestRunService_FindByTestIDSorted(t *testing.T) {
 	})
 
 	t.Run("find for test 1 by id asc", func(t *testing.T) {
-		runs, err := dao.FindByTestIDSorted(tid1, 20, 0, "id", "asc", false)
+		runs, err := dao.FindByTestIDSorted(tid1, 20, 0, "id", "asc", false, false)
 
 		fmt.Printf("%#v\n\n", runs)
 
@@ -857,7 +857,7 @@ func TestRunService_FindByTestIDSorted(t *testing.T) {
 	})
 
 	t.Run("find for test 1 by id desc", func(t *testing.T) {
-		runs, err := dao.FindByTestIDSorted(tid1, 20, 0, "id", "desc", false)
+		runs, err := dao.FindByTestIDSorted(tid1, 20, 0, "id", "desc", false, false)
 
 		assert.NoError(t, err)
 		assert.Len(t, runs, 10)
@@ -866,7 +866,7 @@ func TestRunService_FindByTestIDSorted(t *testing.T) {
 	})
 
 	t.Run("find for test 2 by count asc", func(t *testing.T) {
-		runs, err := dao.FindByTestIDSorted(tid2, 30, 0, "count", "asc", false)
+		runs, err := dao.FindByTestIDSorted(tid2, 30, 0, "count", "asc", false, false)
 
 		assert.NoError(t, err)
 		assert.Len(t, runs, 20)
@@ -875,7 +875,7 @@ func TestRunService_FindByTestIDSorted(t *testing.T) {
 	})
 
 	t.Run("find for test 2 by total desc paged", func(t *testing.T) {
-		runs, err := dao.FindByTestIDSorted(tid2, 5, 1, "total", "desc", false)
+		runs, err := dao.FindByTestIDSorted(tid2, 5, 1, "total", "desc", false, false)
 
 		assert.NoError(t, err)
 		assert.Len(t, runs, 5)
@@ -884,7 +884,7 @@ func TestRunService_FindByTestIDSorted(t *testing.T) {
 	})
 
 	t.Run("find for test 2 by average asc paged", func(t *testing.T) {
-		runs, err := dao.FindByTestIDSorted(tid2, 7, 1, "average", "asc", false)
+		runs, err := dao.FindByTestIDSorted(tid2, 7, 1, "average", "asc", false, false)
 
 		assert.NoError(t, err)
 		assert.Len(t, runs, 7)
@@ -893,7 +893,7 @@ func TestRunService_FindByTestIDSorted(t *testing.T) {
 	})
 
 	t.Run("find for test 2 by fastest asc paged", func(t *testing.T) {
-		runs, err := dao.FindByTestIDSorted(tid2, 6, 1, "fastest", "asc", false)
+		runs, err := dao.FindByTestIDSorted(tid2, 6, 1, "fastest", "asc", false, false)
 
 		assert.NoError(t, err)
 		assert.Len(t, runs, 6)
@@ -902,7 +902,7 @@ func TestRunService_FindByTestIDSorted(t *testing.T) {
 	})
 
 	t.Run("find for test 2 by slowest desc paged", func(t *testing.T) {
-		runs, err := dao.FindByTestIDSorted(tid2, 5, 1, "fastest", "desc", false)
+		runs, err := dao.FindByTestIDSorted(tid2, 5, 1, "fastest", "desc", false, false)
 
 		assert.NoError(t, err)
 		assert.Len(t, runs, 5)
@@ -911,7 +911,7 @@ func TestRunService_FindByTestIDSorted(t *testing.T) {
 	})
 
 	t.Run("find for test 2 by rps desc paged", func(t *testing.T) {
-		runs, err := dao.FindByTestIDSorted(tid2, 5, 1, "rps", "desc", false)
+		runs, err := dao.FindByTestIDSorted(tid2, 5, 1, "rps", "desc", false, false)
 
 		assert.NoError(t, err)
 		assert.Len(t, runs, 5)
@@ -920,19 +920,19 @@ func TestRunService_FindByTestIDSorted(t *testing.T) {
 	})
 
 	t.Run("error on invalid sort param", func(t *testing.T) {
-		_, err := dao.FindByTestIDSorted(tid2, 0, 1, "asdf", "asc", false)
+		_, err := dao.FindByTestIDSorted(tid2, 0, 1, "asdf", "asc", false, false)
 
 		assert.Error(t, err)
 	})
 
 	t.Run("error on invalid order param", func(t *testing.T) {
-		_, err := dao.FindByTestIDSorted(tid2, 0, 1, "count", "asce", false)
+		_, err := dao.FindByTestIDSorted(tid2, 0, 1, "count", "asce", false, false)
 
 		assert.Error(t, err)
 	})
 
 	t.Run("0 for invalid test id", func(t *testing.T) {
-		runs, err := dao.FindByTestIDSorted(1234, 5, 1, "rps", "desc", false)
+		runs, err := dao.FindByTestIDSorted(1234, 5, 1, "rps", "desc", false, false)
 
 		assert.NoError(t, err)
 		assert.Len(t, runs, 0)

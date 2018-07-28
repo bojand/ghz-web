@@ -39,17 +39,13 @@
         </div>
       </div>
     
-    
-		
 			<div class="content">
         <span class="title is-5">
 				  <strong>Historam</strong>
         </span>
 				<div class="js-bar-container"></div>
 			</div>
-	  
-    
-		
+
 			<div class="content" v-if="run.latencyDistribution.length > 0">
         <span class="title is-5">
 				  <strong>Latency</strong>
@@ -127,6 +123,11 @@ const d3 = require('d3-selection')
 export default {
   props: {
     run: Object
+  },
+  watch: {
+    run(newVal, oldVal) {
+      this.createHistogram()
+    }
   },
   mounted() {
     this.createHistogram()

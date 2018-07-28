@@ -2,6 +2,7 @@ package api
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/bojand/ghz-web/model"
 	"github.com/bojand/ghz-web/service"
@@ -159,13 +160,32 @@ func (api *RunAPI) listRuns(c echo.Context) error {
 
 	var err error
 
+	histogram := false
+	latency := false
+
+	popH := strings.ToLower(c.QueryParam("histogram"))
+	if popH == "true" {
+		histogram = true
+	}
+
+	popL := strings.ToLower(c.QueryParam("latency"))
+	if popL == "true" {
+		latency = true
+	}
+
+	popQ := strings.ToLower(c.QueryParam("populate"))
+	if popQ == "true" {
+		histogram = true
+		latency = true
+	}
+
 	go func() {
 		var runs []*model.Run
 		err = nil
 		if doSort {
-			runs, err = api.rs.FindByTestIDSorted(tid, limit, page, sort, order, false)
+			runs, err = api.rs.FindByTestIDSorted(tid, limit, page, sort, order, histogram, latency)
 		} else {
-			runs, err = api.rs.FindByTestID(tid, limit, page, false)
+			runs, err = api.rs.FindByTestID(tid, limit, page, true)
 		}
 		errCh <- err
 		dataCh <- runs

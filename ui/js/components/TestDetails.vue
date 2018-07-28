@@ -109,6 +109,9 @@
       <div class="card-content">
         <component-run-detail :run="latestRun"></component-run-detail>
       </div>
+      <div class="card-content">
+        <component-runs-over-time :runs="runs"></component-runs-over-time>
+      </div>
     </b-collapse>
   </section>
 </template>
@@ -118,6 +121,7 @@ import axios from 'axios'
 
 import StatusTags from './StatusTags.vue'
 import RunDetail from './RunDetail.vue'
+import RunsOverTime from './RunsOverTime.vue'
 
 export default {
   data() {
@@ -134,7 +138,8 @@ export default {
       selectedThreshold: 'median',
       selectedThresholdValue: 0,
       metrics: ['median', 'mean', '95th', '99th', 'fastest', 'slowest', 'RPS'],
-      latestRun: null
+      latestRun: null,
+      runs: null
     }
   },
   props: {
@@ -160,6 +165,10 @@ export default {
 
         if (!this.latestRun) {
           this.latestRun = await this.$store.fetchLatestRun(this.projectId, this.testId)
+        }
+
+        if (!this.runs) {
+          this.runs = await this.$store.fetchRuns(this.projectId, this.testId, false, true)
         }
 
         Object.assign(this.model, this.test)
@@ -251,7 +260,8 @@ export default {
   },
   components: {
     'component-status-tags': StatusTags,
-    'component-run-detail': RunDetail
+    'component-run-detail': RunDetail,
+    'component-runs-over-time': RunsOverTime,
   }
 }
 </script>
