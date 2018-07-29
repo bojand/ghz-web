@@ -109,10 +109,25 @@
       <div class="card-content">
         <component-run-detail :run="latestRun"></component-run-detail>
       </div>
+    </b-collapse>
+    <br />
+    <b-collapse class="card" v-if="runs">
+    <div slot="trigger" slot-scope="props" class="card-header">
+        <p class="card-header-title">
+            Change over time
+        </p>
+        <a class="card-header-icon">
+              <b-icon
+                  :icon="props.open ? 'menu-down' : 'menu-up'">
+              </b-icon>
+          </a>
+      </div>
       <div class="card-content">
         <component-runs-over-time :runs="runs"></component-runs-over-time>
       </div>
     </b-collapse>
+    <br />
+    <component-run-list :project-id="projectId" :testId="testId"></component-run-list>
   </section>
 </template>
 
@@ -122,6 +137,7 @@ import axios from 'axios'
 import StatusTags from './StatusTags.vue'
 import RunDetail from './RunDetail.vue'
 import RunsOverTime from './RunsOverTime.vue'
+import RunList from './RunList.vue'
 
 export default {
   data() {
@@ -262,6 +278,7 @@ export default {
     'component-status-tags': StatusTags,
     'component-run-detail': RunDetail,
     'component-runs-over-time': RunsOverTime,
+    'component-run-list': RunList
   }
 }
 </script>

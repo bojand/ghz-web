@@ -2,10 +2,7 @@
   <section>
 
     <div class="content">
-    <span class="title is-5">
-                <strong>Change over time</strong>
-    </span>
-        <div class="js-line-container card--chart"></div>
+      <div class="js-line-container card--chart"></div>
     </div>
 
   </section>
@@ -164,7 +161,6 @@ export default {
       }
     },
     createLineChart() {
-      console.log('createLineChart')
       let lineChart = britecharts.line()
       let tooltip = britecharts.tooltip()
       let container = d3.select('.js-line-container')
@@ -183,16 +179,16 @@ export default {
 
         lineChart
           .isAnimated(true)
-          .aspectRatio(0.5)
+          // .aspectRatio(0.5)
           .grid('full')
-          .tooltipThreshold(600)
+          // .tooltipThreshold(600)
           .width(containerWidth)
-        //   .margin({
-        //     top: 60,
-        //     bottom: 50,
-        //     left: 50,
-        //     right: 30
-        //   })
+          // .margin({
+          //   top: 20,
+          //   bottom: 20,
+          //   left: 20,
+          //   right: 20
+          // })
           // .colorSchema(britecharts.colors.colorSchemas.green)
           .dateLabel('date')
           .on('customMouseOver', tooltip.show)
@@ -203,12 +199,10 @@ export default {
 
         tooltip
           // In order to change the date range on the tooltip title, uncomment this line
-        //   .dateFormat(chartTooltip.axisTimeCombinations.DAY)
+          //   .dateFormat(chartTooltip.axisTimeCombinations.DAY)
           .title('Data')
           .valueFormatter(value => value + ' ms')
-          .topicsOrder(
-            dataset.dataByTopic.map(t => t.topic)
-          )
+          .topicsOrder(dataset.dataByTopic.map(t => t.topic))
 
         tooltipContainer = d3.select('.js-line-container .metadata-group .hover-marker')
         tooltipContainer.datum([]).call(tooltip)
