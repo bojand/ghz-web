@@ -11,22 +11,42 @@
       :per-page="perPage"
       @page-change="onPageChange"
 
-      :opened-detailed="defaultOpenedDetails"
-      detailed
-      detail-key="id"
-
       backend-sorting
       :default-sort-direction="defaultSortOrder"
       :default-sort="[sortField, sortOrder]"
       @sort="onSort">
 
       <template slot-scope="props">
-        <b-table-column field="id" label="ID" width="100" sortable>
+        <!-- <b-table-column field="id" label="ID" sortable>
           {{ props.row.id }}
+        </b-table-column> -->
+
+        <b-table-column field="createdAt" label="Date" sortable>
+          {{ new Date(props.row.createdAt).toLocaleString() }}
         </b-table-column>
 
-        <b-table-column field="createdAt" label="Date" width="200" sortable>
-          {{ new Date(props.row.createdAt).toLocaleString() }}
+        <b-table-column field="count" label="Count" sortable>
+          {{ props.row.count }}
+        </b-table-column>
+
+        <b-table-column field="total" label="Total" sortable>
+          {{ Number.parseFloat(props.row.total / 1000000).toFixed(2) }} ms
+        </b-table-column>
+
+        <b-table-column field="average" label="Average" sortable>
+          {{ Number.parseFloat(props.row.average / 1000000).toFixed(2) }} ms
+        </b-table-column>
+
+        <b-table-column field="slowest" label="Slowest" sortable>
+          {{ Number.parseFloat(props.row.slowest / 1000000).toFixed(2) }} ms
+        </b-table-column>
+
+        <b-table-column field="fastest" label="Fastest" sortable>
+          {{ Number.parseFloat(props.row.fastest / 1000000).toFixed(2) }} ms
+        </b-table-column>
+
+        <b-table-column field="rps" label="RPS" sortable>
+          {{ Number.parseFloat(props.row.rps).toFixed(2) }}
         </b-table-column>
 
         <b-table-column field="status" label="Status" centered>
@@ -43,9 +63,9 @@
         </b-table-column>
       </template>
 
-      <template slot="detail" slot-scope="props">
+      <!-- <template slot="detail" slot-scope="props">
         <component-run-details :project-id="projectId" :testId="testId" :runId="props.row.id"></component-run-details>
-      </template>
+      </template> -->
     </b-table>
   </section>
 </template>

@@ -153,36 +153,38 @@ func (ds *DetailService) CreateBatch(rid uint, s []*Detail) (uint, uint) {
 		nCreated = uint(nReq) - errCount
 
 		return nCreated, errCount
-	} else {
-		NC := 10
+	}
 
-		var nErr uint32
+	NC := 10
 
-		sem := make(chan bool, NC)
+	var nErr uint32
 
-		for _, item := range s {
-			sem <- true
+	sem := make(chan bool, NC)
 
-			go func(d *Detail) {
-				defer func() { <-sem }()
+	var nCreated, errCount uint
 
-				d.RunID = rid
-				err := ds.Create(d)
+	for _, item := range s {
+		sem <- true
 
-				if err != nil {
-					fmt.Println(err)
-					atomic.AddUint32(&nErr, 1)
-				}
-			}(item)
-		}
+		go func(d *Detail) {
+			defer func() { <-sem }()
+
+			d.RunID = rid
+			err := ds.Create(d)
+
+			if err != nil {
+				fmt.Println(err)
+				atomic.AddUint32(&nErr, 1)
+			}
+		}(item)
 
 		for i := 0; i < cap(sem); i++ {
 			sem <- true
 		}
 
-		errCount := uint(atomic.LoadUint32(&nErr))
-		nCreated := uint(nReq) - errCount
-
-		return nCreated, errCount
+		errCount = uint(atomic.LoadUint32(&nErr))
+		nCreated = uint(nReq) - errCount
 	}
+
+	return nCreated, errCount
 }
