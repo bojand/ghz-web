@@ -24,6 +24,7 @@ import VueRouter from 'vue-router'
 import ProjectListPage from './components/ProjectListPage.vue'
 import ProjectPage from './components/ProjectPage.vue'
 import TestPage from './components/TestPage.vue'
+import RunPage from './components/RunPage.vue'
 
 import Navbar from './layout/Navbar.vue'
 import VFooter from './layout/Footer.vue'
@@ -68,6 +69,35 @@ const routes = [
       if (!store.test || store.test.id !== to.params.testId) {
         try {
           await store.fetchTest(to.params.projectId, to.params.testId)
+        } catch (e) {
+          console.error(e)
+        }
+      }
+      next()
+    }
+  },
+  {
+    name: 'run',
+    path: '/projects/:projectId/tests/:testId/runs/:runId',
+    component: RunPage,
+    beforeEnter: async (to, from, next) => {
+      if (!store.project || store.project.id !== to.params.projectId) {
+        try {
+          await store.fetchProject(to.params.projectId)
+        } catch (e) {
+          console.error(e)
+        }
+      }
+      if (!store.test || store.test.id !== to.params.testId) {
+        try {
+          await store.fetchTest(to.params.projectId, to.params.testId)
+        } catch (e) {
+          console.error(e)
+        }
+      }
+      if (!store.run || store.run.id !== to.params.runId) {
+        try {
+          await store.fetchRun(to.params.projectId, to.params.testId, to.params.runId)
         } catch (e) {
           console.error(e)
         }

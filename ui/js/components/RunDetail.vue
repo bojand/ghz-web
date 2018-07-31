@@ -1,5 +1,5 @@
 <template>
-  <section>
+  <section v-if="run.id">
     
       <div class="columns">
         <div class="column is-narrow">
@@ -12,26 +12,52 @@
                 <tr>
                   <th>Count</th>
                   <td>{{ run.count }}</td>
+                  <td></td>
                 </tr>
                 <tr>
                   <th>Total</th>
-                  <td>{{ run.total }} ms</td>
+                  <td>{{ formatNano(run.total) }} ms</td>
+                  <td></td>
                 </tr>
                 <tr>
                   <th>Slowest</th>
-                  <td>{{ run.slowest }} ms</td>
+                  <td>{{ formatNano(run.slowest) }} ms</td>
+                  <td>
+                    <b-icon
+                      :icon="iconifyResult(test, run.slowest, 'slowest')"
+                      :type="classifyResult(test, run.slowest, 'slowest')">
+                    </b-icon>
+                  </td>
                 </tr>
                 <tr>
                   <th>Fastest</th>
-                  <td>{{ run.fastest }} ms</td>
+                  <td>{{ formatNano(run.fastest) }} ms</td>
+                  <td>
+                    <b-icon
+                      :icon="iconifyResult(test, run.fastest, 'fastest')"
+                      :type="classifyResult(test, run.fastest, 'fastest')">
+                    </b-icon>
+                  </td>
                 </tr>
                 <tr>
                   <th>Average</th>
-                  <td>AVG ms</td>
+                  <td>{{ formatNano(run.average) }} ms</td>
+                  <td>
+                    <b-icon
+                      :icon="iconifyResult(test, run.average, 'mean')"
+                      :type="classifyResult(test, run.average, 'mean')">
+                    </b-icon>
+                  </td>
                 </tr>
                 <tr>
                   <th>Requests / sec</th>
-                  <td>{{ run.rps }}</td>
+                  <td>{{ formatFloat(run.rps, 0) }}</td>
+                  <td>
+                    <b-icon
+                      :icon="iconifyResult(test, run.rps, 'RPS')"
+                      :type="classifyResult(test, run.rps, 'RPS')">
+                    </b-icon>
+                  </td>
                 </tr>
               </tbody>
             </table>
@@ -58,7 +84,7 @@
 					</thead>
 					<tbody>
 						<tr>
-							<td v-for="dist in run.latencyDistribution" :key="dist.latency">{{ dist.latency }} ms</td>
+							<td v-for="dist in run.latencyDistribution" :key="dist.latency">{{ formatNano(dist.latency) }} ms</td>
 						</tr>
 					</tbody>
 				</table>
@@ -120,15 +146,19 @@ import _ from 'lodash'
 const britecharts = require('britecharts')
 const d3 = require('d3-selection')
 
+import common from './common.js'
+
 export default {
   props: {
     run: Object
   },
+  store: ['test'],
   watch: {
     run(newVal, oldVal) {
       this.createHistogram()
     }
   },
+  mixins: [common],
   mounted() {
     this.createHistogram()
   },

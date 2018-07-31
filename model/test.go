@@ -63,7 +63,7 @@ func (m *ThresholdSetting) UnmarshalJSON(data []byte) error {
 }
 
 var durationConstants = [6]Threshold{ThresholdMean, ThresholdMedian, Threshold95th, Threshold99th,
-	ThresholdSlowest, ThresholdFastest}
+	ThresholdFastest, ThresholdSlowest}
 
 // Test represents a test
 type Test struct {

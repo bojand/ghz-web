@@ -4,7 +4,6 @@
 
 <script>
 import TestDetails from './TestDetails.vue'
-import RunList from './RunList.vue'
 
 export default {
   data() {
@@ -18,14 +17,12 @@ export default {
     this.testId = this.$route.params.testId
   },
   async beforeRouteUpdate (to, from, next) {
-    console.log('TestPage beforeRouteUpdate')
     this.projectId = to.params.projectId
     this.testId = to.params.testId
     next()
   },
   components: {
-    'component-test-details': TestDetails,
-    'component-run-list': RunList
+    'component-test-details': TestDetails
   }
 }
 </script>

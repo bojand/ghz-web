@@ -67,7 +67,7 @@ export default {
       if (this.project && this.test && this.run && this.$route.params.runId) {
         this.parts.push(
           {
-            icon: 'pull-box',
+            icon: 'poll-box',
             label: 'Runs',
             link: {
               name: 'test',
@@ -106,6 +106,9 @@ export default {
       this.buildParts()
     },
     test() {
+      this.buildParts()
+    },
+    run() {
       this.buildParts()
     }
   }

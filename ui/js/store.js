@@ -51,6 +51,15 @@ export default {
     return data
   },
 
+  async fetchRun (projectId, testId, runId) {
+    const { data } = await axios.get(
+      `http://localhost:3000/api/projects/${projectId}/tests/${testId}/runs/${testId}`
+    )
+
+    this.run = data
+    return data
+  },
+
   async fetchRuns (projectId, testId, histogram, latency) {
     histogram = histogram === true ? histogram : false
     latency = latency === true ? latency : false

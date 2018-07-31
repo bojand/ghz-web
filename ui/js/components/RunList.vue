@@ -22,7 +22,10 @@
         </b-table-column> -->
 
         <b-table-column field="createdAt" label="Date" sortable>
-          {{ new Date(props.row.createdAt).toLocaleString() }}
+          <router-link :to="{ name: 'run', params: { projectId: projectId, testId: testId, runId: props.row.id } }">
+            {{ new Date(props.row.createdAt).toLocaleString() }}
+            <!-- <b-icon icon="open-in-app" size="is-small"></b-icon> -->
+          </router-link>
         </b-table-column>
 
         <b-table-column field="count" label="Count" sortable>
@@ -30,23 +33,31 @@
         </b-table-column>
 
         <b-table-column field="total" label="Total" sortable>
-          {{ Number.parseFloat(props.row.total / 1000000).toFixed(2) }} ms
+          {{ formatNano(props.row.total) }} ms
         </b-table-column>
 
         <b-table-column field="average" label="Average" sortable>
-          {{ Number.parseFloat(props.row.average / 1000000).toFixed(2) }} ms
+          <span class="tag" :class="classifyResult(test, props.row.average, 'mean')">
+            {{ formatNano(props.row.average) }} ms
+          </span>
         </b-table-column>
 
         <b-table-column field="slowest" label="Slowest" sortable>
-          {{ Number.parseFloat(props.row.slowest / 1000000).toFixed(2) }} ms
+          <span class="tag" :class="classifyResult(test, props.row.slowest, 'slowest')">
+            {{ formatNano(props.row.slowest) }} ms
+          </span>
         </b-table-column>
 
         <b-table-column field="fastest" label="Fastest" sortable>
-          {{ Number.parseFloat(props.row.fastest / 1000000).toFixed(2) }} ms
+          <span class="tag" :class="classifyResult(test, props.row.fastest, 'fastest')">
+            {{ formatNano(props.row.fastest) }} ms
+          </span> 
         </b-table-column>
 
         <b-table-column field="rps" label="RPS" sortable>
-          {{ Number.parseFloat(props.row.rps).toFixed(2) }}
+          <span class="tag" :class="classifyResult(test, props.row.rps, 'RPS')">
+            {{ formatFloat(props.row.rps, 0) }}
+          </span> 
         </b-table-column>
 
         <b-table-column field="status" label="Status" centered>
@@ -58,9 +69,9 @@
           ></b-icon>
         </b-table-column>
 
-        <b-table-column width="100">
+        <!-- <b-table-column>
           <router-link :to="{ name: 'run', params: { projectId: projectId, testId: testId, runId: props.row.id } }" class="button is-info">Details</router-link>
-        </b-table-column>
+        </b-table-column> -->
       </template>
 
       <!-- <template slot="detail" slot-scope="props">
@@ -73,6 +84,7 @@
 <script>
 import axios from 'axios'
 import RunRowDetails from './RunRowDetails.vue'
+import common from './common.js'
 
 export default {
   data() {
@@ -92,6 +104,7 @@ export default {
     projectId: [String, Number],
     testId: [String, Number]
   },
+  store: ['test'],
   watch: {
     projectId(newVal, oldVal) {
       this.loadData()
@@ -103,6 +116,7 @@ export default {
   mounted() {
     this.loadData()
   },
+  mixins: [common],
   methods: {
     async loadData() {
       const page = this.page - 1 || 0

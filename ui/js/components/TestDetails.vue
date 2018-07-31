@@ -225,7 +225,10 @@ export default {
 
           this.loadData()
         }
+      } else {
+        this.selectedChaged()
       }
+
       this.editMode = !this.editMode
     },
 
