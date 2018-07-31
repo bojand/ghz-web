@@ -182,14 +182,5 @@ func (api *TestAPI) listTests(c echo.Context) error {
 }
 
 func (api *TestAPI) populateTest(next echo.HandlerFunc) echo.HandlerFunc {
-	return func(c echo.Context) error {
-		t, err := getTest(api.ts, c)
-		if err != nil {
-			return err
-		}
-
-		c.Set("test", t)
-
-		return next(c)
-	}
+	return populateTest(api.ts, next)
 }

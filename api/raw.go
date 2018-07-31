@@ -73,12 +73,36 @@ func SetupRawAPI(g *echo.Group,
 
 	api := &RawAPI{ps: ps, ts: ts, rs: rs, ds: ds}
 
-	g.POST("/projects/:pid/tests/:tid/runs/:rid/raw/", api.createRaw).Name = "ghz api: create raw"
 	g.POST("/raw/", api.createNew).Name = "ghz api: create raw 2"
+
+	g.Use(api.populateProject)
+	g.Use(api.populateTest)
+
+	g.POST("/projects/:pid/tests/:tid/raw/", api.createRaw).Name = "ghz api: create raw"
 }
 
 func (api *RawAPI) createRaw(c echo.Context) error {
-	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
+	po := c.Get("project")
+	p, ok := po.(*model.Project)
+
+	if p == nil || !ok {
+		return echo.NewHTTPError(http.StatusInternalServerError, "No project in context")
+	}
+
+	to := c.Get("test")
+	t, ok := to.(*model.Test)
+
+	if !ok {
+		return echo.NewHTTPError(http.StatusInternalServerError, "No test in context")
+	}
+
+	rr := new(RawRequest)
+
+	if err := c.Bind(rr); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+	}
+
+	return api.createBatch(c, rr, p, t)
 }
 
 func (api *RawAPI) createNew(c echo.Context) error {
@@ -103,6 +127,10 @@ func (api *RawAPI) createNew(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
+	return api.createBatch(c, rr, p, t)
+}
+
+func (api *RawAPI) createBatch(c echo.Context, rr *RawRequest, p *model.Project, t *model.Test) error {
 	r := new(model.Run)
 	r.TestID = t.ID
 	r.Count = rr.Count
@@ -142,7 +170,7 @@ func (api *RawAPI) createNew(c echo.Context) error {
 	t.SetStatus(rr.Average, median, nine5, nine9, rr.Fastest, rr.Slowest,
 		rr.Rps, hasErrors)
 
-	err = api.rs.Create(r)
+	err := api.rs.Create(r)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
@@ -159,9 +187,17 @@ func (api *RawAPI) createNew(c echo.Context) error {
 		},
 	}
 
-	if errored > 0 {
+	if errored != uint(0) {
 		return echo.NewHTTPError(http.StatusInternalServerError, rres)
 	}
 
-	return echo.NewHTTPError(http.StatusCreated, rres)
+	return c.JSON(http.StatusCreated, rres)
+}
+
+func (api *RawAPI) populateProject(next echo.HandlerFunc) echo.HandlerFunc {
+	return populateProject(api.ps, next)
+}
+
+func (api *RawAPI) populateTest(next echo.HandlerFunc) echo.HandlerFunc {
+	return populateTest(api.ts, next)
 }

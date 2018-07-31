@@ -158,10 +158,12 @@ func (ds *DetailService) CreateBatch(rid uint, s []*Detail) (uint, uint) {
 	NC := 10
 
 	var nErr uint32
+	nErr = 0
 
 	sem := make(chan bool, NC)
 
 	var nCreated, errCount uint
+	errCount = 0
 
 	for _, item := range s {
 		sem <- true
@@ -177,14 +179,14 @@ func (ds *DetailService) CreateBatch(rid uint, s []*Detail) (uint, uint) {
 				atomic.AddUint32(&nErr, 1)
 			}
 		}(item)
-
-		for i := 0; i < cap(sem); i++ {
-			sem <- true
-		}
-
-		errCount = uint(atomic.LoadUint32(&nErr))
-		nCreated = uint(nReq) - errCount
 	}
+
+	for i := 0; i < cap(sem); i++ {
+		sem <- true
+	}
+
+	errCount = uint(atomic.LoadUint32(&nErr))
+	nCreated = uint(nReq) - errCount
 
 	return nCreated, errCount
 }

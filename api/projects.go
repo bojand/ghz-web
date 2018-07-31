@@ -141,14 +141,5 @@ func (api *ProjectAPI) listProjects(c echo.Context) error {
 }
 
 func (api *ProjectAPI) populateProject(next echo.HandlerFunc) echo.HandlerFunc {
-	return func(c echo.Context) error {
-		p, err := getProject(api.ps, c)
-		if err != nil {
-			return err
-		}
-
-		c.Set("project", p)
-
-		return next(c)
-	}
+	return populateProject(api.ps, next)
 }
