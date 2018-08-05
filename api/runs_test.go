@@ -404,6 +404,7 @@ func TestRunAPI(t *testing.T) {
 		for i := 0; i < 25; i++ {
 			nr := &model.Run{
 				TestID:  testID2,
+				Date:    time.Now(),
 				Count:   200 + uint64(i),
 				Total:   1000 * time.Millisecond,
 				Average: time.Duration(5+i) * time.Millisecond,

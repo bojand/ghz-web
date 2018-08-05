@@ -1,6 +1,7 @@
 package api
 
 import (
+	"encoding/json"
 	"net/http"
 	"time"
 
@@ -11,6 +12,7 @@ import (
 
 // RawRequest request to the create raw api
 type RawRequest struct {
+	Date                time.Time                 `json:"date"`
 	Count               uint64                    `json:"count"`
 	Total               time.Duration             `json:"total"`
 	Average             time.Duration             `json:"average"`
@@ -22,6 +24,36 @@ type RawRequest struct {
 	Details             []*model.Detail           `json:"details"`
 	LatencyDistribution []*RawLatencyDistribution `json:"latencyDistribution"`
 	Histogram           []*RawBucket              `json:"histogram"`
+}
+
+// UnmarshalJSON for RawRequest
+func (rr *RawRequest) UnmarshalJSON(data []byte) error {
+	type Alias RawRequest
+	aux := &struct {
+		Date string `json:"date"`
+		*Alias
+	}{
+		Alias: (*Alias)(rr),
+	}
+
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
+	}
+
+	rr.Date, _ = time.Parse(time.RFC3339, aux.Date)
+	return nil
+}
+
+// MarshalJSON for RawRequest
+func (rr RawRequest) MarshalJSON() ([]byte, error) {
+	type Alias RawRequest
+	return json.Marshal(&struct {
+		Date string `json:"date"`
+		*Alias
+	}{
+		Date:  rr.Date.Format(time.RFC3339),
+		Alias: (*Alias)(&rr),
+	})
 }
 
 // RawLatencyDistribution holds latency distribution data

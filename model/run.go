@@ -36,6 +36,7 @@ type Bucket struct {
 // Run represents a project
 type Run struct {
 	Model
+	Date    time.Time     `json:"date"`
 	TestID  uint          `json:"testID" gorm:"type:integer REFERENCES tests(id)"`
 	Test    *Test         `json:"-"`
 	Count   uint64        `json:"count"`
@@ -211,7 +212,7 @@ func (rs *RunService) FindLatest(tid uint) (*Run, error) {
 
 	fmt.Printf("Quering\n\n")
 
-	err := rs.DB.Model(&Run{}).Where("test_id = ?", tid).Order("created_at desc").First(r).Error
+	err := rs.DB.Model(&Run{}).Where("test_id = ?", tid).Order("date desc").First(r).Error
 
 	if err != nil {
 		r = nil

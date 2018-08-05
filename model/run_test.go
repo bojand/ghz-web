@@ -617,6 +617,7 @@ func TestRunService_FindLatest(t *testing.T) {
 
 		r := &Run{
 			Test:    o,
+			Date:    time.Now(),
 			Count:   100,
 			Total:   milli1000,
 			Average: milli5,
@@ -635,6 +636,7 @@ func TestRunService_FindLatest(t *testing.T) {
 		for n := 1; n < 10; n++ {
 			nr := &Run{
 				TestID:  tid1,
+				Date:    time.Now(),
 				Count:   100 + uint64(n),
 				Total:   milli1000,
 				Average: milli5,
@@ -674,6 +676,7 @@ func TestRunService_FindLatest(t *testing.T) {
 
 		r := &Run{
 			Test:    o,
+			Date:    time.Now(),
 			Count:   210,
 			Total:   milli1000,
 			Average: milli5,
@@ -691,6 +694,7 @@ func TestRunService_FindLatest(t *testing.T) {
 		for n := 1; n < 20; n++ {
 			nr := &Run{
 				TestID:  tid2,
+				Date:    time.Now(),
 				Count:   210 + uint64(n),
 				Total:   milli1000,
 				Average: milli5,
