@@ -11,6 +11,8 @@
 <script>
 import _ from 'lodash'
 
+import common from './common.js'
+
 const britecharts = require('britecharts')
 const d3 = require('d3-selection')
 
@@ -26,139 +28,170 @@ export default {
   mounted() {
     this.createLineChart()
   },
+  mixins: [common],
   methods: {
     createChartData() {
-      const data = this.runs.data
+      let data = this.runs.data
+
+      // data = _.map(data, r => {
+      //   const date = new Date(r.date).toDateString()
+      //   const v = _.clone(r)
+      //   v.date = date
+      //   v.fullDate = new Date(r.date).toISOString()
+      //   return v
+      // })
 
       const averages = _.map(data, r => {
         return {
-          date: r.createdAt,
-          value: r.average
+          date: r.date,
+          value: r.average / 1000000
         }
       })
 
       const slowest = _.map(data, r => {
         return {
-          date: r.createdAt,
-          value: r.slowest
+          date: r.date,
+          value: r.slowest / 1000000
         }
       })
 
       const fastest = _.map(data, r => {
         return {
-          date: r.createdAt,
-          value: r.fastest
+          date: r.date,
+          value: r.fastest / 1000000
         }
       })
 
-      //   return {
-      //     dataByTopic: [
-      //       {
-      //         topicName: 'Average',
-      //         topic: 1,
-      //         dates: averages
-      //       },
-      //       {
-      //         topicName: 'Fastest',
-      //         topic: 2,
-      //         dates: fastest
-      //       },
-      //       {
-      //         topicName: 'Slowest',
-      //         topic: 3,
-      //         dates: slowest
-      //       }
-      //     ]
-      //   }
+      const nine5 = _(data)
+        .map(r => {
+          const elem = _.find(r.latencyDistribution, ['percentage', 95])
+          if (elem) {
+            return {
+              date: r.date,
+              value: elem.latency / 1000000
+            }
+          }
+        })
+        .compact()
+        .valueOf()
 
-      return {
+      const chartData = {
         dataByTopic: [
           {
             topicName: 'Average',
             topic: 1,
-            dates: [
-              {
-                date: '2018-01-01T16:00:00-08:00',
-                value: 6.83
-              },
-              {
-                date: '2018-01-02T16:00:00-08:00',
-                value: 5.83
-              },
-              {
-                date: '2018-01-03T16:00:00-08:00',
-                value: 4.83
-              },
-              {
-                date: '2018-01-04T16:00:00-08:00',
-                value: 5.25
-              },
-              {
-                date: '2018-01-05T16:00:00-08:00',
-                value: 7.25
-              },
-              {
-                date: '2018-01-06T16:00:00-08:00',
-                value: 6.25
-              },
-              {
-                date: '2018-01-07T16:00:00-08:00',
-                value: 5.25
-              },
-              {
-                date: '2018-01-08T16:00:00-08:00',
-                value: 6.25
-              },
-              {
-                date: '2018-01-09T16:00:00-08:00',
-                value: 7.65
-              }
-            ]
+            dates: averages
+          },
+          {
+            topicName: 'Fastest',
+            topic: 2,
+            dates: fastest
+          },
+          {
+            topicName: 'Slowest',
+            topic: 3,
+            dates: slowest
           },
           {
             topicName: '95th',
-            topic: 2,
-            dates: [
-              {
-                date: '2018-01-01T16:00:00-08:00',
-                value: 13.26
-              },
-              {
-                date: '2018-01-02T16:00:00-08:00',
-                value: 12.86
-              },
-              {
-                date: '2018-01-03T16:00:00-08:00',
-                value: 12.26
-              },
-              {
-                date: '2018-01-04T16:00:00-08:00',
-                value: 11.95
-              },
-              {
-                date: '2018-01-05T16:00:00-08:00',
-                value: 10.25
-              },
-              {
-                date: '2018-01-06T16:00:00-08:00',
-                value: 11.25
-              },
-              {
-                date: '2018-01-07T16:00:00-08:00',
-                value: 13.45
-              },
-              {
-                date: '2018-01-08T16:00:00-08:00',
-                value: 12.34
-              },
-              {
-                date: '2018-01-09T16:00:00-08:00',
-                value: 15.67
-              }
-            ]
+            topic: 4,
+            dates: nine5
           }
         ]
       }
+
+      console.log(chartData)
+
+      return chartData
+
+      // return {
+      //   dataByTopic: [
+      //     {
+      //       topicName: 'Average',
+      //       topic: 1,
+      //       dates: [
+      //         {
+      //           date: '2018-01-01',
+      //           value: 6.83
+      //         },
+      //         {
+      //           date: '2018-01-02',
+      //           value: 5.83
+      //         },
+      //         {
+      //           date: '2018-01-03',
+      //           value: 4.83
+      //         },
+      //         {
+      //           date: '2018-01-04',
+      //           value: 5.25
+      //         },
+      //         {
+      //           date: '2018-01-05',
+      //           value: 7.25
+      //         },
+      //         {
+      //           date: '2018-01-06',
+      //           value: 6.25
+      //         },
+      //         {
+      //           date: '2018-01-07',
+      //           value: 5.25
+      //         },
+      //         {
+      //           date: '2018-01-08',
+      //           value: 6.25
+      //         },
+      //         {
+      //           date: '2018-01-09',
+      //           value: 7.65
+      //         }
+      //       ]
+      //     },
+      //     {
+      //       topicName: '95th',
+      //       topic: 2,
+      //       dates: [
+      //         {
+      //           date: '2018-01-01',
+      //           value: 13.26
+      //         },
+      //         {
+      //           date: '2018-01-02',
+      //           value: 12.86
+      //         },
+      //         {
+      //           date: '2018-01-03',
+      //           value: 12.26
+      //         },
+      //         {
+      //           date: '2018-01-04',
+      //           value: 11.95
+      //         },
+      //         {
+      //           date: '2018-01-05',
+      //           value: 10.25
+      //         },
+      //         {
+      //           date: '2018-01-06',
+      //           value: 11.25
+      //         },
+      //         {
+      //           date: '2018-01-07',
+      //           value: 13.45
+      //         },
+      //         {
+      //           date: '2018-01-08',
+      //           value: 12.34
+      //         },
+      //         {
+      //           date: '2018-01-09',
+      //           value: 15.67
+      //         }
+      //       ]
+      //     }
+      //   ]
+      // }
     },
     createLineChart() {
       let lineChart = britecharts.line()
@@ -177,19 +210,20 @@ export default {
 
         dataset = this.createChartData()
 
+        const lineMargin = {
+          // top: 60,
+          bottom: 50
+          // left: 50,
+          // right: 30
+        }
+
         lineChart
           .isAnimated(true)
           // .aspectRatio(0.5)
           .grid('full')
           // .tooltipThreshold(600)
           .width(containerWidth)
-          // .margin({
-          //   top: 20,
-          //   bottom: 20,
-          //   left: 20,
-          //   right: 20
-          // })
-          // .colorSchema(britecharts.colors.colorSchemas.green)
+          .margin(lineMargin)
           .dateLabel('date')
           .on('customMouseOver', tooltip.show)
           .on('customMouseMove', tooltip.update)
@@ -199,10 +233,15 @@ export default {
 
         tooltip
           // In order to change the date range on the tooltip title, uncomment this line
-          //   .dateFormat(chartTooltip.axisTimeCombinations.DAY)
+          // .dateFormat(tooltip.axisTimeCombinations.DAY_MONTH)
           .title('Data')
-          .valueFormatter(value => value + ' ms')
-          .topicsOrder(dataset.dataByTopic.map(t => t.topic))
+          .shouldShowDateInTitle(true)
+          .valueFormatter(value => this.formatFloat(value) + ' ms')
+          .topicsOrder(
+            dataset.dataByTopic.map(function(topic) {
+              return topic.topic
+            })
+          )
 
         tooltipContainer = d3.select('.js-line-container .metadata-group .hover-marker')
         tooltipContainer.datum([]).call(tooltip)

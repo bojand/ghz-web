@@ -26,6 +26,9 @@ type RawRequest struct {
 	Histogram           []*RawBucket              `json:"histogram"`
 }
 
+const layoutISO string = "2006-01-02T15:04:05.666Z"
+const layoutISO2 string = "2006-01-02T15:04:05-0700"
+
 // UnmarshalJSON for RawRequest
 func (rr *RawRequest) UnmarshalJSON(data []byte) error {
 	type Alias RawRequest
@@ -40,8 +43,16 @@ func (rr *RawRequest) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	rr.Date, _ = time.Parse(time.RFC3339, aux.Date)
-	return nil
+	var err error
+	rr.Date, err = time.Parse(time.RFC3339, aux.Date)
+	if err != nil {
+		rr.Date, err = time.Parse(layoutISO, aux.Date)
+	}
+	if err != nil {
+		rr.Date, err = time.Parse(layoutISO2, aux.Date)
+	}
+
+	return err
 }
 
 // MarshalJSON for RawRequest
@@ -165,6 +176,7 @@ func (api *RawAPI) createNew(c echo.Context) error {
 func (api *RawAPI) createBatch(c echo.Context, rr *RawRequest, p *model.Project, t *model.Test) error {
 	r := new(model.Run)
 	r.TestID = t.ID
+	r.Date = rr.Date
 	r.Count = rr.Count
 	r.Total = rr.Total
 	r.Average = rr.Average

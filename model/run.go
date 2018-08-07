@@ -268,7 +268,7 @@ func (rs *RunService) FindByTestID(tid, num, page uint, populate bool) ([]*Run, 
 func (rs *RunService) FindByTestIDSorted(tid, num, page uint, sortField, order string,
 	histogram bool, latency bool) ([]*Run, error) {
 	if (sortField != "id" && sortField != "count" && sortField != "total" && sortField != "average" &&
-		sortField != "fastest" && sortField != "slowest" && sortField != "rps") ||
+		sortField != "fastest" && sortField != "slowest" && sortField != "rps" && sortField != "date") ||
 		(order != "asc" && order != "desc") {
 		return nil, errors.New("Invalid sort parameters")
 	}

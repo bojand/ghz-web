@@ -21,9 +21,9 @@
           {{ props.row.id }}
         </b-table-column> -->
 
-        <b-table-column field="createdAt" label="Date" sortable>
+        <b-table-column field="date" label="Date" sortable>
           <router-link :to="{ name: 'run', params: { projectId: projectId, testId: testId, runId: props.row.id } }">
-            {{ new Date(props.row.createdAt).toLocaleString() }}
+            {{ new Date(props.row.date).toLocaleString() }}
             <!-- <b-icon icon="open-in-app" size="is-small"></b-icon> -->
           </router-link>
         </b-table-column>
@@ -92,7 +92,7 @@ export default {
       data: [],
       total: 100,
       loading: false,
-      sortField: 'createdAt',
+      sortField: 'date',
       sortOrder: 'desc',
       defaultSortOrder: 'desc',
       page: 1,
