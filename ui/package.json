@@ -12,6 +12,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "apexcharts": "^1.2.0",
     "axios": "^0.18.0",
     "britecharts": "^2.9.2",
     "buefy": "^0.6.6",

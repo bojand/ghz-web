@@ -69,7 +69,7 @@
         <span class="title is-5">
 				  <strong>Historam</strong>
         </span>
-				<div class="js-bar-container"></div>
+				<div id="histogram-chart"></div>
 			</div>
 
 			<div class="content" v-if="run.latencyDistribution.length > 0">
@@ -143,8 +143,10 @@
 <script>
 import _ from 'lodash'
 
-const britecharts = require('britecharts')
-const d3 = require('d3-selection')
+// const britecharts = require('britecharts')
+// const d3 = require('d3-selection')
+
+const ApexCharts = require('apexcharts')
 
 import common from './common.js'
 
@@ -164,66 +166,65 @@ export default {
   },
   methods: {
     createHistogram() {
-      let barChart = britecharts.bar(),
-        tooltip = britecharts.miniTooltip(),
-        barContainer = d3.select('.js-bar-container'),
-        containerWidth = barContainer.node()
-          ? barContainer.node().getBoundingClientRect().width
-          : false,
-        tooltipContainer,
-        dataset,
-        count = this.run.count
+      if (!this.run) {
+        return
+      }
 
-      tooltip.numberFormat('')
-      tooltip.valueFormatter(function(v) {
-        var percent = v / count * 100
-        return v + ' ' + '(' + Number.parseFloat(percent).toFixed(1) + ' %)'
+      const categories = _.map(this.run.histogram, h => {
+        return Number.parseFloat(h.mark * 1000).toFixed(2)
       })
 
-      if (containerWidth) {
-        dataset = _.map(this.run.histogram, h => {
-          return {
-            name: Number.parseFloat(h.mark * 1000).toFixed(2) + ' ms',
-            value: h.count
+      const series = _.map(this.run.histogram, 'count')
+
+      const count = this.run.count
+
+      var options = {
+        chart: {
+          height: 450,
+          type: 'bar'
+        },
+        plotOptions: {
+          bar: {
+            horizontal: true
+            // barHeight: '60%'
           }
-        })
-
-        barChart
-          .isHorizontal(true)
-          .isAnimated(true)
-          .margin({
-            left: 100,
-            right: 20,
-            top: 20,
-            bottom: 20
-          })
-          .colorSchema(britecharts.colors.colorSchemas.teal)
-          .width(containerWidth)
-          // .yAxisPaddingBetweenChart(10)
-          .height(400)
-          // .hasPercentage(true)
-          .enableLabels(true)
-          .labelsNumberFormat('')
-          .percentageAxisToMaxRatio(1.3)
-          .on('customMouseOver', tooltip.show)
-          .on('customMouseMove', tooltip.update)
-          .on('customMouseOut', tooltip.hide)
-
-        barChart.orderingFunction(function(a, b) {
-          var nA = a.name.replace(/ms/gi, '')
-          var nB = b.name.replace(/ms/gi, '')
-
-          var vA = Number.parseFloat(nA)
-          var vB = Number.parseFloat(nB)
-
-          return vB - vA
-        })
-
-        barContainer.datum(dataset).call(barChart)
-
-        tooltipContainer = d3.select('.js-bar-container .bar-chart .metadata-group')
-        tooltipContainer.datum([]).call(tooltip)
+        },
+        dataLabels: {
+          enabled: false
+        },
+        series: [
+          {
+            name: 'Count',
+            data: series
+          }
+        ],
+        xaxis: {
+          categories: categories,
+          title: {
+            text: 'Count'
+          }
+        },
+        yaxis: {
+          title: {
+            text: 'Latency (ms)'
+          }
+        },
+        tooltip: {
+          y: {
+            formatter: v => {
+              const percent = v / count * 100
+              return v + ' ' + '(' + Number.parseFloat(percent).toFixed(1) + ' %)'
+            }
+          },
+          x: {
+            formatter: v => v + ' ms'
+          }
+        }
       }
+
+      var chart = new ApexCharts(document.querySelector('#histogram-chart'), options)
+
+      chart.render()
     }
   }
 }
