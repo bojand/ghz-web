@@ -4,11 +4,7 @@ function resultPass (test, value, type) {
   }
 
   if (type === 'fastest' || type === 'slowest' || type === 'mean') {
-    if (
-      test.thresholds &&
-      test.thresholds[type] &&
-      test.thresholds[type].threshold > value
-    ) {
+    if (test.thresholds && test.thresholds[type] && test.thresholds[type].threshold > value) {
       return true
     }
 
@@ -16,11 +12,7 @@ function resultPass (test, value, type) {
   }
 
   if (type === 'RPS') {
-    if (
-      test.thresholds &&
-      test.thresholds[type] &&
-      test.thresholds[type].threshold < value
-    ) {
+    if (test.thresholds && test.thresholds[type] && test.thresholds[type].threshold < value) {
       return true
     }
 

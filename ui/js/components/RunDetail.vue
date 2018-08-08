@@ -69,7 +69,9 @@
         <span class="title is-5">
 				  <strong>Historam</strong>
         </span>
-				<div id="histogram-chart"></div>
+				<div>
+          <canvas id="histogram-chart"></canvas>
+        </div>
 			</div>
 
 			<div class="content" v-if="run.latencyDistribution.length > 0">
@@ -143,12 +145,10 @@
 <script>
 import _ from 'lodash'
 
-// const britecharts = require('britecharts')
-// const d3 = require('d3-selection')
-
-const ApexCharts = require('apexcharts')
-
+import Chart from 'chart.js'
 import common from './common.js'
+
+const { colors } = require('../colors.js')
 
 export default {
   props: {
@@ -176,55 +176,74 @@ export default {
 
       const series = _.map(this.run.histogram, 'count')
 
-      const count = this.run.count
+      const totalCount = this.run.count
 
-      var options = {
-        chart: {
-          height: 450,
-          type: 'bar'
-        },
-        plotOptions: {
-          bar: {
-            horizontal: true
-            // barHeight: '60%'
-          }
-        },
-        dataLabels: {
-          enabled: false
-        },
-        series: [
+      const color = Chart.helpers.color
+
+      const barChartData = {
+        labels: categories,
+        datasets: [
           {
-            name: 'Count',
+            label: 'Count',
+            backgroundColor: color(colors.blue)
+              .alpha(0.5)
+              .rgbString(),
+            borderColor: colors.blue,
+            borderWidth: 1,
             data: series
           }
-        ],
-        xaxis: {
-          categories: categories,
-          title: {
-            text: 'Count'
+        ]
+      }
+
+      const barOptions = {
+        elements: {
+          rectangle: {
+            borderWidth: 2
           }
         },
-        yaxis: {
-          title: {
-            text: 'Latency (ms)'
-          }
+        responsive: true,
+        legend: {
+          display: false
         },
-        tooltip: {
-          y: {
-            formatter: v => {
-              const percent = v / count * 100
-              return v + ' ' + '(' + Number.parseFloat(percent).toFixed(1) + ' %)'
+        tooltips: {
+          callbacks: {
+            title: function(tooltipItem, data) {
+              const value = Number.parseInt(tooltipItem[0].xLabel)
+              const percent = value / totalCount * 100
+              return value + ' ' + '(' + Number.parseFloat(percent).toFixed(1) + ' %)'
             }
-          },
-          x: {
-            formatter: v => v + ' ms'
           }
+        },
+        scales: {
+          xAxes: [
+            {
+              display: true,
+              scaleLabel: {
+                display: true,
+                labelString: 'Count'
+              }
+            }
+          ],
+          yAxes: [
+            {
+              display: true,
+              scaleLabel: {
+                display: true,
+                labelString: 'Latency (ms)'
+              }
+            }
+          ]
         }
       }
 
-      var chart = new ApexCharts(document.querySelector('#histogram-chart'), options)
+      const barConfig = {
+        type: 'horizontalBar',
+        data: barChartData,
+        options: barOptions
+      }
 
-      chart.render()
+      const ctx = document.getElementById('histogram-chart').getContext('2d')
+      this.histogramChart = new Chart(ctx, barConfig)
     }
   }
 }

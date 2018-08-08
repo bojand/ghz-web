@@ -2,7 +2,9 @@
   <section>
 
     <div class="content">
-      <div id="line-chart"></div>
+      <div>
+        <canvas id="line-chart"></canvas>
+      </div>
     </div>
 
   </section>
@@ -13,7 +15,9 @@ import _ from 'lodash'
 
 import common from './common.js'
 
-const ApexCharts = require('apexcharts')
+import Chart from 'chart.js'
+
+const { colors } = require('../colors.js')
 
 export default {
   props: {
@@ -48,27 +52,11 @@ export default {
 
       const dates = data.map(d => d.date)
 
-      const series = [
-        {
-          name: 'Average',
-          data: avgs
-        },
-        {
-          name: 'Fastest',
-          data: fasts
-        },
-        {
-          name: 'Slowest',
-          data: slows
-        },
-        {
-          name: '95th',
-          data: nine5
-        }
-      ]
-
       return {
-        series,
+        averate: avgs,
+        fastest: fasts,
+        slowest: slows,
+        nine5: nine5,
         dates
       }
     },
@@ -77,69 +65,133 @@ export default {
         return
       }
 
-      const dataset = this.createChartData()
+      const chartData = this.createChartData()
 
-      const maxLabelLenght = 10
+      const dates = chartData.dates
 
-      var options = {
-        chart: {
-          height: '500',
-          width: '100%',
-          type: 'line',
-          animations: {
-            initialAnimation: {
-              enabled: false
-            }
-          },
-          zoom: {
-            enabled: false
-          }
+      const avgData = []
+      const fastData = []
+      const slowData = []
+      const n5Data = []
+
+      dates.forEach((v, i) => {
+        const d = new Date(v)
+        
+        avgData[i] = {
+          x: d,
+          y: chartData.averate[i]
+        }
+
+        fastData[i] = {
+          x: d,
+          y: chartData.fastest[i]
+        }
+
+        slowData[i] = {
+          x: d,
+          y: chartData.slowest[i]
+        }
+
+        n5Data[i] = {
+          x: d,
+          y: chartData.nine5[i]
+        }
+      })
+
+      const datasets = [
+        {
+          label: 'Average',
+          backgroundColor: colors.blue,
+          borderColor: colors.blue,
+          fill: false,
+          // data: chartData.averate
+          data: avgData
         },
-        dataLabels: {
-          enabled: false
+        {
+          label: 'Fastest',
+          backgroundColor: colors.green,
+          borderColor: colors.green,
+          fill: false,
+          data: fastData
         },
-        title: {
-          text: 'Change Over Time',
-          align: 'left'
+        {
+          label: 'Slowest',
+          backgroundColor: colors.red,
+          borderColor: colors.red,
+          fill: false,
+          data: slowData
         },
-        grid: {
-          borderColor: '#e7e7e7',
-          row: {
-            colors: ['#f3f3f3', 'transparent'], // takes an array which will be repeated on columns
-            opacity: 0.5
-          }
+        {
+          label: '95th',
+          backgroundColor: colors.orange,
+          borderColor: colors.orange,
+          fill: false,
+          data: n5Data
+        }
+      ]
+
+      const maxLabelLength = 10
+
+      var config = {
+        type: 'line',
+        data: {
+          labels: dates,
+          datasets: datasets
         },
-        stroke: {
-          curve: 'smooth'
-        },
-        series: dataset.series,
-        yaxis: {
+        options: {
+          responsive: true,
           title: {
-            text: 'Latency (ms)'
-          }
-        },
-        xaxis: {
-          categories: dataset.dates,
-          title: {
-            text: 'Date'
+            display: true,
+            text: 'Change Over Time'
           },
-          labels: {
-            formatter: value => {
-              const r = new Date(value).toLocaleString()
-              return r.length > maxLabelLenght ? r.substr(0, maxLabelLenght) + '...' : r
-            }
-          }
-        },
-        tooltip: {
-          x: {
-            formatter: value => new Date(value).toLocaleString()
+          tooltips: {
+            mode: 'index',
+            intersect: false,
+            // callbacks: {
+            //   title: function(tooltipItem, data) {
+            //     console.log(tooltipItem)
+            //     console.log(data)
+            //     const value = tooltipItem[0].xLabel
+            //     return new Date(value).toLocaleString()
+            //   }
+            // }
+          },
+          hover: {
+            mode: 'nearest',
+            intersect: true
+          },
+          scales: {
+            xAxes: [
+              {
+                display: true,
+                scaleLabel: {
+                  display: true,
+                  labelString: 'Date'
+                },
+                type: 'time',
+                // ticks: {
+                //   callback: function(value, index, values) {
+                //     const r = new Date(value).toLocaleString()
+                //     return r.length > maxLabelLength ? r.substr(0, maxLabelLength) + '...' : r
+                //   }
+                // }
+              }
+            ],
+            yAxes: [
+              {
+                display: true,
+                scaleLabel: {
+                  display: true,
+                  labelString: 'Latency (ms)'
+                }
+              }
+            ]
           }
         }
       }
 
-      var chart = new ApexCharts(document.querySelector('#line-chart'), options)
-
-      chart.render()
+      const ctx = document.getElementById('line-chart').getContext('2d')
+      this.lineChart = new Chart(ctx, config)
     }
   }
 }
