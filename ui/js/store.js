@@ -53,7 +53,7 @@ export default {
 
   async fetchRun (projectId, testId, runId) {
     const { data } = await axios.get(
-      `http://localhost:3000/api/projects/${projectId}/tests/${testId}/runs/${testId}`
+      `http://localhost:3000/api/projects/${projectId}/tests/${testId}/runs/${runId}`
     )
 
     this.run = data
