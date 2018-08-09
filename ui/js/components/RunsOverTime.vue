@@ -39,6 +39,7 @@ export default {
       const avgs = data.map(d => d.average / 1000000)
       const fasts = data.map(d => d.fastest / 1000000)
       const slows = data.map(d => d.slowest / 1000000)
+      const rps = data.map(d => d.rps)
 
       const nine5 = _(data)
         .map(r => {
@@ -57,6 +58,7 @@ export default {
         fastest: fasts,
         slowest: slows,
         nine5: nine5,
+        rps,
         dates
       }
     },
@@ -73,28 +75,34 @@ export default {
       const fastData = []
       const slowData = []
       const n5Data = []
+      const rpsData = []
 
       dates.forEach((v, i) => {
         const d = new Date(v)
-        
+
         avgData[i] = {
           x: d,
-          y: chartData.averate[i]
+          y: this.formatFloat(chartData.averate[i])
         }
 
         fastData[i] = {
           x: d,
-          y: chartData.fastest[i]
+          y: this.formatFloat(chartData.fastest[i])
         }
 
         slowData[i] = {
           x: d,
-          y: chartData.slowest[i]
+          y: this.formatFloat(chartData.slowest[i])
         }
 
         n5Data[i] = {
           x: d,
-          y: chartData.nine5[i]
+          y: this.formatFloat(chartData.nine5[i])
+        }
+
+        rpsData[i] = {
+          x: d,
+          y: this.formatFloat(chartData.rps[i])
         }
       })
 
@@ -104,29 +112,40 @@ export default {
           backgroundColor: colors.blue,
           borderColor: colors.blue,
           fill: false,
-          // data: chartData.averate
-          data: avgData
+          data: avgData,
+          yAxisID: 'y-axis-lat'
         },
         {
           label: 'Fastest',
           backgroundColor: colors.green,
           borderColor: colors.green,
           fill: false,
-          data: fastData
+          data: fastData,
+          yAxisID: 'y-axis-lat'
         },
         {
           label: 'Slowest',
           backgroundColor: colors.red,
           borderColor: colors.red,
           fill: false,
-          data: slowData
+          data: slowData,
+          yAxisID: 'y-axis-lat'
         },
         {
           label: '95th',
           backgroundColor: colors.orange,
           borderColor: colors.orange,
           fill: false,
-          data: n5Data
+          data: n5Data,
+          yAxisID: 'y-axis-lat'
+        },
+        {
+          label: 'RPS',
+          backgroundColor: colors.grey,
+          borderColor: colors.grey,
+          fill: false,
+          data: rpsData,
+          yAxisID: 'y-axis-rps'
         }
       ]
 
@@ -146,15 +165,7 @@ export default {
           },
           tooltips: {
             mode: 'index',
-            intersect: false,
-            // callbacks: {
-            //   title: function(tooltipItem, data) {
-            //     console.log(tooltipItem)
-            //     console.log(data)
-            //     const value = tooltipItem[0].xLabel
-            //     return new Date(value).toLocaleString()
-            //   }
-            // }
+            intersect: false
           },
           hover: {
             mode: 'nearest',
@@ -168,21 +179,31 @@ export default {
                   display: true,
                   labelString: 'Date'
                 },
-                type: 'time',
-                // ticks: {
-                //   callback: function(value, index, values) {
-                //     const r = new Date(value).toLocaleString()
-                //     return r.length > maxLabelLength ? r.substr(0, maxLabelLength) + '...' : r
-                //   }
-                // }
+                type: 'time'
               }
             ],
             yAxes: [
               {
                 display: true,
+                position: 'left',
+                id: 'y-axis-lat',
                 scaleLabel: {
                   display: true,
                   labelString: 'Latency (ms)'
+                }
+              },
+              {
+                type: 'linear',
+                display: true,
+                scaleLabel: {
+                  display: true,
+                  labelString: 'RPS'
+                },
+                position: 'right',
+                id: 'y-axis-rps',
+                // grid line settings
+                gridLines: {
+                  drawOnChartArea: false // only want the grid lines for one axis to show up
                 }
               }
             ]
