@@ -3,7 +3,8 @@
       <section class="hero">
         <div class="hero-body">
           <div class="container">
-            <!-- <navbar></navbar> -->
+            <navbar></navbar>
+            <br />
             <bread></bread>
           </div>
         </div>

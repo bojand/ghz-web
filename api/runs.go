@@ -29,6 +29,7 @@ func SetupRunAPI(g *echo.Group, rs service.RunService) {
 	g.GET("/:rid/", api.get).Name = "ghz api: get run"
 	g.PUT("/:rid/", api.update).Name = "ghz api: update run"
 	g.DELETE("/:rid/", api.delete).Name = "ghz api: delete run"
+	g.GET("/:rid/export", api.export).Name = "ghz api: export run"
 }
 
 // RunAPI provides the api
@@ -208,6 +209,10 @@ func (api *RunAPI) listRuns(c echo.Context) error {
 }
 
 func (api *RunAPI) delete(c echo.Context) error {
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
+}
+
+func (api *RunAPI) export(c echo.Context) error {
 	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 

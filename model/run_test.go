@@ -32,6 +32,10 @@ func TestRunModel_BeforeSave(t *testing.T) {
 			&Run{TestID: 123, StatusCodeDist: map[string]int{"foo": 1, "bar": 2}},
 			&Run{TestID: 123, StatusCodeDist: map[string]int{"foo": 1, "bar": 2}, StatusCodeDistJSON: "{\"bar\":2,\"foo\":1}", Status: "ok"},
 			false},
+		{"with options",
+			&Run{TestID: 123, Options: &Options{N: 1000, C: 10, Data: map[string]interface{}{"name": "bob"}}},
+			&Run{TestID: 123, Options: &Options{N: 1000, C: 10, Data: map[string]interface{}{"name": "bob"}}, OptionsJSON: "{\"n\":1000,\"c\":10,\"data\":{\"name\":\"bob\"}}", Status: "ok"},
+			false},
 	}
 
 	for _, tt := range runs {
@@ -65,6 +69,10 @@ func TestRunModel_AfterSave(t *testing.T) {
 			&Run{TestID: 123, StatusCodeDist: map[string]int{"foo": 1, "bar": 2}, StatusCodeDistJSON: "{\"bar\":2,\"foo\":1}"},
 			&Run{TestID: 123, StatusCodeDist: map[string]int{"foo": 1, "bar": 2}},
 			false},
+		{"with status options",
+			&Run{TestID: 123, Options: &Options{N: 1000, C: 10, Data: map[string]interface{}{"name": "bob"}}, OptionsJSON: "{\"n\":1000,\"c\":10,\"data\":{\"name\":\"bob\"}}", Status: "ok"},
+			&Run{TestID: 123, Options: &Options{N: 1000, C: 10, Data: map[string]interface{}{"name": "bob"}}, Status: StatusOK},
+			false},
 	}
 
 	for _, tt := range runs {
@@ -97,6 +105,10 @@ func TestRunModel_AfterFind(t *testing.T) {
 		{"with status dist",
 			&Run{TestID: 123, StatusCodeDistJSON: "{\"bar\":2,\"foo\":1}"},
 			&Run{TestID: 123, StatusCodeDist: map[string]int{"foo": 1, "bar": 2}},
+			false},
+		{"with options",
+			&Run{TestID: 123, OptionsJSON: "{\"n\":1000,\"c\":10,\"data\":{\"name\":\"bob\"}}"},
+			&Run{TestID: 123, Options: &Options{N: 1000, C: 10, Data: map[string]interface{}{"name": "bob"}}},
 			false},
 	}
 

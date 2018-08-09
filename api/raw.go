@@ -13,6 +13,7 @@ import (
 // RawRequest request to the create raw api
 type RawRequest struct {
 	Date                time.Time                 `json:"date"`
+	Options             *model.Options            `json:"options,omitempty"`
 	Count               uint64                    `json:"count"`
 	Total               time.Duration             `json:"total"`
 	Average             time.Duration             `json:"average"`
@@ -177,6 +178,7 @@ func (api *RawAPI) createBatch(c echo.Context, rr *RawRequest, p *model.Project,
 	r := new(model.Run)
 	r.TestID = t.ID
 	r.Date = rr.Date
+	r.Options = rr.Options
 	r.Count = rr.Count
 	r.Total = rr.Total
 	r.Average = rr.Average
@@ -208,10 +210,10 @@ func (api *RawAPI) createBatch(c echo.Context, rr *RawRequest, p *model.Project,
 		}
 	}
 
-	median, nine5, nine9 := r.GetThresholdValues()
+	median, nine5 := r.GetThresholdValues()
 	hasErrors := r.HasErrors()
 
-	t.SetStatus(rr.Average, median, nine5, nine9, rr.Fastest, rr.Slowest,
+	t.SetStatus(rr.Average, median, nine5, rr.Fastest, rr.Slowest,
 		rr.Rps, hasErrors)
 
 	err := api.rs.Create(r)

@@ -33,6 +33,22 @@ type Bucket struct {
 	Frequency float64 `json:"frequency"`
 }
 
+// Options represents run options
+type Options struct {
+	Host          string             `json:"host,omitempty"`
+	Cert          string             `json:"cert,omitempty"`
+	CName         string             `json:"cname,omitempty"`
+	N             int                `json:"n,omitempty"`
+	C             int                `json:"c,omitempty"`
+	QPS           int                `json:"qps,omitempty"`
+	Z             time.Duration      `json:"z,omitempty"`
+	Timeout       int                `json:"timeout,omitempty"`
+	DialTimtout   int                `json:"dialTimeout,omitempty"`
+	KeepaliveTime int                `json:"keepAlice,omitempty"`
+	Data          interface{}        `json:"data,omitempty"`
+	Metadata      *map[string]string `json:"metadata,omitempty"`
+}
+
 // Run represents a project
 type Run struct {
 	Model
@@ -48,6 +64,8 @@ type Run struct {
 
 	Status Status `json:"status" validate:"oneof=ok fail"`
 
+	Options *Options `json:"options,omitempty" gorm:"-"`
+
 	ErrorDist      map[string]int `json:"errorDistribution,omitempty" gorm:"-"`
 	StatusCodeDist map[string]int `json:"statusCodeDistribution,omitempty" gorm:"-"`
 
@@ -57,6 +75,7 @@ type Run struct {
 	// temp conversion vars
 	ErrorDistJSON      string `json:"-" gorm:"column:error_dist"`
 	StatusCodeDistJSON string `json:"-" gorm:"column:status_code_dist"`
+	OptionsJSON        string `json:"-" gorm:"column:options"`
 }
 
 // BeforeSave is called by GORM before save
@@ -91,10 +110,22 @@ func (r *Run) BeforeSave(scope *gorm.Scope) error {
 
 	r.StatusCodeDistJSON = string(statusCodeDist)
 
+	options := []byte("")
+	if r.Options != nil {
+		var err error
+		options, err = json.Marshal(r.Options)
+		if err != nil {
+			return err
+		}
+	}
+
+	r.OptionsJSON = string(options)
+
 	if scope != nil {
 		scope.SetColumn("status", r.Status)
 		scope.SetColumn("error_dist", r.ErrorDistJSON)
 		scope.SetColumn("status_code_dist", r.StatusCodeDistJSON)
+		scope.SetColumn("options", r.OptionsJSON)
 	}
 
 	return nil
@@ -104,6 +135,7 @@ func (r *Run) BeforeSave(scope *gorm.Scope) error {
 func (r *Run) AfterSave() error {
 	r.ErrorDistJSON = ""
 	r.StatusCodeDistJSON = ""
+	r.OptionsJSON = ""
 	return nil
 }
 
@@ -131,12 +163,22 @@ func (r *Run) AfterFind() error {
 
 	r.StatusCodeDistJSON = ""
 
+	options := strings.TrimSpace(r.OptionsJSON)
+	if options != "" {
+		r.Options = new(Options)
+		if err := json.Unmarshal([]byte(options), r.Options); err != nil {
+			return err
+		}
+	}
+
+	r.OptionsJSON = ""
+
 	return nil
 }
 
-// GetThresholdValues gets median, 95th and 995h values
-func (r *Run) GetThresholdValues() (time.Duration, time.Duration, time.Duration) {
-	var median, nine5, nine9 time.Duration
+// GetThresholdValues gets median and 95th
+func (r *Run) GetThresholdValues() (time.Duration, time.Duration) {
+	var median, nine5 time.Duration
 
 	latencies := len(r.LatencyDistribution)
 
@@ -151,15 +193,10 @@ func (r *Run) GetThresholdValues() (time.Duration, time.Duration, time.Duration)
 			if l.Percentage == 95 {
 				nine5 = l.Latency
 			}
-
-			// record 95th
-			if l.Percentage == 99 {
-				nine9 = l.Latency
-			}
 		}
 	}
 
-	return median, nine5, nine9
+	return median, nine5
 }
 
 // HasErrors returns whether run has any errors

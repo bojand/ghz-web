@@ -206,7 +206,7 @@ func TestTestAPI(t *testing.T) {
 	t.Run("POST create test with thresholds", func(t *testing.T) {
 		httpTest.Post(basePath+"/"+pid+"/tests/").
 			AddHeader("Content-Type", "application/json; charset=UTF-8").
-			BodyString(`{"name":"threshold Test","description":"a description","status":"fail","thresholds":{"median":{"status":"fail","threshold":10000},"mean":{"status":"ok","threshold":20000},"99th":{"status":"ok","threshold":40000},"95th":{"status":"ok","threshold":30000}}}`).
+			BodyString(`{"name":"threshold Test","description":"a description","status":"fail","thresholds":{"median":{"status":"fail","threshold":10000},"mean":{"status":"ok","threshold":20000},"95th":{"status":"ok","threshold":30000}}}`).
 			Expect(t).
 			Status(201).
 			Type("json").
@@ -224,8 +224,7 @@ func TestTestAPI(t *testing.T) {
 				expectedTH := map[model.Threshold]*model.ThresholdSetting{
 					model.ThresholdMedian: &model.ThresholdSetting{Threshold: time.Duration(10000), Status: model.StatusFail},
 					model.ThresholdMean:   &model.ThresholdSetting{Threshold: time.Duration(20000), Status: model.StatusOK},
-					model.Threshold95th:   &model.ThresholdSetting{Threshold: time.Duration(30000), Status: model.StatusOK},
-					model.Threshold99th:   &model.ThresholdSetting{Threshold: time.Duration(40000), Status: model.StatusOK}}
+					model.Threshold95th:   &model.ThresholdSetting{Threshold: time.Duration(30000), Status: model.StatusOK}}
 
 				assert.Equal(t, expectedTH, tm.Thresholds)
 

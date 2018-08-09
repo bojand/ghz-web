@@ -23,9 +23,6 @@ const (
 	// Threshold95th is the threshold for the 95th percentile
 	Threshold95th = Threshold("95th")
 
-	// Threshold99th is the threshold for the 99th percentile
-	Threshold99th = Threshold("99th")
-
 	// ThresholdFastest is the threshold for the fastest metric
 	ThresholdFastest = Threshold("fastest")
 
@@ -62,8 +59,7 @@ func (m *ThresholdSetting) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-var durationConstants = [6]Threshold{ThresholdMean, ThresholdMedian, Threshold95th, Threshold99th,
-	ThresholdFastest, ThresholdSlowest}
+var durationConstants = [6]Threshold{ThresholdMean, ThresholdMedian, Threshold95th, ThresholdFastest, ThresholdSlowest}
 
 // Test represents a test
 type Test struct {
@@ -171,11 +167,11 @@ func (t *Test) AfterFind() error {
 }
 
 // SetStatus sets this test's status based on the settings and the values in params
-func (t *Test) SetStatus(tMean, tMedian, t95, t99, fastest, slowest time.Duration, rps float64, hasError bool) {
+func (t *Test) SetStatus(tMean, tMedian, t95, fastest, slowest time.Duration, rps float64, hasError bool) {
 	// reset our status
 	t.Status = StatusOK
 
-	compareVal := []time.Duration{tMean, tMedian, t95, t99, fastest, slowest}
+	compareVal := []time.Duration{tMean, tMedian, t95, fastest, slowest}
 
 	for i, thc := range durationConstants {
 		if t.Thresholds[thc] != nil {

@@ -63,6 +63,16 @@
             </table>
           </div>
         </div>
+        <div class="column">
+          <div class="content">
+            <span class="title is-5">
+              <strong>Options</strong>
+            </span>
+            <b-message>
+              <pre style="background-color: transparent;">{{ run.options | pretty }}</pre>
+            </b-message>
+          </div>
+        </div>
       </div>
     
 			<div class="content">
@@ -164,11 +174,22 @@ export default {
   mounted() {
     this.createHistogram()
   },
+  filters: {
+    pretty: function(value) {
+      let v = value
+      if (typeof v === 'string') {
+        v = JSON.parse(value)
+      }
+      return JSON.stringify(v, null, 2)
+    }
+  },
   methods: {
     createHistogram() {
       if (!this.run) {
         return
       }
+
+      console.log(this.run)
 
       const categories = _.map(this.run.histogram, h => {
         return Number.parseFloat(h.mark * 1000).toFixed(2)

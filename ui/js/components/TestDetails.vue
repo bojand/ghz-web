@@ -153,7 +153,7 @@ export default {
       },
       selectedThreshold: 'median',
       selectedThresholdValue: 0,
-      metrics: ['median', 'mean', '95th', '99th', 'fastest', 'slowest', 'RPS'],
+      metrics: ['median', 'mean', '95th', 'fastest', 'slowest', 'RPS'],
       latestRun: null,
       runs: null
     }
@@ -243,7 +243,6 @@ export default {
           mean: { status: 'ok', threshold: 0 },
           median: { status: 'ok', threshold: 0 },
           '95th': { status: 'ok', threshold: 0 },
-          '99th': { status: 'ok', threshold: 0 },
           fastest: { status: 'ok', threshold: 0 },
           slowest: { status: 'ok', threshold: 0 },
           rps: { status: 'ok', threshold: 0 }

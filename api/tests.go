@@ -101,10 +101,10 @@ func (api *TestAPI) update(c echo.Context) error {
 	// so update accordingly
 	latestRun, err := api.rs.FindLatest(t.ID)
 	if err == nil && latestRun != nil {
-		median, nine5, nine9 := latestRun.GetThresholdValues()
+		median, nine5 := latestRun.GetThresholdValues()
 		hasErrors := latestRun.HasErrors()
 
-		t.SetStatus(latestRun.Average, median, nine5, nine9, latestRun.Fastest, latestRun.Slowest,
+		t.SetStatus(latestRun.Average, median, nine5, latestRun.Fastest, latestRun.Slowest,
 			latestRun.Rps, hasErrors)
 	}
 
