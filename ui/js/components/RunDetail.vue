@@ -189,8 +189,6 @@ export default {
         return
       }
 
-      console.log(this.run)
-
       const categories = _.map(this.run.histogram, h => {
         return Number.parseFloat(h.mark * 1000).toFixed(2)
       })

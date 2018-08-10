@@ -58,7 +58,7 @@ func TestDetailAPI(t *testing.T) {
 		SetupTestAPI(testsGroup, ts, rs)
 
 		runsGroup := testsGroup.Group("/:tid/runs")
-		SetupRunAPI(runsGroup, rs)
+		SetupRunAPI(runsGroup, rs, ds)
 
 		detailGroup := runsGroup.Group("/:rid/details")
 		SetupDetailAPI(detailGroup, ds)

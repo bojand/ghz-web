@@ -48,7 +48,7 @@ type DetailService struct {
 	Config *config.DBConfig
 }
 
-// Create creates a new run
+// Create creates a new detail
 func (ds *DetailService) Create(r *Detail) error {
 	return ds.DB.Create(r).Error
 }
@@ -87,7 +87,7 @@ func (ds *DetailService) FindByRunID(rid, num, page uint) ([]*Detail, error) {
 	return s, err
 }
 
-// FindByRunIDSorted lists tests using sorting
+// FindByRunIDSorted lists details using sorting
 func (ds *DetailService) FindByRunIDSorted(rid, num, page uint, sortField, order string) ([]*Detail, error) {
 	if (sortField != "id" && sortField != "latency") || (order != "asc" && order != "desc") {
 		return nil, errors.New("Invalid sort parameters")
@@ -110,7 +110,19 @@ func (ds *DetailService) FindByRunIDSorted(rid, num, page uint, sortField, order
 	return s, err
 }
 
-// Update updates a run
+// FindByRunIDAll lists details using sorting
+func (ds *DetailService) FindByRunIDAll(rid uint) ([]*Detail, error) {
+	r := &Run{}
+	r.ID = rid
+
+	s := make([]*Detail, 0)
+
+	err := ds.DB.Model(r).Related(&s).Error
+
+	return s, err
+}
+
+// Update updates a detail
 func (ds *DetailService) Update(d *Detail) error {
 	dToUpdate := &Detail{}
 	if err := ds.DB.First(dToUpdate, d.ID).Error; err != nil {

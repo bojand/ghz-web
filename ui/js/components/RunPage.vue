@@ -9,11 +9,11 @@
       <br />
       <br />
       <p>
-        <a class="button" :href="`/api/projects/${projectId}/tests/${testId}/runs/${runId}/export?format=json`">
+        <a class="button" :href="`http://localhost:3000/api/projects/${projectId}/tests/${testId}/runs/${runId}/export?format=json`">
           <b-icon icon="download" size="is-small"></b-icon>
           <span>JSON</span>
         </a>
-        <a class="button" :href="`/api/projects/${projectId}/tests/${testId}/runs/${runId}/export?format=csv`">
+        <a class="button" :href="`http://localhost:3000/api/projects/${projectId}/tests/${testId}/runs/${runId}/export?format=csv`">
           <b-icon icon="download" size="is-small"></b-icon>
           <span>CSV</span>
         </a>
@@ -48,9 +48,7 @@ export default {
       this.loading = true
       try {
         if (!this.run) {
-          console.log('loading run')
           this.run = await this.$store.fetchTest(this.projectId, this.testId, this.runId)
-          console.log(this.run)
         }
 
         this.loading = false

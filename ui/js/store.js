@@ -33,7 +33,6 @@ export default {
   },
 
   async updateTest (projectId, testData) {
-    console.log(JSON.stringify(testData))
     const { data } = await axios.put(
       `http://localhost:3000/api/projects/${projectId}/tests/${testData.id}`,
       testData
