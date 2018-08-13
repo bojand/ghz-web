@@ -126,6 +126,23 @@ func TestRunModel_AfterFind(t *testing.T) {
 	}
 }
 
+func TestRunModel_GetThresholdValues(t *testing.T) {
+	var runs = []struct {
+		name        string
+		in          *Run
+		expected    []time.Duration
+		expectError bool
+	}{}
+
+	for _, tt := range runs {
+		t.Run(tt.name, func(t *testing.T) {
+			actual1, actual2 := tt.in.GetThresholdValues()
+
+			assert.Equal(t, tt.expected, []time.Duration{actual1, actual2})
+		})
+	}
+}
+
 func TestRunService_Create(t *testing.T) {
 	defer os.Remove(dbName)
 

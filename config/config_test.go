@@ -57,3 +57,21 @@ func TestLogConfig_Validate(t *testing.T) {
 		})
 	}
 }
+
+func TestServerConfig_GetHostPort(t *testing.T) {
+	var tests = []struct {
+		name     string
+		in       *ServerConfig
+		expected string
+	}{
+		{"with port", &ServerConfig{Address: "127.0.0.1", Port: 2000}, "127.0.0.1:2000"},
+		{"no address", &ServerConfig{Port: 1000}, ":1000"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			actual := tt.in.GetHostPort()
+			assert.Equal(t, tt.expected, actual)
+		})
+	}
+}

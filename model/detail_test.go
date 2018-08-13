@@ -655,6 +655,123 @@ func TestDetailService_FindByRunID(t *testing.T) {
 	})
 }
 
+func TestDetailService_FindByRunIDAll(t *testing.T) {
+	defer os.Remove(dbName)
+
+	db, err := gorm.Open("sqlite3", dbName)
+	if err != nil {
+		assert.FailNow(t, err.Error())
+	}
+	defer db.Close()
+
+	db.AutoMigrate(&Project{}, &Test{}, &Run{}, &Detail{})
+	db.Exec("PRAGMA foreign_keys = ON;")
+
+	dao := DetailService{DB: db, Config: &config.DBConfig{Type: "sqlite3"}}
+	var tid, rid1, rid2 uint
+
+	t.Run("new details for run, test and project", func(t *testing.T) {
+		p := &Project{}
+
+		o := &Test{
+			Project:     p,
+			Name:        "Test 111 ",
+			Description: "Test Description Asdf ",
+		}
+
+		r := &Run{
+			Test:    o,
+			Count:   100,
+			Total:   milli1000,
+			Average: milli5,
+			Fastest: milli1,
+			Slowest: milli500,
+		}
+
+		d := &Detail{
+			Run:     r,
+			Latency: 100.0,
+			Status:  "OK",
+		}
+
+		err := dao.Create(d)
+
+		assert.NoError(t, err)
+
+		tid = o.ID
+		rid1 = r.ID
+
+		// create more runs
+		for n := 1; n < 10; n++ {
+			nd := &Detail{
+				Run:     r,
+				Latency: 100.0 + float64(n),
+				Status:  "OK",
+			}
+
+			err := dao.Create(nd)
+
+			assert.NoError(t, err)
+		}
+	})
+
+	t.Run("new details for a different run", func(t *testing.T) {
+		r := &Run{
+			TestID:  tid,
+			Count:   100,
+			Total:   milli1000,
+			Average: milli5,
+			Fastest: milli1,
+			Slowest: milli500,
+		}
+
+		d := &Detail{
+			Run:     r,
+			Latency: 200.0,
+			Status:  "OK",
+		}
+
+		err := dao.Create(d)
+
+		assert.NoError(t, err)
+
+		rid2 = r.ID
+
+		// create more runs
+		for n := 1; n < 20; n++ {
+			nd := &Detail{
+				RunID:   rid2,
+				Latency: 200.0 + float64(n),
+				Status:  "OK",
+			}
+			err := dao.Create(nd)
+
+			assert.NoError(t, err)
+		}
+	})
+
+	t.Run("find for run 1", func(t *testing.T) {
+		details, err := dao.FindByRunIDAll(rid1)
+
+		assert.NoError(t, err)
+		assert.Len(t, details, 10)
+	})
+
+	t.Run("find for run 2", func(t *testing.T) {
+		details, err := dao.FindByRunIDAll(rid2)
+
+		assert.NoError(t, err)
+		assert.Len(t, details, 20)
+	})
+
+	t.Run("find invalid", func(t *testing.T) {
+		details, err := dao.FindByRunIDAll(1235)
+
+		assert.NoError(t, err)
+		assert.Len(t, details, 0)
+	})
+}
+
 func TestDetailService_FindByRunIDSorted(t *testing.T) {
 	defer os.Remove(dbName)
 
