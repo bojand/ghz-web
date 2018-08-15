@@ -5,12 +5,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/bojand/ghz-web/api"
-	"github.com/bojand/ghz-web/config"
-	"github.com/bojand/ghz-web/model"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
 	"github.com/labstack/gommon/log"
+	"github.com/bojand/ghz-web/api"
+	"github.com/bojand/ghz-web/config"
+	"github.com/bojand/ghz-web/model"
 
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mssql"

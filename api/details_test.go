@@ -10,11 +10,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/bojand/ghz-web/model"
 	"github.com/jinzhu/gorm"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
 	"github.com/stretchr/testify/assert"
+	"github.com/bojand/ghz-web/model"
 	baloo "gopkg.in/h2non/baloo.v3"
 )
 
