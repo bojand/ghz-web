@@ -69,7 +69,7 @@
               <strong>Options</strong>
             </span>
             <b-message>
-              <pre style="background-color: transparent;">{{ run.options | pretty }}</pre>
+              <pre style="background-color: transparent; white-space: pre-wrap;">{{ run.options | pretty }}</pre>
             </b-message>
           </div>
         </div>

@@ -1,10 +1,12 @@
 package model
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
 	"sync/atomic"
+	"time"
 
 	"github.com/bojand/ghz-web/config"
 	"github.com/jinzhu/gorm"
@@ -13,11 +15,48 @@ import (
 // Detail represents a run detail
 type Detail struct {
 	Model
-	RunID   uint    `json:"runID" gorm:"type:integer REFERENCES runs(id)"`
-	Run     *Run    `json:"-"`
-	Latency float64 `json:"latency" validate:"required"`
-	Error   string  `json:"error"`
-	Status  string  `json:"status"`
+
+	RunID uint `json:"runID" gorm:"type:integer REFERENCES runs(id)"`
+	Run   *Run `json:"-"`
+
+	Timestamp time.Time `json:"timestamp"`
+	Latency   float64   `json:"latency" validate:"required"`
+	Error     string    `json:"error"`
+	Status    string    `json:"status"`
+}
+
+const layoutISO string = "2006-01-02T15:04:05.666Z"
+const layoutISO2 string = "2006-01-02T15:04:05-0700"
+
+// UnmarshalJSON for Detail
+func (d *Detail) UnmarshalJSON(data []byte) error {
+	type Alias Detail
+	aux := &struct {
+		Timestamp string `json:"timestamp"`
+		*Alias
+	}{
+		Alias: (*Alias)(d),
+	}
+
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
+	}
+
+	err := json.Unmarshal([]byte(aux.Timestamp), &d.Timestamp)
+	if err != nil {
+		d.Timestamp, err = time.Parse(time.RFC3339Nano, aux.Timestamp)
+	}
+	if err != nil {
+		d.Timestamp, err = time.Parse(time.RFC3339, aux.Timestamp)
+	}
+	if err != nil {
+		d.Timestamp, err = time.Parse(layoutISO, aux.Timestamp)
+	}
+	if err != nil {
+		d.Timestamp, err = time.Parse(layoutISO2, aux.Timestamp)
+	}
+
+	return err
 }
 
 // BeforeSave is called by GORM before save
