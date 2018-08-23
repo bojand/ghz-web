@@ -3,6 +3,7 @@ package model
 import (
 	"os"
 	"testing"
+	"time"
 
 	"github.com/bojand/ghz-web/config"
 	"github.com/jinzhu/gorm"
@@ -31,6 +32,41 @@ func TestDetailModel_BeforeSave(t *testing.T) {
 			}
 
 			assert.Equal(t, tt.expected, tt.in)
+		})
+	}
+}
+
+func TestDetailModel_UnmarshalJSON(t *testing.T) {
+	expectedTime, err := time.Parse("2006-01-02T15:04:05-0700", "2018-08-08T13:00:00-0300")
+	assert.NoError(t, err)
+
+	var tests = []struct {
+		name        string
+		in          string
+		expected    *Detail
+		expectError bool
+	}{
+		{"RFC3339",
+			`{"timestamp":"2018-08-08T13:00:00.000000000-03:00","latency":1.23,"error":"","status":"OK"}`,
+			&Detail{Timestamp: expectedTime, Latency: 1.23, Error: "", Status: "OK"},
+			false},
+		{"layoutISO2",
+			`{"timestamp":"2018-08-08T13:00:00-0300","latency":1.23,"error":"","status":"OK"}`,
+			&Detail{Timestamp: expectedTime, Latency: 1.23, Error: "", Status: "OK"},
+			false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var d Detail
+			err := d.UnmarshalJSON([]byte(tt.in))
+			if tt.expectError {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
+
+			assert.Equal(t, tt.expected, &d)
 		})
 	}
 }

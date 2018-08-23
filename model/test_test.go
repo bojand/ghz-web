@@ -399,6 +399,26 @@ func TestThresholdSetting_UnmarshalJSON(t *testing.T) {
 	}
 }
 
+func Test_UnmarshalJSON(t *testing.T) {
+	var tests = []struct {
+		name     string
+		in       string
+		expected *Test
+	}{
+		{"status ok", `{"name":"asdf","status":"ok"}`, &Test{Name: "asdf", Status: StatusOK}},
+		{"status fail", `{"name":"asdf","status":"fail"}`, &Test{Name: "asdf", Status: StatusFail}},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var actual Test
+			err := json.Unmarshal([]byte(tt.in), &actual)
+			assert.NoError(t, err)
+			assert.Equal(t, tt.expected, &actual)
+		})
+	}
+}
+
 func TestTestModel_BeforeUpdate(t *testing.T) {
 	var tests = []struct {
 		name        string
@@ -1320,5 +1340,95 @@ func TestTestService_FindByProjectSorted(t *testing.T) {
 
 		assert.NoError(t, err)
 		assert.Len(t, tests, 0)
+	})
+
+	t.Run("err on invalid sort param", func(t *testing.T) {
+		tests, err := dao.FindByProjectIDSorted(123, 5, 0, "asdf", "asc")
+
+		assert.Error(t, err)
+		assert.Nil(t, tests)
+	})
+}
+
+func TestTestService_Delete(t *testing.T) {
+	defer os.Remove(dbName)
+
+	db, err := gorm.Open("sqlite3", dbName)
+	if err != nil {
+		assert.FailNow(t, err.Error())
+	}
+	defer db.Close()
+
+	db.AutoMigrate(&Project{}, &Test{})
+	db.Exec("PRAGMA foreign_keys = ON;")
+
+	dao := TestService{DB: db}
+	var tid uint
+	var pid uint
+
+	t.Run("create new test and project", func(t *testing.T) {
+		p := &Project{}
+		o := Test{
+			Project:     p,
+			Name:        "Test 111 ",
+			Description: "Test Description Asdf ",
+		}
+		err := dao.Create(&o)
+
+		assert.NoError(t, err)
+		assert.NotZero(t, p.ID)
+		assert.NotEmpty(t, p.Name)
+		assert.Equal(t, "", p.Description)
+		assert.NotNil(t, p.CreatedAt)
+		assert.NotNil(t, p.UpdatedAt)
+		assert.Nil(t, p.DeletedAt)
+
+		assert.NotZero(t, o.ID)
+		assert.Equal(t, p.ID, o.ProjectID)
+		assert.Equal(t, "test111", o.Name)
+		assert.Equal(t, "Test Description Asdf", o.Description)
+		assert.NotNil(t, o.CreatedAt)
+		assert.NotNil(t, o.UpdatedAt)
+		assert.Nil(t, o.DeletedAt)
+
+		tid = o.ID
+		pid = p.ID
+
+		cp := &Project{}
+		err = db.First(cp, pid).Error
+		assert.NoError(t, err)
+		assert.Equal(t, p.Name, cp.Name)
+
+		ct := &Test{}
+		err = db.First(ct, tid).Error
+		assert.NoError(t, err)
+		assert.Equal(t, o.ProjectID, ct.ProjectID)
+		assert.Equal(t, o.Name, ct.Name)
+		assert.Equal(t, o.Description, ct.Description)
+		assert.Equal(t, o.Status, ct.Status)
+		assert.Equal(t, o.Thresholds, ct.Thresholds)
+		assert.Empty(t, ct.ThresholdsJSON)
+		assert.Equal(t, o.ThresholdsJSON, ct.ThresholdsJSON)
+		assert.True(t, o.CreatedAt.Equal(ct.CreatedAt))
+		assert.True(t, o.UpdatedAt.Equal(ct.CreatedAt))
+	})
+
+	t.Run("delete", func(t *testing.T) {
+		o := Test{
+			ProjectID:   pid,
+			Name:        "Test 222 ",
+			Description: "Test Description 2 ",
+			Status:      StatusFail,
+			Thresholds: map[Threshold]*ThresholdSetting{
+				Threshold95th:   &ThresholdSetting{Threshold: milli4, Status: StatusOK},
+				ThresholdMedian: &ThresholdSetting{Threshold: milli3, Status: StatusOK},
+				ThresholdMean:   &ThresholdSetting{Threshold: milli2, Status: StatusOK},
+			},
+		}
+		o.ID = tid
+
+		err := dao.Delete(&o)
+
+		assert.Error(t, err)
 	})
 }

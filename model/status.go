@@ -19,8 +19,9 @@ func (t Status) String() string {
 
 // UnmarshalJSON prases a Threshold value from JSON string
 func (t *Status) UnmarshalJSON(b []byte) error {
-	*t = StatusFromString(string(b))
-
+	input := strings.TrimLeft(string(b), `"`)
+	input = strings.TrimRight(input, `"`)
+	*t = StatusFromString(input)
 	return nil
 }
 
@@ -44,7 +45,7 @@ func StatusFromString(str string) Status {
 
 const (
 	// StatusOK means the latest run in test was within the threshold
-	StatusOK Status = Status("ok")
+	StatusOK = Status("ok")
 
 	// StatusFail means the latest run in test was not within the threshold
 	StatusFail = Status("fail")
