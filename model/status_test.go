@@ -63,8 +63,6 @@ func TestStatus_UnmarshalJSON(t *testing.T) {
 			var actual Status
 			err := json.Unmarshal([]byte(tt.in), &actual)
 			assert.NoError(t, err)
-			// fmt.Println(tt.expected)
-			// fmt.Println(actual)
 			assert.Equal(t, tt.expected, actual)
 		})
 	}
