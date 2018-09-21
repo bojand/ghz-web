@@ -6,7 +6,7 @@ import "github.com/bojand/ghz-web/model"
 type TestService interface {
 	Count(pid uint) (uint, error)
 	FindByID(id uint) (*model.Test, error)
-	FindByName(name string) (*model.Test, error)
+	FindByName(pid uint, name string) (*model.Test, error)
 	FindByProjectID(pid uint, limit, page uint) ([]*model.Test, error)
 	FindByProjectIDSorted(pid, num, page uint, sortField, order string) ([]*model.Test, error)
 	Create(m *model.Test) error

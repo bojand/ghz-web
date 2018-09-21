@@ -53,7 +53,25 @@ func getTest(ts service.TestService, c echo.Context) (*model.Test, error) {
 			return nil, echo.NewHTTPError(http.StatusNotFound, err.Error())
 		}
 	} else {
-		if t, err = ts.FindByName(idparam); gorm.IsRecordNotFoundError(err) {
+		po := c.Get("project")
+		p, ok := po.(*model.Project)
+
+		var pid uint
+
+		if p == nil || !ok {
+			pidparam := c.Param("pid")
+			pidint, err := strconv.Atoi(pidparam)
+
+			if err != nil {
+				return nil, echo.NewHTTPError(http.StatusNotFound, "No project in context or pid")
+			}
+
+			pid = uint(pidint)
+		} else {
+			pid = uint(p.ID)
+		}
+
+		if t, err = ts.FindByName(pid, idparam); gorm.IsRecordNotFoundError(err) {
 			return nil, echo.NewHTTPError(http.StatusNotFound, err.Error())
 		}
 	}

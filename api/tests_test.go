@@ -37,7 +37,7 @@ func TestTestAPI(t *testing.T) {
 
 	testAPI := &TestAPI{ts: ts}
 
-	var projectID, projectID2, testID uint
+	var projectID, projectID2, testID, testID2 uint
 	var pid, pid2, pid3, tid string
 
 	var httpTest *baloo.Client
@@ -242,12 +242,28 @@ func TestTestAPI(t *testing.T) {
 			Done()
 	})
 
-	t.Run("POST fail with same test name for project 2", func(t *testing.T) {
+	t.Run("POST pass with same test name for project 2", func(t *testing.T) {
 		httpTest.Post(basePath + "/" + pid2 + "/tests/").
 			JSON(map[string]string{"name": " Test Name"}).
 			Expect(t).
-			Status(400).
+			Status(201).
 			Type("json").
+			AssertFunc(func(res *http.Response, req *http.Request) error {
+				tm := new(model.Test)
+				json.NewDecoder(res.Body).Decode(tm)
+
+				assert.NoError(t, err)
+
+				assert.NotZero(t, tm.ID)
+				assert.Equal(t, "testname", tm.Name)
+				assert.Equal(t, projectID2, tm.ProjectID)
+				assert.Equal(t, "", tm.Description)
+				assert.Equal(t, model.StatusOK, tm.Status)
+
+				testID2 = tm.ID
+
+				return nil
+			}).
 			Done()
 	})
 
@@ -291,8 +307,7 @@ func TestTestAPI(t *testing.T) {
 			Done()
 	})
 
-	// TODO fix this
-	t.Run("GET by name for project 2 should 404", func(t *testing.T) {
+	t.Run("GET by name for project 2 should 200", func(t *testing.T) {
 		httpTest.Get(basePath + "/" + pid2 + "/tests/testname/").
 			Expect(t).
 			Status(200).
@@ -303,9 +318,9 @@ func TestTestAPI(t *testing.T) {
 
 				assert.NoError(t, err)
 
-				assert.Equal(t, testID, tm.ID)
+				assert.Equal(t, testID2, tm.ID)
 				assert.Equal(t, "testname", tm.Name)
-				assert.Equal(t, "Test description", tm.Description)
+				assert.Equal(t, "", tm.Description)
 
 				return nil
 			}).
@@ -496,7 +511,7 @@ func TestTestAPI(t *testing.T) {
 				assert.NoError(t, err)
 				assert.Len(t, tl.Data, 20)
 
-				assert.Equal(t, 25, int(tl.Total))
+				assert.Equal(t, 26, int(tl.Total))
 				assert.NotZero(t, tl.Data[0].ID)
 				assert.NotEmpty(t, tl.Data[0].Name)
 				assert.NotZero(t, tl.Data[1].ID)
@@ -520,9 +535,9 @@ func TestTestAPI(t *testing.T) {
 				json.NewDecoder(res.Body).Decode(tl)
 
 				assert.NoError(t, err)
-				assert.Len(t, tl.Data, 5)
+				assert.Len(t, tl.Data, 6)
 
-				assert.Equal(t, 25, int(tl.Total))
+				assert.Equal(t, 26, int(tl.Total))
 				assert.NotZero(t, tl.Data[0].ID)
 				assert.NotEmpty(t, tl.Data[0].Name)
 				assert.NotZero(t, tl.Data[1].ID)

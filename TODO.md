@@ -1,5 +1,6 @@
 # TODO
 
+[x] Compund index on name and parent
 [ ] Improve tests
 [ ] Delete
 [ ] Info endpoint and UX

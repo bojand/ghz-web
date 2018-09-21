@@ -5,12 +5,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/labstack/echo"
-	"github.com/labstack/echo/middleware"
-	"github.com/labstack/gommon/log"
 	"github.com/bojand/ghz-web/api"
 	"github.com/bojand/ghz-web/config"
 	"github.com/bojand/ghz-web/model"
+	"github.com/labstack/echo"
+	"github.com/labstack/echo/middleware"
+	"github.com/labstack/gommon/log"
 
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mssql"
@@ -180,6 +180,7 @@ func (app *Application) testStuff() {
 	// TEST STUFF
 
 	project := &model.Project{Name: "Testproject1"}
+	project2 := &model.Project{Name: "Testproject2"}
 
 	tdao := &model.TestService{DB: app.DB}
 
@@ -209,6 +210,40 @@ func (app *Application) testStuff() {
 	tRead = new(model.Test)
 	tdao.DB.First(&tRead, t1.ID)
 	fmt.Printf("Read after update:\n%+v\n\n", tRead)
+
+	nt2 := &model.Test{
+		Project:     project,
+		Name:        "testproduct333",
+		Description: " test descroption 2 ",
+	}
+
+	err = tdao.Create(nt2)
+
+	if err != nil {
+		app.Logger.Errorf("Error creating nt2: %+v\n", err.Error())
+	}
+
+	nt2.Project = project2
+
+	err = tdao.Create(nt2)
+
+	if err != nil {
+		app.Logger.Errorf("Error: %+v\n", err.Error())
+	}
+
+	nt1, err := tdao.FindByName(project.ID, "testproduct333")
+	if err != nil {
+		app.Logger.Errorf("Error: %+v\n", err.Error())
+	} else {
+		app.Logger.Infof("nt1: %+v", nt1)
+	}
+
+	nt2, err = tdao.FindByName(project2.ID, "testproduct333")
+	if err != nil {
+		app.Logger.Errorf("Error: %+v\n", err.Error())
+	} else {
+		app.Logger.Infof("nt2: %+v", nt2)
+	}
 
 	/*t1 := &model.Test{
 		Project: project,

@@ -10,11 +10,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/bojand/ghz-web/model"
 	"github.com/jinzhu/gorm"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
 	"github.com/stretchr/testify/assert"
-	"github.com/bojand/ghz-web/model"
 	baloo "gopkg.in/h2non/baloo.v3"
 )
 
@@ -36,8 +36,8 @@ func TestDetailAPI(t *testing.T) {
 	ds := &model.DetailService{DB: db}
 	// testAPI := &TestAPI{ts: ts}
 
-	var projectID, runID, testID uint
-	var pid, rid, tid string
+	var projectID, testID uint
+	var pid, tid string
 
 	var httpTest *baloo.Client
 	var echoServer *echo.Echo
@@ -161,8 +161,8 @@ func TestDetailAPI(t *testing.T) {
 				assert.Equal(t, 234*time.Millisecond, r.Slowest)
 				assert.Equal(t, 6543.21, r.Rps)
 
-				rid = strconv.FormatUint(uint64(r.ID), 10)
-				runID = r.ID
+				// rid = strconv.FormatUint(uint64(r.ID), 10)
+				// runID = r.ID
 
 				return nil
 			}).

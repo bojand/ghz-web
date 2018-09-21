@@ -64,9 +64,9 @@ var durationConstants = [6]Threshold{ThresholdMean, ThresholdMedian, Threshold95
 // Test represents a test
 type Test struct {
 	Model
-	ProjectID       uint                            `json:"projectID" gorm:"type:integer REFERENCES projects(id)"`
+	ProjectID       uint                            `json:"projectID" gorm:"type:integer REFERENCES projects(id);unique_index:test_name"`
 	Project         *Project                        `json:"-"`
-	Name            string                          `json:"name" gorm:"unique_index;not null" validate:"required"`
+	Name            string                          `json:"name" gorm:"unique_index:test_name;not null" validate:"required"`
 	Description     string                          `json:"description"`
 	Status          Status                          `json:"status" validate:"oneof=ok fail"`
 	Thresholds      map[Threshold]*ThresholdSetting `json:"thresholds,omitempty" gorm:"-"`
@@ -234,10 +234,10 @@ func (ts *TestService) FindByID(id uint) (*Test, error) {
 }
 
 // FindByName finds test by name
-func (ts *TestService) FindByName(name string) (*Test, error) {
+func (ts *TestService) FindByName(pid uint, name string) (*Test, error) {
 	name = strings.ToLower(name)
 	t := new(Test)
-	err := ts.DB.First(t, "name = ?", name).Error
+	err := ts.DB.First(t, "project_id = ? AND name = ?", pid, name).Error
 	if err != nil {
 		t = nil
 	}

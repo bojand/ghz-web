@@ -93,6 +93,9 @@ runFiles.forEach(rf => {
     const hasErrors = errorCount ? 'true' : 'false'
     tags.push(`hasErrors=${hasErrors}`)
 
+    const dateISO = date.toISOString()
+    tags.push(`date="${dateISO}"`)
+
     const timestamp = date.valueOf() * 1000000
     const tagStr = tags.join(',')
     const valStr = values.join(',')
@@ -104,7 +107,7 @@ runFiles.forEach(rf => {
 })
 
 if (lines && lines.length > 0) {
-  const output = fs.createWriteStream('./lines2.txt')
+  const output = fs.createWriteStream('./lines.txt')
   lines.forEach(l => {
     output.write(l + os.EOL)
   })

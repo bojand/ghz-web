@@ -1017,7 +1017,7 @@ func TestTestService_FindByName(t *testing.T) {
 	})
 
 	t.Run("find valid", func(t *testing.T) {
-		o, err := dao.FindByName("test1234")
+		o, err := dao.FindByName(pid, "test1234")
 
 		assert.NoError(t, err)
 		assert.Equal(t, tid, o.ID)
@@ -1030,7 +1030,7 @@ func TestTestService_FindByName(t *testing.T) {
 	})
 
 	t.Run("find invalid", func(t *testing.T) {
-		o, err := dao.FindByName("lorem")
+		o, err := dao.FindByName(pid, "lorem")
 
 		assert.Error(t, err)
 		assert.Nil(t, o)
