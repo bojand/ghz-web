@@ -186,7 +186,16 @@ func (api *RawAPI) createBatch(c echo.Context, rr *RawRequest, p *model.Project,
 	r.Slowest = rr.Slowest
 	r.Rps = rr.Rps
 	r.ErrorDist = rr.ErrorDist
+
 	r.StatusCodeDist = rr.StatusCodeDist
+
+	// codes := len(rr.StatusCodeDist)
+	// if codes > 0 {
+	// 	r.StatusCodeDist = make(map[string]int, codes)
+	// 	for key, value := range rr.StatusCodeDist {
+	// 		r.StatusCodeDist[key] = value
+	// 	}
+	// }
 
 	latencies := len(rr.LatencyDistribution)
 

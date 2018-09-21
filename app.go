@@ -88,7 +88,7 @@ func (app *Application) setupDatabase() error {
 		&model.Bucket{},
 	)
 
-	if dbType == "sqlite3" {
+	if app.Config.Database.GetDialect() == "sqlite3" {
 		// for sqlite we need this for foreign key constraint
 		db.Exec("PRAGMA foreign_keys = ON;")
 	}

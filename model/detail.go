@@ -186,7 +186,7 @@ func (ds *DetailService) DeleteAll(rid uint) error {
 func (ds *DetailService) CreateBatch(rid uint, s []*Detail) (uint, uint) {
 	nReq := len(s)
 
-	if ds.Config.Type == "sqlite3" {
+	if ds.Config.GetDialect() == "sqlite3" {
 		// for sqlite do db requests in series
 
 		var nCreated, errCount uint

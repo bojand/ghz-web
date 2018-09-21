@@ -2,12 +2,12 @@
 
 [x] Compund index on name and parent
 [ ] Improve tests
-[ ] Delete
-[ ] Info endpoint and UX
 [ ] Add slug as trunkated name
-[ ] RawRequest should come from ghz reporter ?
-[ ] Configs (CORS, etc...)
-[ ] Packaging (Static bunldle. Need server configs including hostname and port for API)
+[ ] Info endpoint and UX
 [ ] API Documentation
+[ ] Packaging (Static bunldle. Need server configs including hostname and port for API)
+[ ] Configs (CORS, etc...)
 [ ] Documentation
+[ ] Delete
+[ ] RawRequest should come from ghz reporter ?
 [ ] Notifications & webhooks

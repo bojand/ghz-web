@@ -540,4 +540,86 @@ func TestRunAPI(t *testing.T) {
 			}).
 			Done()
 	})
+
+	t.Run("GET export unknown run", func(t *testing.T) {
+		httpTest.Get(basePath + "/" + pid + "/tests/" + tid + "/runs/4343212/export/").
+			Expect(t).
+			Status(404).
+			Type("json").
+			Done()
+	})
+
+	t.Run("GET export unknown run without format", func(t *testing.T) {
+		httpTest.Get(basePath + "/" + pid + "/tests/" + tid + "/runs/" + rid + "/export/").
+			Expect(t).
+			Status(400).
+			Type("json").
+			Done()
+	})
+
+	t.Run("GET export unknown run invalid format", func(t *testing.T) {
+		httpTest.Get(basePath + "/" + pid + "/tests/" + tid + "/runs/" + rid + "/export/").
+			SetQueryParams(map[string]string{"format": "foo"}).
+			Expect(t).
+			Status(400).
+			Type("json").
+			Done()
+	})
+
+	t.Run("GET export run json", func(t *testing.T) {
+		httpTest.Get(basePath + "/" + pid + "/tests/" + tid + "/runs/" + rid + "/export/").
+			SetQueryParams(map[string]string{"format": "json"}).
+			Expect(t).
+			Status(200).
+			Type("json").
+			AssertFunc(func(res *http.Response, req *http.Request) error {
+				exportRes := new(JSONExportRespose)
+				json.NewDecoder(res.Body).Decode(exportRes)
+
+				assert.Equal(t, 2000, int(exportRes.Count))
+				assert.Equal(t, 6000*time.Millisecond, exportRes.Total)
+				assert.Equal(t, 222*time.Millisecond, exportRes.Average)
+				assert.Equal(t, 60*time.Millisecond, exportRes.Fastest)
+				assert.Equal(t, 444*time.Millisecond, exportRes.Slowest)
+				assert.Equal(t, 6666.66, exportRes.Rps)
+
+				fmt.Printf("%+v", exportRes)
+
+				return nil
+			}).
+			Done()
+	})
+
+	t.Run("GET export run json", func(t *testing.T) {
+		httpTest.Get(basePath + "/" + pid + "/tests/" + tid + "/runs/" + rid + "/export/").
+			SetQueryParams(map[string]string{"format": "json"}).
+			Expect(t).
+			Status(200).
+			Type("json").
+			AssertFunc(func(res *http.Response, req *http.Request) error {
+				exportRes := new(JSONExportRespose)
+				json.NewDecoder(res.Body).Decode(exportRes)
+
+				assert.Equal(t, 2000, int(exportRes.Count))
+				assert.Equal(t, 6000*time.Millisecond, exportRes.Total)
+				assert.Equal(t, 222*time.Millisecond, exportRes.Average)
+				assert.Equal(t, 60*time.Millisecond, exportRes.Fastest)
+				assert.Equal(t, 444*time.Millisecond, exportRes.Slowest)
+				assert.Equal(t, 6666.66, exportRes.Rps)
+
+				fmt.Printf("%+v", exportRes)
+
+				return nil
+			}).
+			Done()
+	})
+
+	t.Run("GET export run json", func(t *testing.T) {
+		httpTest.Get(basePath + "/" + pid + "/tests/" + tid + "/runs/" + rid + "/export/").
+			SetQueryParams(map[string]string{"format": "csv"}).
+			Expect(t).
+			Status(200).
+			Type("text/csv").
+			Done()
+	})
 }

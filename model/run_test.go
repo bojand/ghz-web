@@ -128,17 +128,64 @@ func TestRunModel_AfterFind(t *testing.T) {
 
 func TestRunModel_GetThresholdValues(t *testing.T) {
 	var runs = []struct {
-		name        string
-		in          *Run
-		expected    []time.Duration
-		expectError bool
-	}{}
+		name     string
+		in       *Run
+		expected []time.Duration
+	}{
+		{"with no latencies", &Run{TestID: 123}, []time.Duration{0, 0}},
+		{"with no relevant percentage", &Run{TestID: 123, LatencyDistribution: []*LatencyDistribution{
+			&LatencyDistribution{Percentage: 10, Latency: milli1},
+		}}, []time.Duration{0, 0}},
+		{"with median", &Run{TestID: 123, LatencyDistribution: []*LatencyDistribution{
+			&LatencyDistribution{
+				Percentage: 10, Latency: milli1,
+			},
+			&LatencyDistribution{
+				Percentage: 50, Latency: milli2,
+			},
+		}}, []time.Duration{milli2, 0}},
+		{"with 95th", &Run{TestID: 123, LatencyDistribution: []*LatencyDistribution{
+			&LatencyDistribution{
+				Percentage: 10, Latency: milli1,
+			},
+			&LatencyDistribution{
+				Percentage: 95, Latency: milli2,
+			},
+		}}, []time.Duration{0, milli2}},
+		{"with both", &Run{TestID: 123, LatencyDistribution: []*LatencyDistribution{
+			&LatencyDistribution{
+				Percentage: 50, Latency: milli1,
+			},
+			&LatencyDistribution{
+				Percentage: 95, Latency: milli2,
+			},
+		}}, []time.Duration{milli1, milli2}},
+	}
 
 	for _, tt := range runs {
 		t.Run(tt.name, func(t *testing.T) {
 			actual1, actual2 := tt.in.GetThresholdValues()
 
 			assert.Equal(t, tt.expected, []time.Duration{actual1, actual2})
+		})
+	}
+}
+
+func TestRunModel_HasErrors(t *testing.T) {
+	var runs = []struct {
+		name     string
+		in       *Run
+		expected bool
+	}{
+		{"with no errors", &Run{TestID: 123}, false},
+		{"with errors", &Run{TestID: 123, ErrorDist: map[string]int{"foo": 1, "bar": 2}}, true},
+	}
+
+	for _, tt := range runs {
+		t.Run(tt.name, func(t *testing.T) {
+			actual := tt.in.HasErrors()
+
+			assert.Equal(t, tt.expected, actual)
 		})
 	}
 }
@@ -530,7 +577,25 @@ func TestRunService_FindByTestID(t *testing.T) {
 				Average: milli5,
 				Fastest: milli1,
 				Slowest: milli500,
+				LatencyDistribution: []*LatencyDistribution{
+					&LatencyDistribution{
+						Percentage: 50, Latency: milli1,
+					},
+					&LatencyDistribution{
+						Percentage: 95, Latency: milli2,
+					},
+				},
 			}
+
+			buckets := 7
+			nr.Histogram = make([]*Bucket, buckets)
+			for bi := 0; bi < buckets; bi++ {
+				nr.Histogram[bi] = new(Bucket)
+				nr.Histogram[bi].Mark = float64(bi)
+				nr.Histogram[bi].Count = bi
+				nr.Histogram[bi].Frequency = float64(bi)
+			}
+
 			err := dao.Create(nr)
 
 			assert.NoError(t, err)
@@ -580,6 +645,26 @@ func TestRunService_FindByTestID(t *testing.T) {
 
 		assert.NoError(t, err)
 		assert.Len(t, runs, 10)
+
+		for _, run := range runs {
+			assert.Nil(t, run.LatencyDistribution)
+			assert.Nil(t, run.Histogram)
+		}
+	})
+
+	t.Run("find for test 1 with populate", func(t *testing.T) {
+		runs, err := dao.FindByTestID(tid1, 10, 0, true)
+
+		assert.NoError(t, err)
+		assert.Len(t, runs, 10)
+
+		for _, run := range runs {
+			// first created (ID = 1) doesn't have any
+			if run.ID != 1 {
+				assert.Len(t, run.LatencyDistribution, 2)
+				assert.Len(t, run.Histogram, 7)
+			}
+		}
 	})
 
 	t.Run("find for test 2", func(t *testing.T) {
@@ -831,7 +916,25 @@ func TestRunService_FindByTestIDSorted(t *testing.T) {
 				Average: time.Duration(1000+n) * time.Millisecond,
 				Fastest: time.Duration(100+n) * time.Millisecond,
 				Slowest: time.Duration(10000+n) * time.Millisecond,
+				LatencyDistribution: []*LatencyDistribution{
+					&LatencyDistribution{
+						Percentage: 50, Latency: milli1,
+					},
+					&LatencyDistribution{
+						Percentage: 95, Latency: milli2,
+					},
+				},
 			}
+
+			buckets := 7
+			nr.Histogram = make([]*Bucket, buckets)
+			for bi := 0; bi < buckets; bi++ {
+				nr.Histogram[bi] = new(Bucket)
+				nr.Histogram[bi].Mark = float64(bi)
+				nr.Histogram[bi].Count = bi
+				nr.Histogram[bi].Frequency = float64(bi)
+			}
+
 			err := dao.Create(nr)
 
 			assert.NoError(t, err)
@@ -881,12 +984,66 @@ func TestRunService_FindByTestIDSorted(t *testing.T) {
 	t.Run("find for test 1 by id asc", func(t *testing.T) {
 		runs, err := dao.FindByTestIDSorted(tid1, 20, 0, "id", "asc", false, false)
 
-		fmt.Printf("%#v\n\n", runs)
+		assert.NoError(t, err)
+		assert.Len(t, runs, 10)
+		assert.Equal(t, uint(1), runs[0].ID)
+		assert.Equal(t, uint(10), runs[9].ID)
+
+		for _, run := range runs {
+			assert.Nil(t, run.LatencyDistribution)
+			assert.Nil(t, run.Histogram)
+		}
+	})
+
+	t.Run("find for test 1 by id asc populate histogram", func(t *testing.T) {
+		runs, err := dao.FindByTestIDSorted(tid1, 20, 0, "id", "asc", true, false)
 
 		assert.NoError(t, err)
 		assert.Len(t, runs, 10)
 		assert.Equal(t, uint(1), runs[0].ID)
 		assert.Equal(t, uint(10), runs[9].ID)
+
+		for _, run := range runs {
+			// first created (ID = 1) doesn't have any
+			if run.ID != 1 {
+				assert.Nil(t, run.LatencyDistribution)
+				assert.Len(t, run.Histogram, 7)
+			}
+		}
+	})
+
+	t.Run("find for test 1 by id asc populate latency", func(t *testing.T) {
+		runs, err := dao.FindByTestIDSorted(tid1, 20, 0, "id", "asc", false, true)
+
+		assert.NoError(t, err)
+		assert.Len(t, runs, 10)
+		assert.Equal(t, uint(1), runs[0].ID)
+		assert.Equal(t, uint(10), runs[9].ID)
+
+		for _, run := range runs {
+			// first created (ID = 1) doesn't have any
+			if run.ID != 1 {
+				assert.Len(t, run.LatencyDistribution, 2)
+				assert.Nil(t, run.Histogram)
+			}
+		}
+	})
+
+	t.Run("find for test 1 by id asc populate both", func(t *testing.T) {
+		runs, err := dao.FindByTestIDSorted(tid1, 20, 0, "id", "asc", true, true)
+
+		assert.NoError(t, err)
+		assert.Len(t, runs, 10)
+		assert.Equal(t, uint(1), runs[0].ID)
+		assert.Equal(t, uint(10), runs[9].ID)
+
+		for _, run := range runs {
+			// first created (ID = 1) doesn't have any
+			if run.ID != 1 {
+				assert.Len(t, run.LatencyDistribution, 2)
+				assert.Len(t, run.Histogram, 7)
+			}
+		}
 	})
 
 	t.Run("find for test 1 by id desc", func(t *testing.T) {
