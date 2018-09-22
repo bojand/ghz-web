@@ -12,11 +12,9 @@
 
 <script>
 import _ from 'lodash'
-
-import common from './common.js'
-
 import Chart from 'chart.js'
 
+import common from './common.js'
 const { colors } = require('../colors.js')
 
 export default {

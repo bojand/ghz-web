@@ -70,10 +70,10 @@ type Test struct {
 	Description     string                          `json:"description"`
 	Status          Status                          `json:"status" validate:"oneof=ok fail"`
 	Thresholds      map[Threshold]*ThresholdSetting `json:"thresholds,omitempty" gorm:"-"`
-	KPI             Threshold                       `json:"kpi"`
+	KeyMetric       Threshold                       `json:"keyMetric"`
 	FailOnError     bool                            `json:"failOnError"`
 	FailOnThreshold bool                            `json:"failOnThreshold"`
-	FailOnKPI       bool                            `json:"failOnKPI"`
+	FailOnKeyMetric bool                            `json:"failOnKeyMetric"`
 	ThresholdsJSON  string                          `json:"-" gorm:"column:thresholds"`
 }
 
@@ -188,7 +188,7 @@ func (t *Test) SetStatus(tMean, tMedian, t95, fastest, slowest time.Duration, rp
 					t.Status = StatusFail
 				}
 
-				if t.KPI == thc && t.FailOnKPI {
+				if t.KeyMetric == thc && t.FailOnKeyMetric {
 					t.Status = StatusFail
 				}
 			}
@@ -207,7 +207,7 @@ func (t *Test) SetStatus(tMean, tMedian, t95, fastest, slowest time.Duration, rp
 				t.Status = StatusFail
 			}
 
-			if t.KPI == ThresholdRPS && t.FailOnKPI {
+			if t.KeyMetric == ThresholdRPS && t.FailOnKeyMetric {
 				t.Status = StatusFail
 			}
 		}

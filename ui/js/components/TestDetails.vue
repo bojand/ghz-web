@@ -47,8 +47,8 @@
                 <button class="button is-success" @click="setThreshold">Set</button>
               </p>
             </b-field>
-            <b-field label="KPI Metric">
-              <b-select placeholder="KPI Metric" v-model="model.kpi">
+            <b-field label="Key Metric">
+              <b-select placeholder="Key Metric" v-model="model.keyMetric">
                   <option>none</option>
                   <option
                       v-for="option in metrics"
@@ -69,7 +69,7 @@
             </div>
             <div class="field">
               <b-tooltip label="Fail the test if key performance metric is not met" position="is-right" type="is-light">
-                <b-switch v-model="model.failOnThreshold" type="is-danger">Fail on unmet KPI</b-switch>
+                <b-switch v-model="model.failOnThreshold" type="is-danger">Fail on unmet key metric</b-switch>
               </b-tooltip>
             </div>
           </div>
@@ -206,8 +206,8 @@ export default {
         this.loading = true
 
         try {
-          if (this.model.kpi === "none") {
-            this.model.kpi = ""
+          if (this.model.keyMetric === "none") {
+            this.model.keyMetric = ""
           }
 
           this.test = await this.$store.updateTest(this.projectId, this.model)
