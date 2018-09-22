@@ -69,5 +69,11 @@ export default {
 
     this.runs = data
     return data
+  },
+
+  async fetchInfo () {
+    const { data } = await axios.get(`http://localhost:3000/api/info`)
+
+    return data
   }
 }

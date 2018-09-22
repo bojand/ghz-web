@@ -19,9 +19,9 @@
         <div class="navbar-item">
           <div class="field is-grouped">
             <p class="control">
-              <a class="button block" href="https://bulma.io/">
+              <button class="button" @click="infoModal()">
                 Info
-              </a>
+              </button>
             </p>
             <p class="control">
               <a class="button block" href="https://bulma.io/">
@@ -40,3 +40,22 @@
 
   </nav>
 </template>
+
+<script>
+
+export default {
+  methods: {
+    async infoModal() {
+      const info = await this.$store.fetchInfo()
+
+      this.$modal.open(`
+        <p>
+          <b-message>
+            <pre style="background-color: transparent; white-space: pre-wrap;">{{ ${info} | pretty }}</pre>
+          </b-message>
+        </p>
+      `)
+    }
+  }
+}
+</script>

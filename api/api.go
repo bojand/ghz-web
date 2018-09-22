@@ -29,4 +29,6 @@ func Setup(
 	SetupDetailAPI(detailGroup, ds)
 
 	SetupRawAPI(g, ps, ts, rs, ds)
+
+	SetupInfoAPI(info, g)
 }

@@ -29,6 +29,7 @@ func SetupInfoAPI(info *config.Info, g *echo.Group) {
 			Uptime:         time.Since(info.StartTime).String(),
 			MemoryStats:    memStats,
 		}
+
 		return c.JSON(http.StatusOK, ir)
 	}).Name = "ghz api: get info"
 }
