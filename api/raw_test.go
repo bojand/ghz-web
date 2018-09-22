@@ -2,12 +2,10 @@ package api
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"strconv"
-	"strings"
 	"testing"
 	"time"
 
@@ -72,15 +70,6 @@ func TestRawAPI(t *testing.T) {
 		apiGroup := echoServer.Group("/api")
 		SetupRawAPI(apiGroup, ps, ts, rs, ds)
 
-		routes := echoServer.Routes()
-		for _, r := range routes {
-			index := strings.Index(r.Name, "ghz api:")
-			if index >= 0 {
-				desc := fmt.Sprintf("%+v %+v", r.Method, r.Path)
-				fmt.Println(desc)
-			}
-		}
-
 		go func() {
 			echoServer.Start("localhost:0")
 		}()
@@ -139,7 +128,7 @@ func TestRawAPI(t *testing.T) {
 			Type("json").
 			AssertFunc(func(res *http.Response, req *http.Request) error {
 				rr := new(RawResponse)
-				json.NewDecoder(res.Body).Decode(rr)
+				err = json.NewDecoder(res.Body).Decode(rr)
 
 				assert.NoError(t, err)
 
@@ -178,7 +167,7 @@ func TestRawAPI(t *testing.T) {
 			Type("json").
 			AssertFunc(func(res *http.Response, req *http.Request) error {
 				rr := new(RawResponse)
-				json.NewDecoder(res.Body).Decode(rr)
+				err = json.NewDecoder(res.Body).Decode(rr)
 
 				assert.NoError(t, err)
 

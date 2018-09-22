@@ -63,15 +63,6 @@ func TestRunAPI(t *testing.T) {
 		runsGroup := testsGroup.Group("/:tid/runs")
 		SetupRunAPI(runsGroup, rs, ds)
 
-		routes := echoServer.Routes()
-		for _, r := range routes {
-			index := strings.Index(r.Name, "ghz api:")
-			if index >= 0 {
-				desc := fmt.Sprintf("%+v %+v", r.Method, r.Path)
-				fmt.Println(desc)
-			}
-		}
-
 		go func() {
 			echoServer.Start("localhost:0")
 		}()
@@ -100,7 +91,7 @@ func TestRunAPI(t *testing.T) {
 			Type("json").
 			AssertFunc(func(res *http.Response, req *http.Request) error {
 				p := new(model.Project)
-				json.NewDecoder(res.Body).Decode(p)
+				err = json.NewDecoder(res.Body).Decode(p)
 
 				assert.NoError(t, err)
 
@@ -124,7 +115,7 @@ func TestRunAPI(t *testing.T) {
 			Type("json").
 			AssertFunc(func(res *http.Response, req *http.Request) error {
 				p := new(model.Project)
-				json.NewDecoder(res.Body).Decode(p)
+				err = json.NewDecoder(res.Body).Decode(p)
 
 				assert.NoError(t, err)
 
@@ -145,7 +136,7 @@ func TestRunAPI(t *testing.T) {
 			Type("json").
 			AssertFunc(func(res *http.Response, req *http.Request) error {
 				tm := new(model.Test)
-				json.NewDecoder(res.Body).Decode(tm)
+				err = json.NewDecoder(res.Body).Decode(tm)
 
 				assert.NoError(t, err)
 
@@ -168,7 +159,7 @@ func TestRunAPI(t *testing.T) {
 			Type("json").
 			AssertFunc(func(res *http.Response, req *http.Request) error {
 				tm := new(model.Test)
-				json.NewDecoder(res.Body).Decode(tm)
+				err = json.NewDecoder(res.Body).Decode(tm)
 
 				assert.NoError(t, err)
 
@@ -193,7 +184,7 @@ func TestRunAPI(t *testing.T) {
 			Type("json").
 			AssertFunc(func(res *http.Response, req *http.Request) error {
 				r := new(model.Run)
-				json.NewDecoder(res.Body).Decode(r)
+				err = json.NewDecoder(res.Body).Decode(r)
 
 				assert.NoError(t, err)
 
@@ -243,7 +234,7 @@ func TestRunAPI(t *testing.T) {
 			Type("json").
 			AssertFunc(func(res *http.Response, req *http.Request) error {
 				r := new(model.Run)
-				json.NewDecoder(res.Body).Decode(r)
+				err = json.NewDecoder(res.Body).Decode(r)
 
 				assert.NoError(t, err)
 
@@ -290,7 +281,7 @@ func TestRunAPI(t *testing.T) {
 			Type("json").
 			AssertFunc(func(res *http.Response, req *http.Request) error {
 				r := new(model.Run)
-				json.NewDecoder(res.Body).Decode(r)
+				err = json.NewDecoder(res.Body).Decode(r)
 
 				assert.NoError(t, err)
 
@@ -349,6 +340,7 @@ func TestRunAPI(t *testing.T) {
 
 		popMW := runAPI.populateRun(handler)
 		err := popMW(c)
+
 		if assert.Error(t, err) {
 			assert.IsType(t, err, &echo.HTTPError{})
 			httpErr := err.(*echo.HTTPError)
@@ -373,6 +365,7 @@ func TestRunAPI(t *testing.T) {
 
 		popMW := runAPI.populateRun(handler)
 		err := popMW(c)
+
 		if assert.NoError(t, err) {
 			ro := c.Get("run")
 			assert.IsType(t, ro, &model.Run{})
@@ -424,7 +417,7 @@ func TestRunAPI(t *testing.T) {
 			Type("json").
 			AssertFunc(func(res *http.Response, req *http.Request) error {
 				rl := new(RunList)
-				json.NewDecoder(res.Body).Decode(rl)
+				err = json.NewDecoder(res.Body).Decode(rl)
 
 				assert.NoError(t, err)
 				assert.Len(t, rl.Data, 20)
@@ -450,7 +443,7 @@ func TestRunAPI(t *testing.T) {
 			Type("json").
 			AssertFunc(func(res *http.Response, req *http.Request) error {
 				r := new(model.Run)
-				json.NewDecoder(res.Body).Decode(r)
+				err = json.NewDecoder(res.Body).Decode(r)
 
 				assert.NoError(t, err)
 
@@ -477,7 +470,7 @@ func TestRunAPI(t *testing.T) {
 			Type("json").
 			AssertFunc(func(res *http.Response, req *http.Request) error {
 				rl := new(RunList)
-				json.NewDecoder(res.Body).Decode(rl)
+				err = json.NewDecoder(res.Body).Decode(rl)
 
 				assert.NoError(t, err)
 				assert.Len(t, rl.Data, 20)
@@ -503,7 +496,7 @@ func TestRunAPI(t *testing.T) {
 			Type("json").
 			AssertFunc(func(res *http.Response, req *http.Request) error {
 				rl := new(RunList)
-				json.NewDecoder(res.Body).Decode(rl)
+				err = json.NewDecoder(res.Body).Decode(rl)
 
 				assert.NoError(t, err)
 				assert.Len(t, rl.Data, 5)
@@ -529,7 +522,7 @@ func TestRunAPI(t *testing.T) {
 			Type("json").
 			AssertFunc(func(res *http.Response, req *http.Request) error {
 				rl := new(RunList)
-				json.NewDecoder(res.Body).Decode(rl)
+				err = json.NewDecoder(res.Body).Decode(rl)
 
 				assert.NoError(t, err)
 				assert.Len(t, rl.Data, 0)
@@ -574,8 +567,9 @@ func TestRunAPI(t *testing.T) {
 			Type("json").
 			AssertFunc(func(res *http.Response, req *http.Request) error {
 				exportRes := new(JSONExportRespose)
-				json.NewDecoder(res.Body).Decode(exportRes)
+				err = json.NewDecoder(res.Body).Decode(exportRes)
 
+				assert.NoError(t, err)
 				assert.Equal(t, 2000, int(exportRes.Count))
 				assert.Equal(t, 6000*time.Millisecond, exportRes.Total)
 				assert.Equal(t, 222*time.Millisecond, exportRes.Average)
@@ -598,8 +592,9 @@ func TestRunAPI(t *testing.T) {
 			Type("json").
 			AssertFunc(func(res *http.Response, req *http.Request) error {
 				exportRes := new(JSONExportRespose)
-				json.NewDecoder(res.Body).Decode(exportRes)
+				err = json.NewDecoder(res.Body).Decode(exportRes)
 
+				assert.NoError(t, err)
 				assert.Equal(t, 2000, int(exportRes.Count))
 				assert.Equal(t, 6000*time.Millisecond, exportRes.Total)
 				assert.Equal(t, 222*time.Millisecond, exportRes.Average)

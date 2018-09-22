@@ -2,7 +2,6 @@ package api
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -54,15 +53,6 @@ func TestProjectAPI(t *testing.T) {
 		projectGroup := echoServer.Group(basePath)
 		SetupProjectAPI(projectGroup, ps)
 
-		routes := echoServer.Routes()
-		for _, r := range routes {
-			index := strings.Index(r.Name, "ghz api:")
-			if index >= 0 {
-				desc := fmt.Sprintf("%+v %+v", r.Method, r.Path)
-				fmt.Println(desc)
-			}
-		}
-
 		go func() {
 			echoServer.Start("localhost:0")
 		}()
@@ -91,7 +81,7 @@ func TestProjectAPI(t *testing.T) {
 			Type("json").
 			AssertFunc(func(res *http.Response, req *http.Request) error {
 				p := new(model.Project)
-				json.NewDecoder(res.Body).Decode(p)
+				err = json.NewDecoder(res.Body).Decode(p)
 
 				assert.NoError(t, err)
 
@@ -115,7 +105,7 @@ func TestProjectAPI(t *testing.T) {
 			Type("json").
 			AssertFunc(func(res *http.Response, req *http.Request) error {
 				p := new(model.Project)
-				json.NewDecoder(res.Body).Decode(p)
+				err = json.NewDecoder(res.Body).Decode(p)
 
 				assert.NoError(t, err)
 
@@ -136,7 +126,7 @@ func TestProjectAPI(t *testing.T) {
 			Type("json").
 			AssertFunc(func(res *http.Response, req *http.Request) error {
 				p := new(model.Project)
-				json.NewDecoder(res.Body).Decode(p)
+				err = json.NewDecoder(res.Body).Decode(p)
 
 				assert.NoError(t, err)
 
@@ -165,7 +155,7 @@ func TestProjectAPI(t *testing.T) {
 			Type("json").
 			AssertFunc(func(res *http.Response, req *http.Request) error {
 				p := new(model.Project)
-				json.NewDecoder(res.Body).Decode(p)
+				err = json.NewDecoder(res.Body).Decode(p)
 
 				assert.NoError(t, err)
 
@@ -185,7 +175,7 @@ func TestProjectAPI(t *testing.T) {
 			Type("json").
 			AssertFunc(func(res *http.Response, req *http.Request) error {
 				p := new(model.Project)
-				json.NewDecoder(res.Body).Decode(p)
+				err = json.NewDecoder(res.Body).Decode(p)
 
 				assert.NoError(t, err)
 
@@ -214,7 +204,7 @@ func TestProjectAPI(t *testing.T) {
 			Type("json").
 			AssertFunc(func(res *http.Response, req *http.Request) error {
 				p := new(model.Project)
-				json.NewDecoder(res.Body).Decode(p)
+				err = json.NewDecoder(res.Body).Decode(p)
 
 				assert.NoError(t, err)
 
@@ -268,7 +258,7 @@ func TestProjectAPI(t *testing.T) {
 			Type("json").
 			AssertFunc(func(res *http.Response, req *http.Request) error {
 				pl := new(ProjectList)
-				json.NewDecoder(res.Body).Decode(pl)
+				err = json.NewDecoder(res.Body).Decode(pl)
 
 				assert.NoError(t, err)
 				assert.Equal(t, uint(3), pl.Total)
@@ -293,7 +283,7 @@ func TestProjectAPI(t *testing.T) {
 			Type("json").
 			AssertFunc(func(res *http.Response, req *http.Request) error {
 				pl := new(ProjectList)
-				json.NewDecoder(res.Body).Decode(pl)
+				err = json.NewDecoder(res.Body).Decode(pl)
 
 				assert.NoError(t, err)
 				assert.Equal(t, uint(3), pl.Total)
@@ -320,7 +310,7 @@ func TestProjectAPI(t *testing.T) {
 			Type("json").
 			AssertFunc(func(res *http.Response, req *http.Request) error {
 				pl := new(ProjectList)
-				json.NewDecoder(res.Body).Decode(pl)
+				err = json.NewDecoder(res.Body).Decode(pl)
 
 				assert.NoError(t, err)
 				assert.Equal(t, uint(3), pl.Total)
@@ -347,7 +337,7 @@ func TestProjectAPI(t *testing.T) {
 			Type("json").
 			AssertFunc(func(res *http.Response, req *http.Request) error {
 				pl := new(ProjectList)
-				json.NewDecoder(res.Body).Decode(pl)
+				err = json.NewDecoder(res.Body).Decode(pl)
 
 				assert.NoError(t, err)
 				assert.Equal(t, uint(3), pl.Total)
@@ -374,7 +364,7 @@ func TestProjectAPI(t *testing.T) {
 			Type("json").
 			AssertFunc(func(res *http.Response, req *http.Request) error {
 				pl := new(ProjectList)
-				json.NewDecoder(res.Body).Decode(pl)
+				err = json.NewDecoder(res.Body).Decode(pl)
 
 				assert.NoError(t, err)
 				assert.Equal(t, uint(3), pl.Total)
@@ -410,6 +400,7 @@ func TestProjectAPI(t *testing.T) {
 
 		popMW := projectAPI.populateProject(handler)
 		err := popMW(c)
+
 		if assert.Error(t, err) {
 			assert.IsType(t, err, &echo.HTTPError{})
 			httpErr := err.(*echo.HTTPError)
@@ -434,6 +425,7 @@ func TestProjectAPI(t *testing.T) {
 
 		popMW := projectAPI.populateProject(handler)
 		err := popMW(c)
+
 		if assert.Error(t, err) {
 			assert.IsType(t, err, &echo.HTTPError{})
 			httpErr := err.(*echo.HTTPError)
@@ -460,6 +452,7 @@ func TestProjectAPI(t *testing.T) {
 
 		popMW := projectAPI.populateProject(handler)
 		err := popMW(c)
+
 		if assert.NoError(t, err) {
 			po := c.Get("project")
 			assert.IsType(t, po, &model.Project{})

@@ -1,8 +1,10 @@
 package api
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/bojand/ghz-web/model"
 	"github.com/bojand/ghz-web/service"
@@ -101,4 +103,17 @@ func getRun(rs service.RunService, c echo.Context) (*model.Run, error) {
 	}
 
 	return r, nil
+}
+
+// PrintRoutes prints routes in the server
+func PrintRoutes(echoServer *echo.Echo) {
+	routes := echoServer.Routes()
+	for _, r := range routes {
+		index := strings.Index(r.Name, "ghz api:")
+		if index >= 0 {
+			desc := fmt.Sprintf("%+v %+v", r.Method, r.Path)
+			fmt.Println(desc)
+		}
+	}
+
 }

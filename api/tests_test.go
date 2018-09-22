@@ -2,7 +2,6 @@ package api
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -58,15 +57,6 @@ func TestTestAPI(t *testing.T) {
 		testsGroup := projectGroup.Group("/:pid/tests")
 		SetupTestAPI(testsGroup, ts, runService)
 
-		routes := echoServer.Routes()
-		for _, r := range routes {
-			index := strings.Index(r.Name, "ghz api:")
-			if index >= 0 {
-				desc := fmt.Sprintf("%+v %+v", r.Method, r.Path)
-				fmt.Println(desc)
-			}
-		}
-
 		go func() {
 			echoServer.Start("localhost:0")
 		}()
@@ -95,7 +85,7 @@ func TestTestAPI(t *testing.T) {
 			Type("json").
 			AssertFunc(func(res *http.Response, req *http.Request) error {
 				p := new(model.Project)
-				json.NewDecoder(res.Body).Decode(p)
+				err = json.NewDecoder(res.Body).Decode(p)
 
 				assert.NoError(t, err)
 
@@ -119,7 +109,7 @@ func TestTestAPI(t *testing.T) {
 			Type("json").
 			AssertFunc(func(res *http.Response, req *http.Request) error {
 				p := new(model.Project)
-				json.NewDecoder(res.Body).Decode(p)
+				err = json.NewDecoder(res.Body).Decode(p)
 
 				assert.NoError(t, err)
 
@@ -143,7 +133,7 @@ func TestTestAPI(t *testing.T) {
 			Type("json").
 			AssertFunc(func(res *http.Response, req *http.Request) error {
 				p := new(model.Project)
-				json.NewDecoder(res.Body).Decode(p)
+				err = json.NewDecoder(res.Body).Decode(p)
 
 				assert.NoError(t, err)
 
@@ -166,7 +156,7 @@ func TestTestAPI(t *testing.T) {
 			Type("json").
 			AssertFunc(func(res *http.Response, req *http.Request) error {
 				tm := new(model.Test)
-				json.NewDecoder(res.Body).Decode(tm)
+				err = json.NewDecoder(res.Body).Decode(tm)
 
 				assert.NoError(t, err)
 
@@ -189,7 +179,7 @@ func TestTestAPI(t *testing.T) {
 			Type("json").
 			AssertFunc(func(res *http.Response, req *http.Request) error {
 				tm := new(model.Test)
-				json.NewDecoder(res.Body).Decode(tm)
+				err = json.NewDecoder(res.Body).Decode(tm)
 
 				assert.NoError(t, err)
 
@@ -212,7 +202,7 @@ func TestTestAPI(t *testing.T) {
 			Type("json").
 			AssertFunc(func(res *http.Response, req *http.Request) error {
 				tm := new(model.Test)
-				json.NewDecoder(res.Body).Decode(tm)
+				err = json.NewDecoder(res.Body).Decode(tm)
 
 				assert.NoError(t, err)
 
@@ -250,7 +240,7 @@ func TestTestAPI(t *testing.T) {
 			Type("json").
 			AssertFunc(func(res *http.Response, req *http.Request) error {
 				tm := new(model.Test)
-				json.NewDecoder(res.Body).Decode(tm)
+				err = json.NewDecoder(res.Body).Decode(tm)
 
 				assert.NoError(t, err)
 
@@ -274,7 +264,7 @@ func TestTestAPI(t *testing.T) {
 			Type("json").
 			AssertFunc(func(res *http.Response, req *http.Request) error {
 				tm := new(model.Test)
-				json.NewDecoder(res.Body).Decode(tm)
+				err = json.NewDecoder(res.Body).Decode(tm)
 
 				assert.NoError(t, err)
 
@@ -294,7 +284,7 @@ func TestTestAPI(t *testing.T) {
 			Type("json").
 			AssertFunc(func(res *http.Response, req *http.Request) error {
 				tm := new(model.Test)
-				json.NewDecoder(res.Body).Decode(tm)
+				err = json.NewDecoder(res.Body).Decode(tm)
 
 				assert.NoError(t, err)
 
@@ -314,7 +304,7 @@ func TestTestAPI(t *testing.T) {
 			Type("json").
 			AssertFunc(func(res *http.Response, req *http.Request) error {
 				tm := new(model.Test)
-				json.NewDecoder(res.Body).Decode(tm)
+				err = json.NewDecoder(res.Body).Decode(tm)
 
 				assert.NoError(t, err)
 
@@ -351,7 +341,7 @@ func TestTestAPI(t *testing.T) {
 			Type("json").
 			AssertFunc(func(res *http.Response, req *http.Request) error {
 				tm := new(model.Test)
-				json.NewDecoder(res.Body).Decode(tm)
+				err = json.NewDecoder(res.Body).Decode(tm)
 
 				assert.NoError(t, err)
 
@@ -373,7 +363,7 @@ func TestTestAPI(t *testing.T) {
 			Type("json").
 			AssertFunc(func(res *http.Response, req *http.Request) error {
 				tm := new(model.Test)
-				json.NewDecoder(res.Body).Decode(tm)
+				err = json.NewDecoder(res.Body).Decode(tm)
 
 				assert.NoError(t, err)
 
@@ -403,6 +393,7 @@ func TestTestAPI(t *testing.T) {
 
 		popMW := testAPI.populateTest(handler)
 		err := popMW(c)
+
 		if assert.Error(t, err) {
 			assert.IsType(t, err, &echo.HTTPError{})
 			httpErr := err.(*echo.HTTPError)
@@ -427,6 +418,7 @@ func TestTestAPI(t *testing.T) {
 
 		popMW := testAPI.populateTest(handler)
 		err := popMW(c)
+
 		if assert.Error(t, err) {
 			assert.IsType(t, err, &echo.HTTPError{})
 			httpErr := err.(*echo.HTTPError)
@@ -451,6 +443,7 @@ func TestTestAPI(t *testing.T) {
 
 		popMW := testAPI.populateTest(handler)
 		err := popMW(c)
+
 		if assert.NoError(t, err) {
 			to := c.Get("test")
 			assert.IsType(t, to, &model.Test{})
@@ -479,6 +472,7 @@ func TestTestAPI(t *testing.T) {
 
 		popMW := testAPI.populateTest(handler)
 		err := popMW(c)
+
 		if assert.NoError(t, err) {
 			to := c.Get("test")
 			assert.IsType(t, to, &model.Test{})
@@ -506,7 +500,7 @@ func TestTestAPI(t *testing.T) {
 			Type("json").
 			AssertFunc(func(res *http.Response, req *http.Request) error {
 				tl := new(TestList)
-				json.NewDecoder(res.Body).Decode(tl)
+				err = json.NewDecoder(res.Body).Decode(tl)
 
 				assert.NoError(t, err)
 				assert.Len(t, tl.Data, 20)
@@ -532,7 +526,7 @@ func TestTestAPI(t *testing.T) {
 			Type("json").
 			AssertFunc(func(res *http.Response, req *http.Request) error {
 				tl := new(TestList)
-				json.NewDecoder(res.Body).Decode(tl)
+				err = json.NewDecoder(res.Body).Decode(tl)
 
 				assert.NoError(t, err)
 				assert.Len(t, tl.Data, 6)
@@ -557,7 +551,7 @@ func TestTestAPI(t *testing.T) {
 			Type("json").
 			AssertFunc(func(res *http.Response, req *http.Request) error {
 				tl := new(TestList)
-				json.NewDecoder(res.Body).Decode(tl)
+				err = json.NewDecoder(res.Body).Decode(tl)
 
 				assert.NoError(t, err)
 				assert.Len(t, tl.Data, 0)

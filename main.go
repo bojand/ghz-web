@@ -6,6 +6,7 @@ import (
 	"os"
 	"runtime"
 	"strings"
+	"time"
 
 	"github.com/bojand/ghz-web/config"
 )
@@ -37,13 +38,20 @@ func main() {
 
 	cfgPath := strings.TrimSpace(*cPath)
 
-	config, err := config.Read(cfgPath)
+	conf, err := config.Read(cfgPath)
 	if err != nil {
 		panic(err)
 	}
 
+	info := &config.Info{
+		Version:   version,
+		GOVersion: runtime.Version(),
+		StartTime: time.Now(),
+	}
+
 	app := Application{
-		Config: config,
+		Config: conf,
+		Info:   info,
 	}
 
 	app.Start()

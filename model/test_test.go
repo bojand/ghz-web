@@ -37,7 +37,7 @@ func TestTestModel_SetStatus(t *testing.T) {
 		{"with error true but and fail on error", &Test{FailOnError: true}, [6]time.Duration{
 			milli1, milli2, milli3, milli4, milli5, milli5,
 		}, 0.0, true, &Test{Status: StatusFail, FailOnError: true}},
-		{"no values over limit", &Test{FailOnThreshold: true, FailOnKPI: true,
+		{"no values over limit", &Test{FailOnThreshold: true, FailOnKeyMetric: true,
 			Thresholds: map[Threshold]*ThresholdSetting{
 				ThresholdMean:    &ThresholdSetting{Threshold: milli5},
 				ThresholdMedian:  &ThresholdSetting{Threshold: milli5},
@@ -46,7 +46,7 @@ func TestTestModel_SetStatus(t *testing.T) {
 				ThresholdSlowest: &ThresholdSetting{Threshold: milli5},
 			}}, [6]time.Duration{
 			milli1, milli2, milli3, milli4, milli4, milli4,
-		}, 0.0, false, &Test{Status: StatusOK, FailOnError: false, FailOnThreshold: true, FailOnKPI: true,
+		}, 0.0, false, &Test{Status: StatusOK, FailOnError: false, FailOnThreshold: true, FailOnKeyMetric: true,
 			Thresholds: map[Threshold]*ThresholdSetting{
 				ThresholdMean:    &ThresholdSetting{Threshold: milli5, Status: StatusOK},
 				ThresholdMedian:  &ThresholdSetting{Threshold: milli5, Status: StatusOK},
@@ -69,7 +69,7 @@ func TestTestModel_SetStatus(t *testing.T) {
 			ThresholdFastest: &ThresholdSetting{Threshold: milli5, Status: StatusOK},
 			ThresholdSlowest: &ThresholdSetting{Threshold: milli5, Status: StatusOK},
 		}}},
-		{"mean over limit", &Test{FailOnThreshold: true, FailOnKPI: true,
+		{"mean over limit", &Test{FailOnThreshold: true, FailOnKeyMetric: true,
 			Thresholds: map[Threshold]*ThresholdSetting{
 				ThresholdMean:    &ThresholdSetting{Threshold: 500 * time.Nanosecond},
 				ThresholdMedian:  &ThresholdSetting{Threshold: milli5},
@@ -78,7 +78,7 @@ func TestTestModel_SetStatus(t *testing.T) {
 				ThresholdSlowest: &ThresholdSetting{Threshold: milli5},
 			}}, [6]time.Duration{
 			milli1, milli2, milli3, milli4, milli4, milli4,
-		}, 0.0, false, &Test{Status: StatusFail, FailOnError: false, FailOnThreshold: true, FailOnKPI: true,
+		}, 0.0, false, &Test{Status: StatusFail, FailOnError: false, FailOnThreshold: true, FailOnKeyMetric: true,
 			Thresholds: map[Threshold]*ThresholdSetting{
 				ThresholdMean:    &ThresholdSetting{Threshold: 500 * time.Nanosecond, Status: StatusFail},
 				ThresholdMedian:  &ThresholdSetting{Threshold: milli5, Status: StatusOK},
@@ -86,7 +86,7 @@ func TestTestModel_SetStatus(t *testing.T) {
 				ThresholdFastest: &ThresholdSetting{Threshold: milli5, Status: StatusOK},
 				ThresholdSlowest: &ThresholdSetting{Threshold: milli5, Status: StatusOK},
 			}}},
-		{"median over limit", &Test{FailOnThreshold: true, FailOnKPI: true,
+		{"median over limit", &Test{FailOnThreshold: true, FailOnKeyMetric: true,
 			Thresholds: map[Threshold]*ThresholdSetting{
 				ThresholdMean:    &ThresholdSetting{Threshold: milli1},
 				ThresholdMedian:  &ThresholdSetting{Threshold: milli1},
@@ -95,7 +95,7 @@ func TestTestModel_SetStatus(t *testing.T) {
 				ThresholdSlowest: &ThresholdSetting{Threshold: milli5},
 			}}, [6]time.Duration{
 			milli1, milli2, milli3, milli4, milli4, milli4,
-		}, 0.0, false, &Test{Status: StatusFail, FailOnError: false, FailOnThreshold: true, FailOnKPI: true,
+		}, 0.0, false, &Test{Status: StatusFail, FailOnError: false, FailOnThreshold: true, FailOnKeyMetric: true,
 			Thresholds: map[Threshold]*ThresholdSetting{
 				ThresholdMean:    &ThresholdSetting{Threshold: milli1, Status: StatusOK},
 				ThresholdMedian:  &ThresholdSetting{Threshold: milli1, Status: StatusFail},
@@ -103,7 +103,7 @@ func TestTestModel_SetStatus(t *testing.T) {
 				ThresholdFastest: &ThresholdSetting{Threshold: milli5, Status: StatusOK},
 				ThresholdSlowest: &ThresholdSetting{Threshold: milli5, Status: StatusOK},
 			}}},
-		{"95th over limit", &Test{FailOnThreshold: true, FailOnKPI: true,
+		{"95th over limit", &Test{FailOnThreshold: true, FailOnKeyMetric: true,
 			Thresholds: map[Threshold]*ThresholdSetting{
 				ThresholdMean:    &ThresholdSetting{Threshold: milli5},
 				ThresholdMedian:  &ThresholdSetting{Threshold: milli5},
@@ -112,7 +112,7 @@ func TestTestModel_SetStatus(t *testing.T) {
 				ThresholdSlowest: &ThresholdSetting{Threshold: milli5},
 			}}, [6]time.Duration{
 			milli1, milli2, milli3, milli4, milli4, milli4,
-		}, 0.0, false, &Test{Status: StatusFail, FailOnError: false, FailOnThreshold: true, FailOnKPI: true,
+		}, 0.0, false, &Test{Status: StatusFail, FailOnError: false, FailOnThreshold: true, FailOnKeyMetric: true,
 			Thresholds: map[Threshold]*ThresholdSetting{
 				ThresholdMean:    &ThresholdSetting{Threshold: milli5, Status: StatusOK},
 				ThresholdMedian:  &ThresholdSetting{Threshold: milli5, Status: StatusOK},
@@ -120,7 +120,7 @@ func TestTestModel_SetStatus(t *testing.T) {
 				ThresholdFastest: &ThresholdSetting{Threshold: milli5, Status: StatusOK},
 				ThresholdSlowest: &ThresholdSetting{Threshold: milli5, Status: StatusOK},
 			}}},
-		{"fastest over limit", &Test{FailOnThreshold: true, FailOnKPI: true,
+		{"fastest over limit", &Test{FailOnThreshold: true, FailOnKeyMetric: true,
 			Thresholds: map[Threshold]*ThresholdSetting{
 				ThresholdMean:    &ThresholdSetting{Threshold: milli5},
 				ThresholdMedian:  &ThresholdSetting{Threshold: milli5},
@@ -129,7 +129,7 @@ func TestTestModel_SetStatus(t *testing.T) {
 				ThresholdSlowest: &ThresholdSetting{Threshold: milli5},
 			}}, [6]time.Duration{
 			milli1, milli2, milli3, milli4, milli4, milli4,
-		}, 0.0, false, &Test{Status: StatusFail, FailOnError: false, FailOnThreshold: true, FailOnKPI: true,
+		}, 0.0, false, &Test{Status: StatusFail, FailOnError: false, FailOnThreshold: true, FailOnKeyMetric: true,
 			Thresholds: map[Threshold]*ThresholdSetting{
 				ThresholdMean:    &ThresholdSetting{Threshold: milli5, Status: StatusOK},
 				ThresholdMedian:  &ThresholdSetting{Threshold: milli5, Status: StatusOK},
@@ -137,7 +137,7 @@ func TestTestModel_SetStatus(t *testing.T) {
 				ThresholdFastest: &ThresholdSetting{Threshold: milli1, Status: StatusFail},
 				ThresholdSlowest: &ThresholdSetting{Threshold: milli5, Status: StatusOK},
 			}}},
-		{"slowest over limit", &Test{FailOnThreshold: true, FailOnKPI: true,
+		{"slowest over limit", &Test{FailOnThreshold: true, FailOnKeyMetric: true,
 			Thresholds: map[Threshold]*ThresholdSetting{
 				ThresholdMean:    &ThresholdSetting{Threshold: milli5},
 				ThresholdMedian:  &ThresholdSetting{Threshold: milli5},
@@ -146,7 +146,7 @@ func TestTestModel_SetStatus(t *testing.T) {
 				ThresholdSlowest: &ThresholdSetting{Threshold: milli1},
 			}}, [6]time.Duration{
 			milli1, milli2, milli3, milli4, milli4, milli4,
-		}, 0.0, false, &Test{Status: StatusFail, FailOnError: false, FailOnThreshold: true, FailOnKPI: true,
+		}, 0.0, false, &Test{Status: StatusFail, FailOnError: false, FailOnThreshold: true, FailOnKeyMetric: true,
 			Thresholds: map[Threshold]*ThresholdSetting{
 				ThresholdMean:    &ThresholdSetting{Threshold: milli5, Status: StatusOK},
 				ThresholdMedian:  &ThresholdSetting{Threshold: milli5, Status: StatusOK},
@@ -154,7 +154,7 @@ func TestTestModel_SetStatus(t *testing.T) {
 				ThresholdFastest: &ThresholdSetting{Threshold: milli5, Status: StatusOK},
 				ThresholdSlowest: &ThresholdSetting{Threshold: milli1, Status: StatusFail},
 			}}},
-		{"RPS passed in 0", &Test{FailOnThreshold: true, FailOnKPI: true,
+		{"RPS passed in 0", &Test{FailOnThreshold: true, FailOnKeyMetric: true,
 			Thresholds: map[Threshold]*ThresholdSetting{
 				ThresholdMean:    &ThresholdSetting{Threshold: milli5},
 				ThresholdMedian:  &ThresholdSetting{Threshold: milli5},
@@ -164,7 +164,7 @@ func TestTestModel_SetStatus(t *testing.T) {
 				ThresholdRPS:     &ThresholdSetting{NumericalThreshold: 1000.0},
 			}}, [6]time.Duration{
 			milli1, milli2, milli3, milli4, milli4, milli4,
-		}, 0.0, false, &Test{Status: StatusOK, FailOnError: false, FailOnThreshold: true, FailOnKPI: true,
+		}, 0.0, false, &Test{Status: StatusOK, FailOnError: false, FailOnThreshold: true, FailOnKeyMetric: true,
 			Thresholds: map[Threshold]*ThresholdSetting{
 				ThresholdMean:    &ThresholdSetting{Threshold: milli5, Status: StatusOK},
 				ThresholdMedian:  &ThresholdSetting{Threshold: milli5, Status: StatusOK},
@@ -173,7 +173,7 @@ func TestTestModel_SetStatus(t *testing.T) {
 				ThresholdSlowest: &ThresholdSetting{Threshold: milli5, Status: StatusOK},
 				ThresholdRPS:     &ThresholdSetting{NumericalThreshold: 1000.0, Status: StatusOK},
 			}}},
-		{"RPS below limit", &Test{FailOnThreshold: true, FailOnKPI: true,
+		{"RPS below limit", &Test{FailOnThreshold: true, FailOnKeyMetric: true,
 			Thresholds: map[Threshold]*ThresholdSetting{
 				ThresholdMean:    &ThresholdSetting{Threshold: milli5},
 				ThresholdMedian:  &ThresholdSetting{Threshold: milli5},
@@ -183,7 +183,7 @@ func TestTestModel_SetStatus(t *testing.T) {
 				ThresholdRPS:     &ThresholdSetting{NumericalThreshold: 1000.0},
 			}}, [6]time.Duration{
 			milli1, milli2, milli3, milli4, milli4, milli4,
-		}, 200.0, false, &Test{Status: StatusFail, FailOnError: false, FailOnThreshold: true, FailOnKPI: true,
+		}, 200.0, false, &Test{Status: StatusFail, FailOnError: false, FailOnThreshold: true, FailOnKeyMetric: true,
 			Thresholds: map[Threshold]*ThresholdSetting{
 				ThresholdMean:    &ThresholdSetting{Threshold: milli5, Status: StatusOK},
 				ThresholdMedian:  &ThresholdSetting{Threshold: milli5, Status: StatusOK},
@@ -192,7 +192,7 @@ func TestTestModel_SetStatus(t *testing.T) {
 				ThresholdSlowest: &ThresholdSetting{Threshold: milli5, Status: StatusOK},
 				ThresholdRPS:     &ThresholdSetting{NumericalThreshold: 1000, Status: StatusFail},
 			}}},
-		{"RPS above limit", &Test{FailOnThreshold: true, FailOnKPI: true,
+		{"RPS above limit", &Test{FailOnThreshold: true, FailOnKeyMetric: true,
 			Thresholds: map[Threshold]*ThresholdSetting{
 				ThresholdMean:    &ThresholdSetting{Threshold: milli5},
 				ThresholdMedian:  &ThresholdSetting{Threshold: milli5},
@@ -202,7 +202,7 @@ func TestTestModel_SetStatus(t *testing.T) {
 				ThresholdRPS:     &ThresholdSetting{NumericalThreshold: 1000.0},
 			}}, [6]time.Duration{
 			milli1, milli2, milli3, milli4, milli4, milli4,
-		}, 2000.0, false, &Test{Status: StatusOK, FailOnError: false, FailOnThreshold: true, FailOnKPI: true,
+		}, 2000.0, false, &Test{Status: StatusOK, FailOnError: false, FailOnThreshold: true, FailOnKeyMetric: true,
 			Thresholds: map[Threshold]*ThresholdSetting{
 				ThresholdMean:    &ThresholdSetting{Threshold: milli5, Status: StatusOK},
 				ThresholdMedian:  &ThresholdSetting{Threshold: milli5, Status: StatusOK},
@@ -211,7 +211,7 @@ func TestTestModel_SetStatus(t *testing.T) {
 				ThresholdSlowest: &ThresholdSetting{Threshold: milli5, Status: StatusOK},
 				ThresholdRPS:     &ThresholdSetting{NumericalThreshold: 1000.0, Status: StatusOK},
 			}}},
-		{"slowest over limit but FailOnThreshold false", &Test{FailOnThreshold: false, FailOnKPI: true,
+		{"slowest over limit but FailOnThreshold false", &Test{FailOnThreshold: false, FailOnKeyMetric: true,
 			Thresholds: map[Threshold]*ThresholdSetting{
 				ThresholdMean:    &ThresholdSetting{Threshold: milli5},
 				ThresholdMedian:  &ThresholdSetting{Threshold: milli5},
@@ -220,7 +220,7 @@ func TestTestModel_SetStatus(t *testing.T) {
 				ThresholdSlowest: &ThresholdSetting{Threshold: milli1},
 			}}, [6]time.Duration{
 			milli1, milli2, milli3, milli4, milli4, milli4,
-		}, 0.0, false, &Test{Status: StatusOK, FailOnError: false, FailOnThreshold: false, FailOnKPI: true,
+		}, 0.0, false, &Test{Status: StatusOK, FailOnError: false, FailOnThreshold: false, FailOnKeyMetric: true,
 			Thresholds: map[Threshold]*ThresholdSetting{
 				ThresholdMean:    &ThresholdSetting{Threshold: milli5, Status: StatusOK},
 				ThresholdMedian:  &ThresholdSetting{Threshold: milli5, Status: StatusOK},
@@ -228,8 +228,8 @@ func TestTestModel_SetStatus(t *testing.T) {
 				ThresholdFastest: &ThresholdSetting{Threshold: milli5, Status: StatusOK},
 				ThresholdSlowest: &ThresholdSetting{Threshold: milli1, Status: StatusFail},
 			}}},
-		{"slowest over limit and kpi is slowest", &Test{FailOnThreshold: false, FailOnKPI: true,
-			KPI: ThresholdSlowest,
+		{"slowest over limit and KeyMetric is slowest", &Test{FailOnThreshold: false, FailOnKeyMetric: true,
+			KeyMetric: ThresholdSlowest,
 			Thresholds: map[Threshold]*ThresholdSetting{
 				ThresholdMean:    &ThresholdSetting{Threshold: milli5},
 				ThresholdMedian:  &ThresholdSetting{Threshold: milli5},
@@ -238,8 +238,8 @@ func TestTestModel_SetStatus(t *testing.T) {
 				ThresholdSlowest: &ThresholdSetting{Threshold: milli1},
 			}}, [6]time.Duration{
 			milli1, milli2, milli3, milli4, milli4, milli4,
-		}, 0.0, false, &Test{Status: StatusFail, FailOnError: false, FailOnThreshold: false, FailOnKPI: true,
-			KPI: ThresholdSlowest,
+		}, 0.0, false, &Test{Status: StatusFail, FailOnError: false, FailOnThreshold: false, FailOnKeyMetric: true,
+			KeyMetric: ThresholdSlowest,
 			Thresholds: map[Threshold]*ThresholdSetting{
 				ThresholdMean:    &ThresholdSetting{Threshold: milli5, Status: StatusOK},
 				ThresholdMedian:  &ThresholdSetting{Threshold: milli5, Status: StatusOK},
@@ -247,8 +247,8 @@ func TestTestModel_SetStatus(t *testing.T) {
 				ThresholdFastest: &ThresholdSetting{Threshold: milli5, Status: StatusOK},
 				ThresholdSlowest: &ThresholdSetting{Threshold: milli1, Status: StatusFail},
 			}}},
-		{"slowest over limit and kpi is fastest", &Test{FailOnThreshold: false, FailOnKPI: true,
-			KPI: ThresholdFastest,
+		{"slowest over limit and KeyMetric is fastest", &Test{FailOnThreshold: false, FailOnKeyMetric: true,
+			KeyMetric: ThresholdFastest,
 			Thresholds: map[Threshold]*ThresholdSetting{
 				ThresholdMean:    &ThresholdSetting{Threshold: milli5},
 				ThresholdMedian:  &ThresholdSetting{Threshold: milli5},
@@ -257,8 +257,8 @@ func TestTestModel_SetStatus(t *testing.T) {
 				ThresholdSlowest: &ThresholdSetting{Threshold: milli1},
 			}}, [6]time.Duration{
 			milli1, milli2, milli3, milli4, milli4, milli4,
-		}, 0.0, false, &Test{Status: StatusOK, FailOnError: false, FailOnThreshold: false, FailOnKPI: true,
-			KPI: ThresholdFastest,
+		}, 0.0, false, &Test{Status: StatusOK, FailOnError: false, FailOnThreshold: false, FailOnKeyMetric: true,
+			KeyMetric: ThresholdFastest,
 			Thresholds: map[Threshold]*ThresholdSetting{
 				ThresholdMean:    &ThresholdSetting{Threshold: milli5, Status: StatusOK},
 				ThresholdMedian:  &ThresholdSetting{Threshold: milli5, Status: StatusOK},
@@ -266,8 +266,8 @@ func TestTestModel_SetStatus(t *testing.T) {
 				ThresholdFastest: &ThresholdSetting{Threshold: milli5, Status: StatusOK},
 				ThresholdSlowest: &ThresholdSetting{Threshold: milli1, Status: StatusFail},
 			}}},
-		{"slowest over limit and kpi is slowest but fail on kip is false", &Test{FailOnThreshold: false, FailOnKPI: false,
-			KPI: ThresholdSlowest,
+		{"slowest over limit and KeyMetric is slowest but fail on kip is false", &Test{FailOnThreshold: false, FailOnKeyMetric: false,
+			KeyMetric: ThresholdSlowest,
 			Thresholds: map[Threshold]*ThresholdSetting{
 				ThresholdMean:    &ThresholdSetting{Threshold: milli5},
 				ThresholdMedian:  &ThresholdSetting{Threshold: milli5},
@@ -276,8 +276,8 @@ func TestTestModel_SetStatus(t *testing.T) {
 				ThresholdSlowest: &ThresholdSetting{Threshold: milli1},
 			}}, [6]time.Duration{
 			milli1, milli2, milli3, milli4, milli4, milli4,
-		}, 0.0, false, &Test{Status: StatusOK, FailOnError: false, FailOnThreshold: false, FailOnKPI: false,
-			KPI: ThresholdSlowest,
+		}, 0.0, false, &Test{Status: StatusOK, FailOnError: false, FailOnThreshold: false, FailOnKeyMetric: false,
+			KeyMetric: ThresholdSlowest,
 			Thresholds: map[Threshold]*ThresholdSetting{
 				ThresholdMean:    &ThresholdSetting{Threshold: milli5, Status: StatusOK},
 				ThresholdMedian:  &ThresholdSetting{Threshold: milli5, Status: StatusOK},
@@ -285,7 +285,7 @@ func TestTestModel_SetStatus(t *testing.T) {
 				ThresholdFastest: &ThresholdSetting{Threshold: milli5, Status: StatusOK},
 				ThresholdSlowest: &ThresholdSetting{Threshold: milli1, Status: StatusFail},
 			}}},
-		{"RPS under limit fail on threshold false", &Test{FailOnThreshold: false, FailOnKPI: true,
+		{"RPS under limit fail on threshold false", &Test{FailOnThreshold: false, FailOnKeyMetric: true,
 			Thresholds: map[Threshold]*ThresholdSetting{
 				ThresholdMean:    &ThresholdSetting{Threshold: milli5},
 				ThresholdMedian:  &ThresholdSetting{Threshold: milli5},
@@ -295,7 +295,7 @@ func TestTestModel_SetStatus(t *testing.T) {
 				ThresholdRPS:     &ThresholdSetting{NumericalThreshold: 1000.0},
 			}}, [6]time.Duration{
 			milli1, milli2, milli3, milli4, milli4, milli4,
-		}, 200.0, false, &Test{Status: StatusOK, FailOnError: false, FailOnThreshold: false, FailOnKPI: true,
+		}, 200.0, false, &Test{Status: StatusOK, FailOnError: false, FailOnThreshold: false, FailOnKeyMetric: true,
 			Thresholds: map[Threshold]*ThresholdSetting{
 				ThresholdMean:    &ThresholdSetting{Threshold: milli5, Status: StatusOK},
 				ThresholdMedian:  &ThresholdSetting{Threshold: milli5, Status: StatusOK},
@@ -304,8 +304,8 @@ func TestTestModel_SetStatus(t *testing.T) {
 				ThresholdSlowest: &ThresholdSetting{Threshold: milli5, Status: StatusOK},
 				ThresholdRPS:     &ThresholdSetting{NumericalThreshold: 1000.0, Status: StatusFail},
 			}}},
-		{"RPS under limit fail and kpi", &Test{FailOnThreshold: false, FailOnKPI: true,
-			KPI: ThresholdRPS,
+		{"RPS under limit fail and KeyMetric", &Test{FailOnThreshold: false, FailOnKeyMetric: true,
+			KeyMetric: ThresholdRPS,
 			Thresholds: map[Threshold]*ThresholdSetting{
 				ThresholdMean:    &ThresholdSetting{Threshold: milli5},
 				ThresholdMedian:  &ThresholdSetting{Threshold: milli5},
@@ -315,8 +315,8 @@ func TestTestModel_SetStatus(t *testing.T) {
 				ThresholdRPS:     &ThresholdSetting{NumericalThreshold: 1000.0},
 			}}, [6]time.Duration{
 			milli1, milli2, milli3, milli4, milli4, milli4,
-		}, 200.0, false, &Test{Status: StatusFail, FailOnError: false, FailOnThreshold: false, FailOnKPI: true,
-			KPI: ThresholdRPS,
+		}, 200.0, false, &Test{Status: StatusFail, FailOnError: false, FailOnThreshold: false, FailOnKeyMetric: true,
+			KeyMetric: ThresholdRPS,
 			Thresholds: map[Threshold]*ThresholdSetting{
 				ThresholdMean:    &ThresholdSetting{Threshold: milli5, Status: StatusOK},
 				ThresholdMedian:  &ThresholdSetting{Threshold: milli5, Status: StatusOK},
@@ -325,8 +325,8 @@ func TestTestModel_SetStatus(t *testing.T) {
 				ThresholdSlowest: &ThresholdSetting{Threshold: milli5, Status: StatusOK},
 				ThresholdRPS:     &ThresholdSetting{NumericalThreshold: 1000.0, Status: StatusFail},
 			}}},
-		{"RPS over limit fail and kpi", &Test{FailOnThreshold: false, FailOnKPI: true,
-			KPI: ThresholdRPS,
+		{"RPS over limit fail and KeyMetric", &Test{FailOnThreshold: false, FailOnKeyMetric: true,
+			KeyMetric: ThresholdRPS,
 			Thresholds: map[Threshold]*ThresholdSetting{
 				ThresholdMean:    &ThresholdSetting{Threshold: milli5},
 				ThresholdMedian:  &ThresholdSetting{Threshold: milli5},
@@ -336,8 +336,8 @@ func TestTestModel_SetStatus(t *testing.T) {
 				ThresholdRPS:     &ThresholdSetting{NumericalThreshold: 1000.0},
 			}}, [6]time.Duration{
 			milli1, milli2, milli3, milli4, milli4, milli4,
-		}, 2000.0, false, &Test{Status: StatusOK, FailOnError: false, FailOnThreshold: false, FailOnKPI: true,
-			KPI: ThresholdRPS,
+		}, 2000.0, false, &Test{Status: StatusOK, FailOnError: false, FailOnThreshold: false, FailOnKeyMetric: true,
+			KeyMetric: ThresholdRPS,
 			Thresholds: map[Threshold]*ThresholdSetting{
 				ThresholdMean:    &ThresholdSetting{Threshold: milli5, Status: StatusOK},
 				ThresholdMedian:  &ThresholdSetting{Threshold: milli5, Status: StatusOK},
@@ -346,8 +346,8 @@ func TestTestModel_SetStatus(t *testing.T) {
 				ThresholdSlowest: &ThresholdSetting{Threshold: milli5, Status: StatusOK},
 				ThresholdRPS:     &ThresholdSetting{NumericalThreshold: 1000.0, Status: StatusOK},
 			}}},
-		{"RPS under limit fail and kpi fail", &Test{FailOnThreshold: false, FailOnKPI: false,
-			KPI: ThresholdRPS,
+		{"RPS under limit fail and KeyMetric fail", &Test{FailOnThreshold: false, FailOnKeyMetric: false,
+			KeyMetric: ThresholdRPS,
 			Thresholds: map[Threshold]*ThresholdSetting{
 				ThresholdMean:    &ThresholdSetting{Threshold: milli5},
 				ThresholdMedian:  &ThresholdSetting{Threshold: milli5},
@@ -357,8 +357,8 @@ func TestTestModel_SetStatus(t *testing.T) {
 				ThresholdRPS:     &ThresholdSetting{NumericalThreshold: 1000.0},
 			}}, [6]time.Duration{
 			milli1, milli2, milli3, milli4, milli4, milli4,
-		}, 200.0, false, &Test{Status: StatusOK, FailOnError: false, FailOnThreshold: false, FailOnKPI: false,
-			KPI: ThresholdRPS,
+		}, 200.0, false, &Test{Status: StatusOK, FailOnError: false, FailOnThreshold: false, FailOnKeyMetric: false,
+			KeyMetric: ThresholdRPS,
 			Thresholds: map[Threshold]*ThresholdSetting{
 				ThresholdMean:    &ThresholdSetting{Threshold: milli5, Status: StatusOK},
 				ThresholdMedian:  &ThresholdSetting{Threshold: milli5, Status: StatusOK},

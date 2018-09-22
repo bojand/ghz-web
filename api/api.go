@@ -1,12 +1,16 @@
 package api
 
 import (
+	"github.com/bojand/ghz-web/config"
 	"github.com/bojand/ghz-web/service"
 	"github.com/labstack/echo"
 )
 
 // Setup sets up the application API
-func Setup(g *echo.Group,
+func Setup(
+	config *config.Config,
+	info *config.Info,
+	g *echo.Group,
 	ps service.ProjectService,
 	ts service.TestService,
 	rs service.RunService,

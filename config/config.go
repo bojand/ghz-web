@@ -3,10 +3,18 @@ package config
 import (
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/jinzhu/configor"
 	"github.com/pkg/errors"
 )
+
+// Info represents some app level info
+type Info struct {
+	Version   string
+	GOVersion string
+	StartTime time.Time
+}
 
 // ServerConfig is server config
 type ServerConfig struct {
