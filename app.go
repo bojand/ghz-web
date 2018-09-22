@@ -93,6 +93,11 @@ func (app *Application) setupDatabase() error {
 }
 
 func (app *Application) setupServer() {
+	ps := model.ProjectService{DB: app.DB}
+	ts := model.TestService{DB: app.DB}
+	rs := model.RunService{DB: app.DB}
+	ds := model.DetailService{DB: app.DB, Config: &app.Config.Database}
+
 	s := app.Server
 
 	s.Use(middleware.CORS())
@@ -106,11 +111,6 @@ func (app *Application) setupServer() {
 	root.Use(middleware.Recover())
 
 	apiRoot := root.Group("/api")
-
-	ps := model.ProjectService{DB: app.DB}
-	ts := model.TestService{DB: app.DB}
-	rs := model.RunService{DB: app.DB}
-	ds := model.DetailService{DB: app.DB, Config: &app.Config.Database}
 
 	api.Setup(app.Config, app.Info, apiRoot, &ps, &ts, &rs, &ds)
 

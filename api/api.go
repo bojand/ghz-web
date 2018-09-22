@@ -16,6 +16,8 @@ func Setup(
 	rs service.RunService,
 	ds service.DetailService) {
 
+	SetupInfoAPI(info, g)
+
 	projectGroup := g.Group("/projects")
 	SetupProjectAPI(projectGroup, ps)
 
@@ -29,6 +31,4 @@ func Setup(
 	SetupDetailAPI(detailGroup, ds)
 
 	SetupRawAPI(g, ps, ts, rs, ds)
-
-	SetupInfoAPI(info, g)
 }

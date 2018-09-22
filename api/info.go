@@ -14,7 +14,7 @@ type InfoResponse struct {
 	Version        string            `json:"version"`
 	RuntimeVersion string            `json:"runtimeVersion"`
 	Uptime         string            `json:"uptime"`
-	MemoryStats    *runtime.MemStats `json:"memoryStats"`
+	MemoryStats    *runtime.MemStats `json:"memoryStats,omitempty"`
 }
 
 // SetupInfoAPI sets up the info endpoint
@@ -27,7 +27,7 @@ func SetupInfoAPI(info *config.Info, g *echo.Group) {
 			Version:        info.Version,
 			RuntimeVersion: info.GOVersion,
 			Uptime:         time.Since(info.StartTime).String(),
-			MemoryStats:    memStats,
+			// MemoryStats:    memStats,
 		}
 
 		return c.JSON(http.StatusOK, ir)
