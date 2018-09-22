@@ -3,6 +3,7 @@ package api
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"strconv"
@@ -10,6 +11,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/bojand/ghz-web/config"
 	"github.com/bojand/ghz-web/model"
 	"github.com/jinzhu/gorm"
 	"github.com/labstack/echo"
@@ -27,17 +29,22 @@ func TestDetailAPI(t *testing.T) {
 	}
 	defer db.Close()
 
-	db.AutoMigrate(&model.Project{}, &model.Test{}, &model.Run{}, &model.Detail{})
+	conf, cerr := config.Read("../test/config1.toml")
+	if cerr != nil {
+		assert.FailNow(t, cerr.Error())
+	}
+
+	db.AutoMigrate(&model.Project{}, &model.Test{}, &model.Run{}, &model.Detail{},
+		&model.Bucket{}, &model.LatencyDistribution{})
 	db.Exec("PRAGMA foreign_keys = ON;")
 
 	ts := &model.TestService{DB: db}
 	ps := &model.ProjectService{DB: db}
 	rs := &model.RunService{DB: db}
-	ds := &model.DetailService{DB: db}
-	// testAPI := &TestAPI{ts: ts}
+	ds := &model.DetailService{DB: db, Config: &conf.Database}
 
-	var projectID, testID uint
-	var pid, tid string
+	var projectID, testID, runID uint
+	var pid, tid, rid string
 
 	var httpTest *baloo.Client
 	var echoServer *echo.Echo
@@ -49,6 +56,8 @@ func TestDetailAPI(t *testing.T) {
 	defer echoServer.Close()
 
 	const basePath = "/projects"
+
+	var run0data, run1data []byte
 
 	t.Run("Start API", func(t *testing.T) {
 		projectGroup := echoServer.Group(basePath)
@@ -62,6 +71,9 @@ func TestDetailAPI(t *testing.T) {
 
 		detailGroup := runsGroup.Group("/:rid/details")
 		SetupDetailAPI(detailGroup, ds)
+
+		apiGroup := echoServer.Group("/api")
+		SetupRawAPI(apiGroup, ps, ts, rs, ds)
 
 		routes := echoServer.Routes()
 		for _, r := range routes {
@@ -92,77 +104,84 @@ func TestDetailAPI(t *testing.T) {
 		httpTest = baloo.New(echoServer.Listener.Addr().String())
 	})
 
-	t.Run("Create new project", func(t *testing.T) {
-		httpTest.Post(basePath + "/").
-			JSON(map[string]string{"name": " Test Project Name "}).
+	t.Run("Read data file", func(t *testing.T) {
+		jsonFile, err := os.Open("../test/run0.json")
+		assert.NoError(t, err)
+		defer jsonFile.Close()
+
+		run0data, err = ioutil.ReadAll(jsonFile)
+
+		assert.NoError(t, err)
+		assert.NotNil(t, run0data)
+		assert.True(t, len(run0data) > 0)
+	})
+
+	t.Run("Read data file 2", func(t *testing.T) {
+		jsonFile, err := os.Open("../test/run1.json")
+		assert.NoError(t, err)
+		defer jsonFile.Close()
+
+		run1data, err = ioutil.ReadAll(jsonFile)
+
+		assert.NoError(t, err)
+		assert.NotNil(t, run1data)
+		assert.True(t, len(run1data) > 0)
+	})
+
+	t.Run("POST create raw data", func(t *testing.T) {
+		var data map[string]interface{}
+
+		err := json.Unmarshal(run0data, &data)
+
+		assert.NoError(t, err)
+
+		httpTest.Post("/api/raw/").
+			JSON(data).
 			Expect(t).
 			Status(201).
 			Type("json").
 			AssertFunc(func(res *http.Response, req *http.Request) error {
-				p := new(model.Project)
-				json.NewDecoder(res.Body).Decode(p)
+				rr := new(RawResponse)
+				json.NewDecoder(res.Body).Decode(rr)
 
 				assert.NoError(t, err)
 
-				assert.NotZero(t, p.ID)
-				assert.Equal(t, "testprojectname", p.Name)
-				assert.Equal(t, "", p.Description)
+				assert.NotNil(t, rr.Project)
+				assert.NotNil(t, rr.Test)
+				assert.NotNil(t, rr.Run)
+				assert.NotNil(t, rr.Details)
+				assert.NotZero(t, rr.Details.Success)
 
-				projectID = p.ID
+				assert.NotZero(t, rr.Project.ID)
+				assert.NotZero(t, rr.Test.ID)
+				assert.NotZero(t, rr.Run.ID)
+
+				testID = rr.Test.ID
+				tid = strconv.FormatUint(uint64(testID), 10)
+
+				projectID = rr.Project.ID
 				pid = strconv.FormatUint(uint64(projectID), 10)
 
+				runID = rr.Run.ID
+				rid = strconv.FormatUint(uint64(runID), 10)
+
 				return nil
 			}).
 			Done()
 	})
 
-	t.Run("Create new test", func(t *testing.T) {
-		httpTest.Post(basePath + "/" + pid + "/tests/").
-			JSON(map[string]string{"name": " Test Name ", "description": "Test description"}).
+	t.Run("GET list of details", func(t *testing.T) {
+		httpTest.Get("/projects/" + pid + "/tests/" + tid + "/runs/" + rid + "/details/").
 			Expect(t).
-			Status(201).
+			Status(200).
 			Type("json").
 			AssertFunc(func(res *http.Response, req *http.Request) error {
-				tm := new(model.Test)
-				json.NewDecoder(res.Body).Decode(tm)
+				dl := new(DetailList)
+				json.NewDecoder(res.Body).Decode(dl)
 
 				assert.NoError(t, err)
-
-				assert.NotZero(t, tm.ID)
-				assert.Equal(t, "testname", tm.Name)
-				assert.Equal(t, "Test description", tm.Description)
-
-				testID = tm.ID
-				tid = strconv.FormatUint(uint64(testID), 10)
-				return nil
-			}).
-			Done()
-	})
-
-	t.Run("Create a run", func(t *testing.T) {
-		httpTest.Post(basePath+"/"+pid+"/tests/"+tid+"/runs/").
-			AddHeader("Content-Type", "application/json; charset=UTF-8").
-			BodyString(`{"count":1000,"total":5000000000,"average":123000000,"fastest":50000000,"slowest":234000000,"rps":6543.21}`).
-			Expect(t).
-			Status(201).
-			Type("json").
-			AssertFunc(func(res *http.Response, req *http.Request) error {
-				r := new(model.Run)
-				json.NewDecoder(res.Body).Decode(r)
-
-				assert.NoError(t, err)
-
-				assert.NotZero(t, r.ID)
-				assert.Equal(t, testID, r.TestID)
-				assert.Equal(t, 1000, int(r.Count))
-				assert.Equal(t, 5000*time.Millisecond, r.Total)
-				assert.Equal(t, 123*time.Millisecond, r.Average)
-				assert.Equal(t, 50*time.Millisecond, r.Fastest)
-				assert.Equal(t, 234*time.Millisecond, r.Slowest)
-				assert.Equal(t, 6543.21, r.Rps)
-
-				// rid = strconv.FormatUint(uint64(r.ID), 10)
-				// runID = r.ID
+				assert.Len(t, dl.Data, 20)
+				assert.Equal(t, 937, int(dl.Total))
 
 				return nil
 			}).

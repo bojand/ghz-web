@@ -43,8 +43,6 @@ func TestRawAPI(t *testing.T) {
 	rs := &model.RunService{DB: db}
 	ds := &model.DetailService{DB: db, Config: &conf.Database}
 
-	// runAPI := &RunAPI{rs: rs, ds: ds}
-
 	var projectID, testID uint
 	var pid, tid string
 
