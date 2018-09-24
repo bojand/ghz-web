@@ -1,5 +1,6 @@
 <template>
   <nav class="navbar">
+    
     <div class="navbar-brand">
       <a class="navbar-item" href="/">
         <!-- <img src="../../img/green_fwd_64.png" alt="Logo"> -->
@@ -42,19 +43,29 @@
 </template>
 
 <script>
+import InfoModal from '../components/InfoModal.vue'
 
 export default {
   methods: {
     async infoModal() {
-      const info = await this.$store.fetchInfo()
+      let info = await this.$store.fetchInfo()
 
-      this.$modal.open(`
-        <p>
-          <b-message>
-            <pre style="background-color: transparent; white-space: pre-wrap;">{{ ${info} | pretty }}</pre>
-          </b-message>
-        </p>
-      `)
+      if (typeof info === 'string') {
+        info = JSON.parse(info)
+      }
+
+      info = JSON.stringify(info, null, 2)
+
+      console.log(info)
+
+      this.$modal.open({
+        parent: this,
+        component: InfoModal,
+        hasModalCard: true,
+        props: {
+          info
+        }
+      })
     }
   }
 }

@@ -6578,19 +6578,24 @@ label.panel-block {
   position: relative; }
   .autocomplete .dropdown-menu {
     display: block;
-    min-width: 100%; }
+    min-width: 100%;
+    max-width: 100%; }
     .autocomplete .dropdown-menu.is-opened-top {
       top: auto;
       bottom: 100%; }
   .autocomplete .dropdown-content {
     overflow: auto;
     max-height: 200px; }
-  .autocomplete .dropdown-item.is-hovered, .autocomplete .dropdown .dropdown-menu .has-link a.is-hovered, .dropdown .dropdown-menu .has-link .autocomplete a.is-hovered {
-    background: whitesmoke;
-    color: #0a0a0a; }
-  .autocomplete .dropdown-item.is-disabled, .autocomplete .dropdown .dropdown-menu .has-link a.is-disabled, .dropdown .dropdown-menu .has-link .autocomplete a.is-disabled {
-    opacity: 0.5;
-    cursor: not-allowed; }
+  .autocomplete .dropdown-item, .autocomplete .dropdown .dropdown-menu .has-link a, .dropdown .dropdown-menu .has-link .autocomplete a {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis; }
+    .autocomplete .dropdown-item.is-hovered, .autocomplete .dropdown .dropdown-menu .has-link a.is-hovered, .dropdown .dropdown-menu .has-link .autocomplete a.is-hovered {
+      background: whitesmoke;
+      color: #0a0a0a; }
+    .autocomplete .dropdown-item.is-disabled, .autocomplete .dropdown .dropdown-menu .has-link a.is-disabled, .dropdown .dropdown-menu .has-link .autocomplete a.is-disabled {
+      opacity: 0.5;
+      cursor: not-allowed; }
   .autocomplete.is-small {
     border-radius: 2px;
     font-size: 0.75rem; }
@@ -6606,7 +6611,11 @@ label.panel-block {
   .b-checkbox.checkbox + .checkbox {
     margin-left: 0.5em; }
   .b-checkbox.checkbox input[type=checkbox] {
-    display: none; }
+    position: absolute;
+    left: 0;
+    opacity: 0;
+    outline: none;
+    z-index: -1; }
     .b-checkbox.checkbox input[type=checkbox] + .check {
       width: 1.25em;
       height: 1.25em;
@@ -6984,11 +6993,11 @@ label.panel-block {
   align-items: center;
   display: none;
   justify-content: center;
-  overflow: hidden;
-  z-index: 999; }
+  overflow: hidden; }
   .loading-overlay.is-active {
     display: flex; }
   .loading-overlay.is-full-page {
+    z-index: 999;
     position: fixed; }
     .loading-overlay.is-full-page .loading-icon:after {
       top: calc(50% - 2.5em);
@@ -7183,7 +7192,11 @@ label.panel-block {
   .b-radio.radio + .radio {
     margin-left: 0.5em; }
   .b-radio.radio input[type=radio] {
-    display: none; }
+    position: absolute;
+    left: 0;
+    opacity: 0;
+    outline: none;
+    z-index: -1; }
     .b-radio.radio input[type=radio] + .check {
       display: flex;
       align-items: center;
@@ -7331,6 +7344,7 @@ label.panel-block {
     .switch input[type=checkbox] + .check {
       display: flex;
       align-items: center;
+      flex-shrink: 0;
       width: 2.75em;
       height: 1.575em;
       padding: 0.2em;
@@ -7634,6 +7648,8 @@ label.panel-block {
       box-shadow: none !important; }
   .taginput .taginput-container .autocomplete .icon {
     height: 1.7em; }
+  .taginput .taginput-container .autocomplete > .control.is-loading::after {
+    top: 0.375em; }
 
 .timepicker .dropdown,
 .timepicker .dropdown-trigger {
