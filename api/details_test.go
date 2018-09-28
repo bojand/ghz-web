@@ -165,7 +165,7 @@ func TestDetailAPI(t *testing.T) {
 			Status(200).
 			Type("json").
 			AssertFunc(func(res *http.Response, req *http.Request) error {
-				dl := new(DetailList)
+				dl := new(DetailListResponse)
 				err = json.NewDecoder(res.Body).Decode(dl)
 
 				assert.NoError(t, err)

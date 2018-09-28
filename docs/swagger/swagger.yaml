@@ -1,5 +1,16 @@
 basePath: '{{.BasePath}}'
 definitions:
+  api.DetailListResponse:
+    properties:
+      data:
+        description: List of detail objects
+        items:
+          type: '&{%!s(token.Pos=601) %!s(*ast.SelectorExpr=&{0xc0004b39a0 0xc0004b39c0})}'
+        type: array
+      total:
+        description: The total number of details
+        type: integer
+    type: object
   api.InfoResponse:
     properties:
       memoryInfo:
@@ -62,7 +73,7 @@ paths:
   /info:
     get:
       description: Gets the server info
-      operationId: getinfo
+      operationId: get-info
       produces:
       - application/json
       responses:
@@ -87,4 +98,60 @@ paths:
             $ref: '#/definitions/echo.HTTPError'
             type: object
       summary: Gets the server info
+  /projects/{pid}/tests/{tid}/runs/{rid}/details:
+    get:
+      description: Lists the details for the specific run.
+      operationId: get-list-details
+      parameters:
+      - description: Project ID
+        in: path
+        name: pid
+        required: true
+        type: integer
+      - description: Test ID
+        in: path
+        name: tid
+        required: true
+        type: integer
+      - description: Run ID
+        in: path
+        name: rid
+        required: true
+        type: integer
+      - description: The page to view
+        in: query
+        name: page
+        type: integer
+      - description: 'The sort order. Default: ''asc'''
+        in: query
+        name: order
+        type: string
+      - description: 'The property to sort by. Default: ''id'''
+        in: query
+        name: sort
+        type: sring
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.DetailListResponse'
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/echo.HTTPError'
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/echo.HTTPError'
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/echo.HTTPError'
+            type: object
+      summary: Lists the details for the specific run
 swagger: "2.0"

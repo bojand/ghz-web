@@ -9,6 +9,7 @@ import (
 	"github.com/labstack/echo/middleware"
 	"github.com/labstack/gommon/log"
 	"github.com/swaggo/echo-swagger"
+	"gopkg.in/go-playground/validator.v9"
 
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mssql"
@@ -105,6 +106,8 @@ func (app *Application) setupServer() {
 
 	s := app.Server
 
+	s.Validator = &CustomValidator{validator: validator.New()}
+
 	s.Use(middleware.CORS())
 
 	s.Pre(middleware.AddTrailingSlash())
@@ -125,4 +128,14 @@ func (app *Application) setupServer() {
 	root.GET("/docs/*", echoSwagger.WrapHandler, middleware.RemoveTrailingSlash())
 
 	api.PrintRoutes(s)
+}
+
+// CustomValidator is our validator for the API
+type CustomValidator struct {
+	validator *validator.Validate
+}
+
+// Validate validates the input
+func (cv *CustomValidator) Validate(i interface{}) error {
+	return cv.validator.Struct(i)
 }

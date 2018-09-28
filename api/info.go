@@ -64,8 +64,8 @@ type InfoAPI struct {
 // getInfo Gets the server info
 // @Summary Gets the server info
 // @Description Gets the server info
-// @ID getinfo
-// @Produce  json
+// @ID get-info
+// @Produce json
 // @Success 200 {object} api.InfoResponse
 // @Failure 400 {object} echo.HTTPError
 // @Failure 404 {object} echo.HTTPError
