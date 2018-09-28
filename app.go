@@ -3,10 +3,12 @@ package main
 import (
 	"github.com/bojand/ghz-web/api"
 	"github.com/bojand/ghz-web/config"
+	"github.com/bojand/ghz-web/docs"
 	"github.com/bojand/ghz-web/model"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
 	"github.com/labstack/gommon/log"
+	"github.com/swaggo/echo-swagger"
 
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mssql"
@@ -98,6 +100,9 @@ func (app *Application) setupServer() {
 	rs := model.RunService{DB: app.DB}
 	ds := model.DetailService{DB: app.DB, Config: &app.Config.Database}
 
+	docs.SwaggerInfo.Host = app.Config.Server.GetHostPort()
+	docs.SwaggerInfo.BasePath = app.Config.Server.RootURL + "/api"
+
 	s := app.Server
 
 	s.Use(middleware.CORS())
@@ -115,6 +120,9 @@ func (app *Application) setupServer() {
 	api.Setup(app.Config, app.Info, apiRoot, &ps, &ts, &rs, &ds)
 
 	s.Static("/", "ui/dist").Name = "ghz api: static"
+
+	// cannot work with trailing slashes
+	root.GET("/docs/*", echoSwagger.WrapHandler, middleware.RemoveTrailingSlash())
 
 	api.PrintRoutes(s)
 }

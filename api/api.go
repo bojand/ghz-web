@@ -6,6 +6,10 @@ import (
 	"github.com/labstack/echo"
 )
 
+// @title ghz-web API
+// @version 1.0
+// @description ghz-web REST API
+
 // Setup sets up the application API
 func Setup(
 	config *config.Config,

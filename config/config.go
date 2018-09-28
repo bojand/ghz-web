@@ -19,8 +19,8 @@ type Info struct {
 // ServerConfig is server config
 type ServerConfig struct {
 	RootURL string
-	Address string
-	Port    uint `default:"3000"`
+	Address string `default:"localhost"`
+	Port    uint   `default:"3000"`
 }
 
 // GetHostPort returns host:port
