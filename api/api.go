@@ -1,6 +1,8 @@
 package api
 
 import (
+	"time"
+
 	"github.com/bojand/ghz-web/config"
 	"github.com/bojand/ghz-web/service"
 	"github.com/labstack/echo"
@@ -35,4 +37,25 @@ func Setup(
 	SetupDetailAPI(detailGroup, ds)
 
 	SetupRawAPI(g, ps, ts, rs, ds)
+}
+
+// Model for common api objects
+type Model struct {
+	// The id
+	ID uint `json:"id" example:"123"`
+
+	// The creation time
+	CreatedAt time.Time `json:"createdAt"`
+
+	// The updated time
+	UpdatedAt time.Time `json:"updatedAt"`
+
+	// The deleted time
+	DeletedAt *time.Time `json:"deletedAt"`
+}
+
+// Listable is list
+type Listable struct {
+	// The total number of items
+	Total uint `json:"total" example:"10"`
 }

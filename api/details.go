@@ -2,19 +2,40 @@ package api
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/bojand/ghz-web/model"
 	"github.com/bojand/ghz-web/service"
 	"github.com/labstack/echo"
 )
 
+// Detail is a detail object
+type Detail struct {
+	Model
+
+	// Run id
+	RunID uint `json:"runID" example:"321"`
+
+	// Timestamp for the detail
+	Timestamp time.Time `json:"timestamp"`
+
+	// Latency of the call
+	Latency float64 `json:"latency" validate:"required"`
+
+	// Error details
+	Error string `json:"error"`
+
+	// Status of the call
+	Status string `json:"status"`
+}
+
 // DetailListRequest request
 type DetailListRequest struct {
 	// The property by which to sort the results
-	Sort string `json:"sort" query:"sort" validate:"oneof=id"`
+	Sort string `json:"sort" query:"sort" validate:"omitempty,oneof=id"`
 
 	// The sort order
-	Order string `json:"order" query:"order" validate:"oneof=asc desc"`
+	Order string `json:"order" query:"order" validate:"omitempty,oneof=asc desc"`
 
 	// The page to view
 	Page uint `json:"page" query:"page"`
@@ -22,11 +43,10 @@ type DetailListRequest struct {
 
 // DetailListResponse response holds a list of details
 type DetailListResponse struct {
-	// The total number of details
-	Total uint `json:"total"`
+	Listable
 
 	// List of detail objects
-	Data []*model.Detail `json:"data"`
+	Data []*Detail `json:"data"`
 }
 
 // SetupDetailAPI sets up the API
@@ -80,12 +100,14 @@ func (api *DetailAPI) listDetails(c echo.Context) error {
 
 	page := dlReq.Page
 	sort := dlReq.Sort
-	order := dlReq.Order
+	order := "asc"
 
 	doSort := false
 
 	if sort != "" {
 		doSort = true
+
+		order = dlReq.Order
 	}
 
 	limit := uint(20)
@@ -125,7 +147,23 @@ func (api *DetailAPI) listDetails(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Bad Request: "+err2.Error())
 	}
 
-	pl := &DetailListResponse{Total: count, Data: data}
+	resData := make([]*Detail, len(data))
+
+	for i, d := range data {
+		resData[i] = new(Detail)
+		resData[i].ID = d.ID
+		resData[i].CreatedAt = d.CreatedAt
+		resData[i].UpdatedAt = d.UpdatedAt
+		resData[i].DeletedAt = d.DeletedAt
+		resData[i].RunID = d.RunID
+		resData[i].Timestamp = d.Timestamp
+		resData[i].Latency = d.Latency
+		resData[i].Error = d.Error
+		resData[i].Status = d.Status
+	}
+
+	pl := &DetailListResponse{Data: resData}
+	pl.Total = count
 
 	return c.JSON(http.StatusOK, pl)
 }
