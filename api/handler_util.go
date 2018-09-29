@@ -117,3 +117,17 @@ func PrintRoutes(echoServer *echo.Echo) {
 	}
 
 }
+
+func bindAndValidate(c echo.Context, in interface{}) error {
+	if err := c.Bind(in); err != nil {
+		return err
+	}
+
+	if c.Echo().Validator != nil {
+		if err := c.Validate(in); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}

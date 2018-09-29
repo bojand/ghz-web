@@ -90,11 +90,7 @@ func (api *DetailAPI) listDetails(c echo.Context) error {
 
 	dlReq := new(DetailListRequest)
 
-	if err := c.Bind(dlReq); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
-	}
-
-	if err := c.Validate(dlReq); err != nil {
+	if err := bindAndValidate(c, dlReq); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 

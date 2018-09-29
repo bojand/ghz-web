@@ -69,7 +69,7 @@ func TestInfoAPI(t *testing.T) {
 
 				assert.Equal(t, runtime.Version(), infoRes.RuntimeVersion)
 				assert.NotEmpty(t, infoRes.Uptime)
-				assert.NotNil(t, infoRes.MemoryStats)
+				assert.NotNil(t, infoRes.MemoryInfo)
 
 				return nil
 			}).
