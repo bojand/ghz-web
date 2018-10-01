@@ -29,4 +29,4 @@ Planned features:
 
 ### Status
 
-ALpha-ish. Compiles and executes. API and UX mostly done. Results can be ingested and data viewed. Things mostly work but lots of wrapping up to do. See `TODO.md`.
+Alpha-ish. Compiles and executes. API and UX mostly done. Results can be ingested and data viewed. Things mostly work but lots of wrapping up to do. See `TODO.md`.
