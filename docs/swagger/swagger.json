@@ -1,0 +1,226 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "ghz-web REST API",
+        "title": "ghz-web API",
+        "contact": {},
+        "license": {},
+        "version": "1.0"
+    },
+    "host": "{{.Host}}",
+    "basePath": "{{.BasePath}}",
+    "paths": {
+        "/info": {
+            "get": {
+                "description": "Gets the server info",
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Gets the server info",
+                "operationId": "get-info",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "$ref": "#/definitions/api.InfoResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "$ref": "#/definitions/echo.HTTPError"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "$ref": "#/definitions/echo.HTTPError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "$ref": "#/definitions/echo.HTTPError"
+                        }
+                    }
+                }
+            }
+        },
+        "/projects/{pid}/tests/{tid}/runs/{rid}/details": {
+            "get": {
+                "description": "Lists the details for the specific run.",
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Lists the details for the specific run",
+                "operationId": "get-list-details",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Project ID",
+                        "name": "pid",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Test ID",
+                        "name": "tid",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Run ID",
+                        "name": "rid",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "The page to view",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "The sort order. Default: 'asc'",
+                        "name": "order",
+                        "in": "query"
+                    },
+                    {
+                        "type": "sring",
+                        "description": "The property to sort by. Default: 'id'",
+                        "name": "sort",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "$ref": "#/definitions/api.DetailListResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "$ref": "#/definitions/echo.HTTPError"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "$ref": "#/definitions/echo.HTTPError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "$ref": "#/definitions/echo.HTTPError"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "api.Detail": {
+            "type": "object"
+        },
+        "api.DetailListResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "description": "List of detail objects",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/api.Detail"
+                    }
+                },
+                "total": {
+                    "description": "The total number of items",
+                    "type": "integer",
+                    "example": 10
+                }
+            }
+        },
+        "api.InfoResponse": {
+            "type": "object",
+            "properties": {
+                "memoryInfo": {
+                    "description": "Memory info",
+                    "type": "object",
+                    "$ref": "#/definitions/api.MemoryInfo"
+                },
+                "runtimeVersion": {
+                    "description": "Go runtime version",
+                    "type": "string"
+                },
+                "uptime": {
+                    "description": "Uptime of the server",
+                    "type": "string"
+                },
+                "version": {
+                    "description": "Version of the application",
+                    "type": "string"
+                }
+            }
+        },
+        "api.MemoryInfo": {
+            "type": "object",
+            "properties": {
+                "allocated": {
+                    "description": "Bytes of allocated heap objects.",
+                    "type": "integer"
+                },
+                "frees": {
+                    "description": "The cumulative count of heap objects freed.",
+                    "type": "integer"
+                },
+                "lookups": {
+                    "description": "The number of pointer lookups performed by the runtime.",
+                    "type": "integer"
+                },
+                "mallocs": {
+                    "description": "The cumulative count of heap objects allocated.\nThe number of live objects is Mallocs - Frees.",
+                    "type": "integer"
+                },
+                "numGC": {
+                    "description": "The number of completed GC cycles.",
+                    "type": "integer"
+                },
+                "system": {
+                    "description": "The total bytes of memory obtained from the OS.",
+                    "type": "integer"
+                },
+                "totalAllocated": {
+                    "description": "Cumulative bytes allocated for heap objects.",
+                    "type": "integer"
+                }
+            }
+        },
+        "echo.HTTPError": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer"
+                },
+                "internal": {
+                    "type": "error"
+                },
+                "message": {
+                    "type": "object"
+                }
+            }
+        }
+    }
+}

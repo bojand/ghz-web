@@ -31,7 +31,7 @@ type DBConfig struct {
 
 // GetConnectionString returns the database connection string
 func (db *DBConfig) GetConnectionString() string {
-	if strings.TrimSpace(db.Connection) != "" {
+	if db.Connection != "" {
 		return db.Connection
 	}
 
@@ -127,7 +127,9 @@ func (db *DBConfig) GetDialect() string {
 
 // Validate the database config
 func (db *DBConfig) Validate() error {
-	dbtype := strings.ToLower(db.Type)
+	db.Connection = strings.TrimSpace(db.Connection)
+
+	dbtype := strings.ToLower(strings.TrimSpace(db.Type))
 
 	supported := dbtype == "sqlite" ||
 		dbtype == "sqlite3" ||

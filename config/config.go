@@ -3,16 +3,24 @@ package config
 import (
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/jinzhu/configor"
 	"github.com/pkg/errors"
 )
 
+// Info represents some app level info
+type Info struct {
+	Version   string
+	GOVersion string
+	StartTime time.Time
+}
+
 // ServerConfig is server config
 type ServerConfig struct {
 	RootURL string
-	Address string
-	Port    uint `default:"3000"`
+	Address string `default:"localhost"`
+	Port    uint   `default:"3000"`
 }
 
 // GetHostPort returns host:port
@@ -29,6 +37,7 @@ type LogConfig struct {
 // Validate validates the config settings
 func (lc *LogConfig) Validate() error {
 	lvl := strings.ToLower(lc.Level)
+	lvl = strings.TrimSpace(lvl)
 
 	supported := lvl == "off" ||
 		lvl == "error" ||
@@ -63,6 +72,8 @@ func (c *Config) Validate() error {
 	if err != nil {
 		return err
 	}
+
+	c.Server.RootURL = strings.TrimSpace(c.Server.RootURL)
 
 	return nil
 }

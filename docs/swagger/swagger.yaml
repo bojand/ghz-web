@@ -1,0 +1,160 @@
+basePath: '{{.BasePath}}'
+definitions:
+  api.Detail:
+    type: object
+  api.DetailListResponse:
+    properties:
+      data:
+        description: List of detail objects
+        items:
+          $ref: '#/definitions/api.Detail'
+        type: array
+      total:
+        description: The total number of items
+        example: 10
+        type: integer
+    type: object
+  api.InfoResponse:
+    properties:
+      memoryInfo:
+        $ref: '#/definitions/api.MemoryInfo'
+        description: Memory info
+        type: object
+      runtimeVersion:
+        description: Go runtime version
+        type: string
+      uptime:
+        description: Uptime of the server
+        type: string
+      version:
+        description: Version of the application
+        type: string
+    type: object
+  api.MemoryInfo:
+    properties:
+      allocated:
+        description: Bytes of allocated heap objects.
+        type: integer
+      frees:
+        description: The cumulative count of heap objects freed.
+        type: integer
+      lookups:
+        description: The number of pointer lookups performed by the runtime.
+        type: integer
+      mallocs:
+        description: |-
+          The cumulative count of heap objects allocated.
+          The number of live objects is Mallocs - Frees.
+        type: integer
+      numGC:
+        description: The number of completed GC cycles.
+        type: integer
+      system:
+        description: The total bytes of memory obtained from the OS.
+        type: integer
+      totalAllocated:
+        description: Cumulative bytes allocated for heap objects.
+        type: integer
+    type: object
+  echo.HTTPError:
+    properties:
+      code:
+        type: integer
+      internal:
+        type: error
+      message:
+        type: object
+    type: object
+host: '{{.Host}}'
+info:
+  contact: {}
+  description: ghz-web REST API
+  license: {}
+  title: ghz-web API
+  version: "1.0"
+paths:
+  /info:
+    get:
+      description: Gets the server info
+      operationId: get-info
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.InfoResponse'
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/echo.HTTPError'
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/echo.HTTPError'
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/echo.HTTPError'
+            type: object
+      summary: Gets the server info
+  /projects/{pid}/tests/{tid}/runs/{rid}/details:
+    get:
+      description: Lists the details for the specific run.
+      operationId: get-list-details
+      parameters:
+      - description: Project ID
+        in: path
+        name: pid
+        required: true
+        type: integer
+      - description: Test ID
+        in: path
+        name: tid
+        required: true
+        type: integer
+      - description: Run ID
+        in: path
+        name: rid
+        required: true
+        type: integer
+      - description: The page to view
+        in: query
+        name: page
+        type: integer
+      - description: 'The sort order. Default: ''asc'''
+        in: query
+        name: order
+        type: string
+      - description: 'The property to sort by. Default: ''id'''
+        in: query
+        name: sort
+        type: sring
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.DetailListResponse'
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/echo.HTTPError'
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/echo.HTTPError'
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/echo.HTTPError'
+            type: object
+      summary: Lists the details for the specific run
+swagger: "2.0"
