@@ -8,7 +8,7 @@ Still work in progress
 
 <div align="center">
 	<br>
-	<img src="screenshot_wip.svg" alt="screenshot" width="100">
+	<img src="screenshot_wip.png" alt="screenshot" width="100">
 	<br>
 </div>
 
