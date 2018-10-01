@@ -1,38 +1,6 @@
 basePath: '{{.BasePath}}'
 definitions:
   api.Detail:
-    properties:
-      createdAt:
-        description: The creation time
-        type: string
-      deletedAt:
-        description: The deleted time
-        type: string
-      error:
-        description: Error details
-        type: string
-      id:
-        description: The id
-        example: 123
-        type: integer
-      latency:
-        description: Latency of the call
-        type: number
-      runID:
-        description: Run id
-        example: 321
-        type: integer
-      status:
-        description: Status of the call
-        type: string
-      timestamp:
-        description: Timestamp for the detail
-        type: string
-      updatedAt:
-        description: The updated time
-        type: string
-    required:
-    - latency
     type: object
   api.DetailListResponse:
     properties:

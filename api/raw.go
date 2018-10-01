@@ -12,19 +12,44 @@ import (
 
 // RawRequest request to the create raw api
 type RawRequest struct {
-	Date                time.Time                 `json:"date"`
-	Options             *model.Options            `json:"options,omitempty"`
-	Count               uint64                    `json:"count"`
-	Total               time.Duration             `json:"total"`
-	Average             time.Duration             `json:"average"`
-	Fastest             time.Duration             `json:"fastest"`
-	Slowest             time.Duration             `json:"slowest"`
-	Rps                 float64                   `json:"rps"`
-	ErrorDist           map[string]int            `json:"errorDistribution,omitempty"`
-	StatusCodeDist      map[string]int            `json:"statusCodeDistribution,omitempty"`
-	Details             []*model.Detail           `json:"details"`
+	// Date of the test
+	Date time.Time `json:"date"`
+
+	// Options for the test
+	Options *model.Options `json:"options,omitempty"`
+
+	// Count is the number for calls
+	Count uint64 `json:"count"`
+
+	// Total duration of the test
+	Total time.Duration `json:"total"`
+
+	// Acerage duration of a call
+	Average time.Duration `json:"average"`
+
+	// Fastest call duration
+	Fastest time.Duration `json:"fastest"`
+
+	// Slowest call duration
+	Slowest time.Duration `json:"slowest"`
+
+	// Rps is the requests per second metric
+	Rps float64 `json:"rps"`
+
+	// ErrorDist is the error distribution
+	ErrorDist map[string]int `json:"errorDistribution,omitempty"`
+
+	// Status code distribution
+	StatusCodeDist map[string]int `json:"statusCodeDistribution,omitempty"`
+
+	// Details of all the calls
+	Details []*model.Detail `json:"details"`
+
+	// Latency distribution
 	LatencyDistribution []*RawLatencyDistribution `json:"latencyDistribution"`
-	Histogram           []*RawBucket              `json:"histogram"`
+
+	// Histogram is the latency histrogram
+	Histogram []*RawBucket `json:"histogram"`
 }
 
 const layoutISO string = "2006-01-02T15:04:05.666Z"
@@ -70,8 +95,11 @@ func (rr RawRequest) MarshalJSON() ([]byte, error) {
 
 // RawLatencyDistribution holds latency distribution data
 type RawLatencyDistribution struct {
-	Percentage int           `json:"percentage"`
-	Latency    time.Duration `json:"latency"`
+	// Percentage of the dictribution
+	Percentage int `json:"percentage"`
+
+	// Latency of this distributoin
+	Latency time.Duration `json:"latency"`
 }
 
 // RawBucket holds histogram data
@@ -88,16 +116,26 @@ type RawBucket struct {
 
 // RawResponse is the response to the raw endpoint
 type RawResponse struct {
-	Project *model.Project  `json:"project"`
-	Test    *model.Test     `json:"test"`
-	Run     *model.Run      `json:"run"`
+	// Created project
+	Project *model.Project `json:"project"`
+
+	// Created test
+	Test *model.Test `json:"test"`
+
+	// Created run
+	Run *model.Run `json:"run"`
+
+	// The summary of created details
 	Details *DetailsCreated `json:"details"`
 }
 
 // DetailsCreated summary of how many details got created and how many failed
 type DetailsCreated struct {
+	// Number of successfully created detail objects
 	Success uint `json:"success"`
-	Fail    uint `json:"fail"`
+
+	// Number of failed detail objects
+	Fail uint `json:"fail"`
 }
 
 // RawAPI provides the api
@@ -125,6 +163,18 @@ func SetupRawAPI(g *echo.Group,
 	g.POST("/projects/:pid/tests/:tid/raw/", api.createRaw).Name = "ghz api: create raw"
 }
 
+// Create raw result api
+// @Summary Created raw results for given project and test
+// @Description Created raw results for given project and test
+// @ID post-create-raw
+// @Accept  json
+// @Produce json
+// @Param RawRequest body api.RawRequest true "Raw request"
+// @Success 200 {object} api.RawResponse
+// @Failure 400 {object} echo.HTTPError
+// @Failure 404 {object} echo.HTTPError
+// @Failure 500 {object} echo.HTTPError
+// @Router /projects/{pid}/tests/{tid}/raw/ [post]
 func (api *RawAPI) createRaw(c echo.Context) error {
 	po := c.Get("project")
 	p, ok := po.(*model.Project)
@@ -149,6 +199,18 @@ func (api *RawAPI) createRaw(c echo.Context) error {
 	return api.createBatch(c, rr, p, t)
 }
 
+// Create new raw result api
+// @Summary Created new raw results
+// @Description Created new raw results. Automatically creates prject, test and run.
+// @ID post-create-raw-new
+// @Accept  json
+// @Produce json
+// @Param RawRequest body api.RawRequest true "Raw request"
+// @Success 200 {object} api.RawResponse
+// @Failure 400 {object} echo.HTTPError
+// @Failure 404 {object} echo.HTTPError
+// @Failure 500 {object} echo.HTTPError
+// @Router /projects/{pid}/tests/{tid}/raw/ [post]
 func (api *RawAPI) createNew(c echo.Context) error {
 	rr := new(RawRequest)
 
@@ -188,14 +250,6 @@ func (api *RawAPI) createBatch(c echo.Context, rr *RawRequest, p *model.Project,
 	r.ErrorDist = rr.ErrorDist
 
 	r.StatusCodeDist = rr.StatusCodeDist
-
-	// codes := len(rr.StatusCodeDist)
-	// if codes > 0 {
-	// 	r.StatusCodeDist = make(map[string]int, codes)
-	// 	for key, value := range rr.StatusCodeDist {
-	// 		r.StatusCodeDist[key] = value
-	// 	}
-	// }
 
 	latencies := len(rr.LatencyDistribution)
 

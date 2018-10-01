@@ -16,13 +16,22 @@ import (
 type Detail struct {
 	Model
 
-	RunID uint `json:"runID" gorm:"type:integer REFERENCES runs(id)"`
-	Run   *Run `json:"-"`
+	Run *Run `json:"-"`
 
+	// Run id
+	RunID uint `json:"runID" gorm:"type:integer REFERENCES runs(id)"`
+
+	// Timestamp for the detail
 	Timestamp time.Time `json:"timestamp"`
-	Latency   float64   `json:"latency" validate:"required"`
-	Error     string    `json:"error"`
-	Status    string    `json:"status"`
+
+	// Latency of the call
+	Latency float64 `json:"latency" validate:"required"`
+
+	// Error details
+	Error string `json:"error"`
+
+	// Status of the call
+	Status string `json:"status"`
 }
 
 const layoutISO string = "2006-01-02T15:04:05.666Z"
