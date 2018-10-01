@@ -2,7 +2,11 @@
 
 Web API for tracking [ghz](https://github.com/bojand/ghz) runs.
 
-Still work in progress
+Ingests JSON results from ghz runs and keeps them over time for view and analysis.
+
+Threshold criteria can be set for passing / failing runs and tests.
+
+Still work in progress.
 
 ### Screenshot
 
@@ -18,11 +22,11 @@ Still work in progress
 
 Planned features:
 
-* Single executable for service, API and user interface
-* SQLite, MySQL, and Postgres support
-* Simple API to ingest `ghz` run JSON results
-* UX to track and analyze results
+* Single executable for running the service, API and user interface.
+* SQLite, MySQL, and Postgres support.
+* Simple API to ingest `ghz` run JSON results.
+* User interface to track and analyze results.
 
 ### Status
 
-ALpha-ish. API mostly done. Things mostly work but lots of wrapping up to do. See `TODO.md`.
+ALpha-ish. Compiles and executes. API and UX mostly done. Results can be ingested and data viewed. Things mostly work but lots of wrapping up to do. See `TODO.md`.
