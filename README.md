@@ -8,7 +8,9 @@ Still work in progress
 
 <div align="center">
 	<br>
-	<img src="screenshot_wip.png" alt="screenshot" width="100">
+	<a href="screenshot_wip.png" target="_blank">
+        <img src="screenshot_wip.png" alt="screenshot" width="100">
+    </a>
 	<br>
 </div>
 
