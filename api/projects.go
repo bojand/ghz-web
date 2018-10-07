@@ -1,6 +1,7 @@
 package api
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/bojand/ghz-web/model"
@@ -11,8 +12,27 @@ import (
 
 // ProjectList response
 type ProjectList struct {
-	Total uint             `json:"total"`
-	Data  []*model.Project `json:"data"`
+	Total uint       `json:"total"`
+	Data  []*Project `json:"data"`
+}
+
+// Project represents a project
+type Project struct {
+	Model
+
+	Name        string `json:"name"`
+	Description string `json:"description"`
+}
+
+func formatProject(d *model.Project) *Project {
+	p := new(Project)
+	p.ID = d.ID
+	p.CreatedAt = d.CreatedAt
+	p.UpdatedAt = d.UpdatedAt
+	p.DeletedAt = d.DeletedAt
+	p.Name = d.Name
+	p.Description = d.Description
+	return p
 }
 
 // SetupProjectAPI sets up the API
@@ -35,18 +55,24 @@ type ProjectAPI struct {
 }
 
 func (api *ProjectAPI) create(c echo.Context) error {
-	p := new(model.Project)
+	p := new(Project)
 
 	if err := c.Bind(p); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
-	err := api.ps.Create(p)
+	fmt.Printf("1:\n\n1 %+v \n\n", p)
+
+	pm := &model.Project{Name: p.Name, Description: p.Description}
+
+	fmt.Printf("2:\n\n %+v \n\n", pm)
+
+	err := api.ps.Create(pm)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
-	return c.JSON(http.StatusCreated, p)
+	return c.JSON(http.StatusCreated, formatProject(pm))
 }
 
 func (api *ProjectAPI) get(c echo.Context) error {
@@ -57,11 +83,11 @@ func (api *ProjectAPI) get(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "No project in context")
 	}
 
-	return c.JSON(http.StatusOK, p)
+	return c.JSON(http.StatusOK, formatProject(p))
 }
 
 func (api *ProjectAPI) update(c echo.Context) error {
-	p := new(model.Project)
+	p := new(Project)
 
 	if err := c.Bind(p); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
@@ -74,11 +100,14 @@ func (api *ProjectAPI) update(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "No project in context")
 	}
 
-	p.ID = ep.ID
+	pm := new(model.Project)
+	pm.ID = ep.ID
+	pm.Name = p.Name
+	pm.Description = p.Description
 
 	var err error
 
-	if err = api.ps.Update(p); gorm.IsRecordNotFoundError(err) {
+	if err = api.ps.Update(pm); gorm.IsRecordNotFoundError(err) {
 		return echo.NewHTTPError(http.StatusNotFound, "Not Found")
 	}
 
@@ -86,7 +115,7 @@ func (api *ProjectAPI) update(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
-	return c.JSON(http.StatusOK, p)
+	return c.JSON(http.StatusOK, formatProject(pm))
 }
 
 func (api *ProjectAPI) delete(c echo.Context) error {
@@ -135,7 +164,13 @@ func (api *ProjectAPI) listProjects(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Bad Request: "+err2.Error())
 	}
 
-	pl := &ProjectList{Total: count, Data: data}
+	resData := make([]*Project, len(data))
+
+	for i, d := range data {
+		resData[i] = formatProject(d)
+	}
+
+	pl := &ProjectList{Total: count, Data: resData}
 
 	return c.JSON(http.StatusOK, pl)
 }
