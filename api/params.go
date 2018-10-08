@@ -46,3 +46,20 @@ func getSortAndOrder(c echo.Context) (bool, string, string) {
 
 	return doSort, sort, order
 }
+
+func getSortAndOrderFromListRequest(listReq *ListRequest) (bool, string, string, uint) {
+	page := listReq.Page
+	sort := strings.ToLower(listReq.Sort)
+	order := "asc"
+
+	doSort := false
+
+	if sort != "" {
+		doSort = true
+		if listReq.Order != "" {
+			order = strings.ToLower(listReq.Order)
+		}
+	}
+
+	return doSort, sort, order, page
+}

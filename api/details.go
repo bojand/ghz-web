@@ -32,7 +32,7 @@ type Detail struct {
 // DetailListRequest request
 type DetailListRequest struct {
 	// The property by which to sort the results
-	Sort string `json:"sort" query:"sort" validate:"omitempty,oneof=id"`
+	Sort string `json:"sort" query:"sort" validate:"omitempty,oneof=id ID"`
 
 	// The sort order
 	Order string `json:"order" query:"order" validate:"omitempty,oneof=asc desc"`

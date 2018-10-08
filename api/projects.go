@@ -11,8 +11,10 @@ import (
 
 // ProjectList response
 type ProjectList struct {
-	Total uint       `json:"total"`
-	Data  []*Project `json:"data"`
+	Listable
+
+	// List of detail objects
+	Data []*Project `json:"data"`
 }
 
 // Project represents a project
@@ -53,6 +55,17 @@ type ProjectAPI struct {
 	ps service.ProjectService
 }
 
+// Create a project
+// @Summary Create a project
+// @Description Create a project
+// @ID post-create-project
+// @Produce json
+// @Param Project body api.Project true "Project"
+// @Success 200 {object} api.Project
+// @Failure 400 {object} echo.HTTPError
+// @Failure 404 {object} echo.HTTPError
+// @Failure 500 {object} echo.HTTPError
+// @Router /projects [post]
 func (api *ProjectAPI) create(c echo.Context) error {
 	p := new(Project)
 
@@ -70,6 +83,17 @@ func (api *ProjectAPI) create(c echo.Context) error {
 	return c.JSON(http.StatusCreated, formatProject(pm))
 }
 
+// Get a project
+// @Summary Get a project
+// @Description Get a project
+// @ID get-project
+// @Produce json
+// @Param pid path int true "Project ID"
+// @Success 200 {object} api.Project
+// @Failure 400 {object} echo.HTTPError
+// @Failure 404 {object} echo.HTTPError
+// @Failure 500 {object} echo.HTTPError
+// @Router /projects/{pid} [get]
 func (api *ProjectAPI) get(c echo.Context) error {
 	po := c.Get("project")
 	p, ok := po.(*model.Project)
@@ -81,6 +105,18 @@ func (api *ProjectAPI) get(c echo.Context) error {
 	return c.JSON(http.StatusOK, formatProject(p))
 }
 
+// Update a project
+// @Summary Update a project
+// @Description Update a project
+// @ID put-update-project
+// @Produce json
+// @Param Project body api.Project true "Project"
+// @Param pid path int true "Project ID"
+// @Success 200 {object} api.Project
+// @Failure 400 {object} echo.HTTPError
+// @Failure 404 {object} echo.HTTPError
+// @Failure 500 {object} echo.HTTPError
+// @Router /projects/{pid} [put]
 func (api *ProjectAPI) update(c echo.Context) error {
 	p := new(Project)
 
@@ -117,10 +153,27 @@ func (api *ProjectAPI) delete(c echo.Context) error {
 	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
+// Lists the projects
+// @Summary Lists the projects
+// @Description Lists the projects
+// @ID get-list-projects
+// @Produce json
+// @Param page query integer false "The page to view"
+// @Param order query string false "The sort order. Default: 'asc'"
+// @Param sort query sring false "The property to sort by. Default: 'id'"
+// @Success 200 {object} api.ProjectListResponse
+// @Failure 400 {object} echo.HTTPError
+// @Failure 404 {object} echo.HTTPError
+// @Failure 500 {object} echo.HTTPError
+// @Router /projects [get]
 func (api *ProjectAPI) listProjects(c echo.Context) error {
-	page := getPageParam(c)
+	listReq := new(ListRequest)
 
-	doSort, sort, order := getSortAndOrder(c)
+	if err := bindAndValidate(c, listReq); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+	}
+
+	doSort, sort, order, page := getSortAndOrderFromListRequest(listReq)
 
 	limit := uint(20)
 
@@ -165,7 +218,8 @@ func (api *ProjectAPI) listProjects(c echo.Context) error {
 		resData[i] = formatProject(d)
 	}
 
-	pl := &ProjectList{Total: count, Data: resData}
+	pl := &ProjectList{Data: resData}
+	pl.Total = count
 
 	return c.JSON(http.StatusOK, pl)
 }

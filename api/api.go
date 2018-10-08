@@ -59,3 +59,15 @@ type Listable struct {
 	// The total number of items
 	Total uint `json:"total" example:"10"`
 }
+
+// ListRequest request
+type ListRequest struct {
+	// The property by which to sort the results
+	Sort string `json:"sort" query:"sort" validate:"omitempty,oneof=id ID name"`
+
+	// The sort order
+	Order string `json:"order" query:"order" validate:"omitempty,oneof=asc desc"`
+
+	// The page to view
+	Page uint `json:"page" query:"page"`
+}
