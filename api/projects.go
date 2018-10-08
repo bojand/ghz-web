@@ -1,7 +1,6 @@
 package api
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/bojand/ghz-web/model"
@@ -61,11 +60,7 @@ func (api *ProjectAPI) create(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
-	fmt.Printf("1:\n\n1 %+v \n\n", p)
-
 	pm := &model.Project{Name: p.Name, Description: p.Description}
-
-	fmt.Printf("2:\n\n %+v \n\n", pm)
 
 	err := api.ps.Create(pm)
 	if err != nil {
