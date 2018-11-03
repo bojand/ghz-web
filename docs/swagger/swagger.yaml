@@ -1,6 +1,38 @@
 basePath: '{{.BasePath}}'
 definitions:
   api.Detail:
+    properties:
+      createdAt:
+        description: The creation time
+        type: string
+      deletedAt:
+        description: The deleted time
+        type: string
+      error:
+        description: Error details
+        type: string
+      id:
+        description: The id
+        example: 123
+        type: integer
+      latency:
+        description: Latency of the call
+        type: number
+      runID:
+        description: Run id
+        example: 321
+        type: integer
+      status:
+        description: Status of the call
+        type: string
+      timestamp:
+        description: Timestamp for the detail
+        type: string
+      updatedAt:
+        description: The updated time
+        type: string
+    required:
+    - latency
     type: object
   api.DetailListResponse:
     properties:
@@ -12,6 +44,15 @@ definitions:
       total:
         description: The total number of items
         example: 10
+        type: integer
+    type: object
+  api.DetailsCreated:
+    properties:
+      fail:
+        description: Number of failed detail objects
+        type: integer
+      success:
+        description: Number of successfully created detail objects
         type: integer
     type: object
   api.InfoResponse:
@@ -56,6 +97,127 @@ definitions:
         description: Cumulative bytes allocated for heap objects.
         type: integer
     type: object
+  api.Project:
+    properties:
+      createdAt:
+        description: The creation time
+        type: string
+      deletedAt:
+        description: The deleted time
+        type: string
+      description:
+        type: string
+      id:
+        description: The id
+        example: 123
+        type: integer
+      name:
+        type: string
+      updatedAt:
+        description: The updated time
+        type: string
+    type: object
+  api.ProjectList:
+    properties:
+      data:
+        description: List of detail objects
+        items:
+          $ref: '#/definitions/api.Project'
+        type: array
+      total:
+        description: The total number of items
+        example: 10
+        type: integer
+    type: object
+  api.RawBucket:
+    properties:
+      count:
+        description: The count in the bucket
+        type: integer
+      frequency:
+        description: The frequency of results in the bucket as a decimal percentage
+        type: number
+      mark:
+        description: The Mark for histogram bucket in seconds
+        type: number
+    type: object
+  api.RawLatencyDistribution:
+    properties:
+      latency:
+        description: Latency of this distributoin
+        type: string
+      percentage:
+        description: Percentage of the dictribution
+        type: integer
+    type: object
+  api.RawRequest:
+    properties:
+      average:
+        description: Acerage duration of a call
+        type: string
+      count:
+        description: Count is the number for calls
+        type: integer
+      date:
+        description: Date of the test
+        type: string
+      details:
+        description: Details of all the calls
+        items:
+          type: '&{%!s(token.Pos=1016) %!s(*ast.SelectorExpr=&{0xc00031f080 0xc00031f0a0})}'
+        type: array
+      errorDistribution:
+        description: ErrorDist is the error distribution
+        type: object
+      fastest:
+        description: Fastest call duration
+        type: string
+      histogram:
+        description: Histogram is the latency histrogram
+        items:
+          $ref: '#/definitions/api.RawBucket'
+        type: array
+      latencyDistribution:
+        description: Latency distribution
+        items:
+          $ref: '#/definitions/api.RawLatencyDistribution'
+        type: array
+      options:
+        $ref: '#/definitions/model.Options'
+        description: Options for the test
+        type: object
+      rps:
+        description: Rps is the requests per second metric
+        type: number
+      slowest:
+        description: Slowest call duration
+        type: string
+      statusCodeDistribution:
+        description: Status code distribution
+        type: object
+      total:
+        description: Total duration of the test
+        type: string
+    type: object
+  api.RawResponse:
+    properties:
+      details:
+        $ref: '#/definitions/api.DetailsCreated'
+        description: The summary of created details
+        type: object
+      project:
+        $ref: '#/definitions/model.Project'
+        description: Created project
+        type: object
+      run:
+        $ref: '#/definitions/model.Run'
+        description: Created run
+        type: object
+      test:
+        $ref: '#/definitions/model.Test'
+        description: Created test
+        type: object
+    type: object
   echo.HTTPError:
     properties:
       code:
@@ -65,13 +227,193 @@ definitions:
       message:
         type: object
     type: object
+  model.Bucket:
+    properties:
+      count:
+        description: The count in the bucket
+        type: integer
+      createdAt:
+        description: The creation time
+        type: string
+      deletedAt:
+        description: The deleted time
+        type: string
+      frequency:
+        description: The frequency of results in the bucket as a decimal percentage
+        type: number
+      id:
+        description: The id
+        type: integer
+      mark:
+        description: The Mark for histogram bucket in seconds
+        type: number
+      runId:
+        type: integer
+      updatedAt:
+        description: The updated time
+        type: string
+    type: object
+  model.LatencyDistribution:
+    properties:
+      createdAt:
+        description: The creation time
+        type: string
+      deletedAt:
+        description: The deleted time
+        type: string
+      id:
+        description: The id
+        type: integer
+      latency:
+        type: string
+      percentage:
+        type: integer
+      runId:
+        type: integer
+      updatedAt:
+        description: The updated time
+        type: string
+    type: object
+  model.Options:
+    properties:
+      c:
+        type: integer
+      call:
+        type: string
+      cert:
+        type: string
+      cname:
+        type: string
+      data:
+        type: object
+      dialTimeout:
+        type: integer
+      host:
+        type: string
+      keepAlice:
+        type: integer
+      metadata:
+        type: object
+      "n":
+        type: integer
+      proto:
+        type: string
+      qps:
+        type: integer
+      timeout:
+        type: integer
+      z:
+        type: string
+    type: object
+  model.Project:
+    properties:
+      createdAt:
+        description: The creation time
+        type: string
+      deletedAt:
+        description: The deleted time
+        type: string
+      description:
+        type: string
+      id:
+        description: The id
+        type: integer
+      name:
+        type: string
+      updatedAt:
+        description: The updated time
+        type: string
+    type: object
+  model.Run:
+    properties:
+      average:
+        type: string
+      count:
+        type: integer
+      createdAt:
+        description: The creation time
+        type: string
+      date:
+        type: string
+      deletedAt:
+        description: The deleted time
+        type: string
+      errorDistribution:
+        type: object
+      fastest:
+        type: string
+      histogram:
+        items:
+          $ref: '#/definitions/model.Bucket'
+        type: array
+      id:
+        description: The id
+        type: integer
+      latencyDistribution:
+        items:
+          $ref: '#/definitions/model.LatencyDistribution'
+        type: array
+      options:
+        $ref: '#/definitions/model.Options'
+        type: object
+      rps:
+        type: number
+      slowest:
+        type: string
+      status:
+        type: string
+      statusCodeDistribution:
+        type: object
+      testID:
+        type: integer
+      total:
+        type: string
+      updatedAt:
+        description: The updated time
+        type: string
+    type: object
+  model.Test:
+    properties:
+      createdAt:
+        description: The creation time
+        type: string
+      deletedAt:
+        description: The deleted time
+        type: string
+      description:
+        type: string
+      failOnError:
+        type: boolean
+      failOnKeyMetric:
+        type: boolean
+      failOnThreshold:
+        type: boolean
+      id:
+        description: The id
+        type: integer
+      keyMetric:
+        type: string
+      name:
+        type: string
+      projectID:
+        type: integer
+      status:
+        type: string
+      thresholds:
+        type: object
+      updatedAt:
+        description: The updated time
+        type: string
+    required:
+    - name
+    type: object
 host: '{{.Host}}'
 info:
   contact: {}
-  description: ghz-web REST API
+  description: '{{.Description}}'
   license: {}
-  title: ghz-web API
-  version: "1.0"
+  title: '{{.Title}}'
+  version: '{{.Version}}'
 paths:
   /info:
     get:
@@ -101,6 +443,195 @@ paths:
             $ref: '#/definitions/echo.HTTPError'
             type: object
       summary: Gets the server info
+  /projects:
+    get:
+      description: Lists the projects
+      operationId: get-list-projects
+      parameters:
+      - description: The page to view
+        in: query
+        name: page
+        type: integer
+      - description: 'The sort order. Default: ''asc'''
+        in: query
+        name: order
+        type: string
+      - description: 'The property to sort by. Default: ''id'''
+        in: query
+        name: sort
+        type: sring
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.ProjectList'
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/echo.HTTPError'
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/echo.HTTPError'
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/echo.HTTPError'
+            type: object
+      summary: Lists the projects
+    post:
+      description: Create a project
+      operationId: post-create-project
+      parameters:
+      - description: Project
+        in: body
+        name: Project
+        required: true
+        schema:
+          $ref: '#/definitions/api.Project'
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.Project'
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/echo.HTTPError'
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/echo.HTTPError'
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/echo.HTTPError'
+            type: object
+      summary: Create a project
+  /projects/{pid}:
+    get:
+      description: Get a project
+      operationId: get-project
+      parameters:
+      - description: Project ID
+        in: path
+        name: pid
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.Project'
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/echo.HTTPError'
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/echo.HTTPError'
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/echo.HTTPError'
+            type: object
+      summary: Get a project
+    put:
+      description: Update a project
+      operationId: put-update-project
+      parameters:
+      - description: Project
+        in: body
+        name: Project
+        required: true
+        schema:
+          $ref: '#/definitions/api.Project'
+          type: object
+      - description: Project ID
+        in: path
+        name: pid
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.Project'
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/echo.HTTPError'
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/echo.HTTPError'
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/echo.HTTPError'
+            type: object
+      summary: Update a project
+  /projects/{pid}/tests/{tid}/raw/:
+    post:
+      consumes:
+      - application/json
+      description: Created new raw results. Automatically creates prject, test and
+        run.
+      operationId: post-create-raw-new
+      parameters:
+      - description: Raw request
+        in: body
+        name: RawRequest
+        required: true
+        schema:
+          $ref: '#/definitions/api.RawRequest'
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.RawResponse'
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/echo.HTTPError'
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/echo.HTTPError'
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/echo.HTTPError'
+            type: object
+      summary: Created new raw results
   /projects/{pid}/tests/{tid}/runs/{rid}/details:
     get:
       description: Lists the details for the specific run.

@@ -161,7 +161,7 @@ func (api *ProjectAPI) delete(c echo.Context) error {
 // @Param page query integer false "The page to view"
 // @Param order query string false "The sort order. Default: 'asc'"
 // @Param sort query sring false "The property to sort by. Default: 'id'"
-// @Success 200 {object} api.ProjectListResponse
+// @Success 200 {object} api.ProjectList
 // @Failure 400 {object} echo.HTTPError
 // @Failure 404 {object} echo.HTTPError
 // @Failure 500 {object} echo.HTTPError

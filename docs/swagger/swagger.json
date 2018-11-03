@@ -1,11 +1,11 @@
 {
     "swagger": "2.0",
     "info": {
-        "description": "ghz-web REST API",
-        "title": "ghz-web API",
+        "description": "{{.Description}}",
+        "title": "{{.Title}}",
         "contact": {},
         "license": {},
-        "version": "1.0"
+        "version": "{{.Version}}"
     },
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
@@ -24,6 +24,277 @@
                         "schema": {
                             "type": "object",
                             "$ref": "#/definitions/api.InfoResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "$ref": "#/definitions/echo.HTTPError"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "$ref": "#/definitions/echo.HTTPError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "$ref": "#/definitions/echo.HTTPError"
+                        }
+                    }
+                }
+            }
+        },
+        "/projects": {
+            "get": {
+                "description": "Lists the projects",
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Lists the projects",
+                "operationId": "get-list-projects",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "The page to view",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "The sort order. Default: 'asc'",
+                        "name": "order",
+                        "in": "query"
+                    },
+                    {
+                        "type": "sring",
+                        "description": "The property to sort by. Default: 'id'",
+                        "name": "sort",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "$ref": "#/definitions/api.ProjectList"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "$ref": "#/definitions/echo.HTTPError"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "$ref": "#/definitions/echo.HTTPError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "$ref": "#/definitions/echo.HTTPError"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Create a project",
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Create a project",
+                "operationId": "post-create-project",
+                "parameters": [
+                    {
+                        "description": "Project",
+                        "name": "Project",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object",
+                            "$ref": "#/definitions/api.Project"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "$ref": "#/definitions/api.Project"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "$ref": "#/definitions/echo.HTTPError"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "$ref": "#/definitions/echo.HTTPError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "$ref": "#/definitions/echo.HTTPError"
+                        }
+                    }
+                }
+            }
+        },
+        "/projects/{pid}": {
+            "get": {
+                "description": "Get a project",
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Get a project",
+                "operationId": "get-project",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Project ID",
+                        "name": "pid",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "$ref": "#/definitions/api.Project"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "$ref": "#/definitions/echo.HTTPError"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "$ref": "#/definitions/echo.HTTPError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "$ref": "#/definitions/echo.HTTPError"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "Update a project",
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Update a project",
+                "operationId": "put-update-project",
+                "parameters": [
+                    {
+                        "description": "Project",
+                        "name": "Project",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object",
+                            "$ref": "#/definitions/api.Project"
+                        }
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Project ID",
+                        "name": "pid",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "$ref": "#/definitions/api.Project"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "$ref": "#/definitions/echo.HTTPError"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "$ref": "#/definitions/echo.HTTPError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "$ref": "#/definitions/echo.HTTPError"
+                        }
+                    }
+                }
+            }
+        },
+        "/projects/{pid}/tests/{tid}/raw/": {
+            "post": {
+                "description": "Created new raw results. Automatically creates prject, test and run.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Created new raw results",
+                "operationId": "post-create-raw-new",
+                "parameters": [
+                    {
+                        "description": "Raw request",
+                        "name": "RawRequest",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object",
+                            "$ref": "#/definitions/api.RawRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "$ref": "#/definitions/api.RawResponse"
                         }
                     },
                     "400": {
@@ -134,7 +405,50 @@
     },
     "definitions": {
         "api.Detail": {
-            "type": "object"
+            "type": "object",
+            "required": [
+                "latency"
+            ],
+            "properties": {
+                "createdAt": {
+                    "description": "The creation time",
+                    "type": "string"
+                },
+                "deletedAt": {
+                    "description": "The deleted time",
+                    "type": "string"
+                },
+                "error": {
+                    "description": "Error details",
+                    "type": "string"
+                },
+                "id": {
+                    "description": "The id",
+                    "type": "integer",
+                    "example": 123
+                },
+                "latency": {
+                    "description": "Latency of the call",
+                    "type": "number"
+                },
+                "runID": {
+                    "description": "Run id",
+                    "type": "integer",
+                    "example": 321
+                },
+                "status": {
+                    "description": "Status of the call",
+                    "type": "string"
+                },
+                "timestamp": {
+                    "description": "Timestamp for the detail",
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "description": "The updated time",
+                    "type": "string"
+                }
+            }
         },
         "api.DetailListResponse": {
             "type": "object",
@@ -150,6 +464,19 @@
                     "description": "The total number of items",
                     "type": "integer",
                     "example": 10
+                }
+            }
+        },
+        "api.DetailsCreated": {
+            "type": "object",
+            "properties": {
+                "fail": {
+                    "description": "Number of failed detail objects",
+                    "type": "integer"
+                },
+                "success": {
+                    "description": "Number of successfully created detail objects",
+                    "type": "integer"
                 }
             }
         },
@@ -208,6 +535,173 @@
                 }
             }
         },
+        "api.Project": {
+            "type": "object",
+            "properties": {
+                "createdAt": {
+                    "description": "The creation time",
+                    "type": "string"
+                },
+                "deletedAt": {
+                    "description": "The deleted time",
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "description": "The id",
+                    "type": "integer",
+                    "example": 123
+                },
+                "name": {
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "description": "The updated time",
+                    "type": "string"
+                }
+            }
+        },
+        "api.ProjectList": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "description": "List of detail objects",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/api.Project"
+                    }
+                },
+                "total": {
+                    "description": "The total number of items",
+                    "type": "integer",
+                    "example": 10
+                }
+            }
+        },
+        "api.RawBucket": {
+            "type": "object",
+            "properties": {
+                "count": {
+                    "description": "The count in the bucket",
+                    "type": "integer"
+                },
+                "frequency": {
+                    "description": "The frequency of results in the bucket as a decimal percentage",
+                    "type": "number"
+                },
+                "mark": {
+                    "description": "The Mark for histogram bucket in seconds",
+                    "type": "number"
+                }
+            }
+        },
+        "api.RawLatencyDistribution": {
+            "type": "object",
+            "properties": {
+                "latency": {
+                    "description": "Latency of this distributoin",
+                    "type": "string"
+                },
+                "percentage": {
+                    "description": "Percentage of the dictribution",
+                    "type": "integer"
+                }
+            }
+        },
+        "api.RawRequest": {
+            "type": "object",
+            "properties": {
+                "average": {
+                    "description": "Acerage duration of a call",
+                    "type": "string"
+                },
+                "count": {
+                    "description": "Count is the number for calls",
+                    "type": "integer"
+                },
+                "date": {
+                    "description": "Date of the test",
+                    "type": "string"
+                },
+                "details": {
+                    "description": "Details of all the calls",
+                    "type": "array",
+                    "items": {
+                        "type": "\u0026{%!s(token.Pos=1016) %!s(*ast.SelectorExpr=\u0026{0xc00031f080 0xc00031f0a0})}"
+                    }
+                },
+                "errorDistribution": {
+                    "description": "ErrorDist is the error distribution",
+                    "type": "object"
+                },
+                "fastest": {
+                    "description": "Fastest call duration",
+                    "type": "string"
+                },
+                "histogram": {
+                    "description": "Histogram is the latency histrogram",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/api.RawBucket"
+                    }
+                },
+                "latencyDistribution": {
+                    "description": "Latency distribution",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/api.RawLatencyDistribution"
+                    }
+                },
+                "options": {
+                    "description": "Options for the test",
+                    "type": "object",
+                    "$ref": "#/definitions/model.Options"
+                },
+                "rps": {
+                    "description": "Rps is the requests per second metric",
+                    "type": "number"
+                },
+                "slowest": {
+                    "description": "Slowest call duration",
+                    "type": "string"
+                },
+                "statusCodeDistribution": {
+                    "description": "Status code distribution",
+                    "type": "object"
+                },
+                "total": {
+                    "description": "Total duration of the test",
+                    "type": "string"
+                }
+            }
+        },
+        "api.RawResponse": {
+            "type": "object",
+            "properties": {
+                "details": {
+                    "description": "The summary of created details",
+                    "type": "object",
+                    "$ref": "#/definitions/api.DetailsCreated"
+                },
+                "project": {
+                    "description": "Created project",
+                    "type": "object",
+                    "$ref": "#/definitions/model.Project"
+                },
+                "run": {
+                    "description": "Created run",
+                    "type": "object",
+                    "$ref": "#/definitions/model.Run"
+                },
+                "test": {
+                    "description": "Created test",
+                    "type": "object",
+                    "$ref": "#/definitions/model.Test"
+                }
+            }
+        },
         "echo.HTTPError": {
             "type": "object",
             "properties": {
@@ -219,6 +713,267 @@
                 },
                 "message": {
                     "type": "object"
+                }
+            }
+        },
+        "model.Bucket": {
+            "type": "object",
+            "properties": {
+                "count": {
+                    "description": "The count in the bucket",
+                    "type": "integer"
+                },
+                "createdAt": {
+                    "description": "The creation time",
+                    "type": "string"
+                },
+                "deletedAt": {
+                    "description": "The deleted time",
+                    "type": "string"
+                },
+                "frequency": {
+                    "description": "The frequency of results in the bucket as a decimal percentage",
+                    "type": "number"
+                },
+                "id": {
+                    "description": "The id",
+                    "type": "integer"
+                },
+                "mark": {
+                    "description": "The Mark for histogram bucket in seconds",
+                    "type": "number"
+                },
+                "runId": {
+                    "type": "integer"
+                },
+                "updatedAt": {
+                    "description": "The updated time",
+                    "type": "string"
+                }
+            }
+        },
+        "model.LatencyDistribution": {
+            "type": "object",
+            "properties": {
+                "createdAt": {
+                    "description": "The creation time",
+                    "type": "string"
+                },
+                "deletedAt": {
+                    "description": "The deleted time",
+                    "type": "string"
+                },
+                "id": {
+                    "description": "The id",
+                    "type": "integer"
+                },
+                "latency": {
+                    "type": "string"
+                },
+                "percentage": {
+                    "type": "integer"
+                },
+                "runId": {
+                    "type": "integer"
+                },
+                "updatedAt": {
+                    "description": "The updated time",
+                    "type": "string"
+                }
+            }
+        },
+        "model.Options": {
+            "type": "object",
+            "properties": {
+                "c": {
+                    "type": "integer"
+                },
+                "call": {
+                    "type": "string"
+                },
+                "cert": {
+                    "type": "string"
+                },
+                "cname": {
+                    "type": "string"
+                },
+                "data": {
+                    "type": "object"
+                },
+                "dialTimeout": {
+                    "type": "integer"
+                },
+                "host": {
+                    "type": "string"
+                },
+                "keepAlice": {
+                    "type": "integer"
+                },
+                "metadata": {
+                    "type": "object"
+                },
+                "n": {
+                    "type": "integer"
+                },
+                "proto": {
+                    "type": "string"
+                },
+                "qps": {
+                    "type": "integer"
+                },
+                "timeout": {
+                    "type": "integer"
+                },
+                "z": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.Project": {
+            "type": "object",
+            "properties": {
+                "createdAt": {
+                    "description": "The creation time",
+                    "type": "string"
+                },
+                "deletedAt": {
+                    "description": "The deleted time",
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "description": "The id",
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "description": "The updated time",
+                    "type": "string"
+                }
+            }
+        },
+        "model.Run": {
+            "type": "object",
+            "properties": {
+                "average": {
+                    "type": "string"
+                },
+                "count": {
+                    "type": "integer"
+                },
+                "createdAt": {
+                    "description": "The creation time",
+                    "type": "string"
+                },
+                "date": {
+                    "type": "string"
+                },
+                "deletedAt": {
+                    "description": "The deleted time",
+                    "type": "string"
+                },
+                "errorDistribution": {
+                    "type": "object"
+                },
+                "fastest": {
+                    "type": "string"
+                },
+                "histogram": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.Bucket"
+                    }
+                },
+                "id": {
+                    "description": "The id",
+                    "type": "integer"
+                },
+                "latencyDistribution": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.LatencyDistribution"
+                    }
+                },
+                "options": {
+                    "type": "object",
+                    "$ref": "#/definitions/model.Options"
+                },
+                "rps": {
+                    "type": "number"
+                },
+                "slowest": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "statusCodeDistribution": {
+                    "type": "object"
+                },
+                "testID": {
+                    "type": "integer"
+                },
+                "total": {
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "description": "The updated time",
+                    "type": "string"
+                }
+            }
+        },
+        "model.Test": {
+            "type": "object",
+            "required": [
+                "name"
+            ],
+            "properties": {
+                "createdAt": {
+                    "description": "The creation time",
+                    "type": "string"
+                },
+                "deletedAt": {
+                    "description": "The deleted time",
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "failOnError": {
+                    "type": "boolean"
+                },
+                "failOnKeyMetric": {
+                    "type": "boolean"
+                },
+                "failOnThreshold": {
+                    "type": "boolean"
+                },
+                "id": {
+                    "description": "The id",
+                    "type": "integer"
+                },
+                "keyMetric": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "projectID": {
+                    "type": "integer"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "thresholds": {
+                    "type": "object"
+                },
+                "updatedAt": {
+                    "description": "The updated time",
+                    "type": "string"
                 }
             }
         }
